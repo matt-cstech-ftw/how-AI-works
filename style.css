@@ -9,6 +9,7 @@
   --text-muted: #8b949e;
   --success: #3fb950;
   --warning: #d29922;
+  --purple: #bc8cff;
   --chip-bg: #21262d;
   --chip-border: #388bfd33;
 }
@@ -264,16 +265,23 @@ button:disabled {
 }
 
 .new-token {
-  background-color: rgba(88, 166, 255, 0.2);
+  background-color: rgba(88, 166, 255, 0.15);
   color: var(--accent);
   border-radius: 3px;
-  padding: 0 3px;
-  animation: highlight 1.5s ease-out;
+  padding: 0 4px;
+  margin: 0 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-@keyframes highlight {
-  0% { background-color: #58a6ff; color: #0d1117; }
-  100% { background-color: rgba(88, 166, 255, 0.2); color: var(--accent); }
+.new-token:hover {
+  background-color: rgba(88, 166, 255, 0.35);
+  text-decoration: underline;
+}
+
+.new-token.active-inspect {
+  outline: 2px solid var(--accent);
+  background-color: rgba(88, 166, 255, 0.4);
 }
 
 .flow-stepper {
@@ -292,12 +300,13 @@ button:disabled {
   border-radius: 4px;
   background: #21262d;
   color: var(--text-muted);
+  transition: all 0.3s ease;
 }
 
-.step-badge.active {
-  background: var(--accent);
+.step-badge.highlight {
+  background: var(--purple);
   color: #0d1117;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .arrow {
@@ -308,9 +317,23 @@ button:disabled {
 .explainer-card {
   background: #1c2128;
   border-left: 4px solid var(--accent);
-  padding: 0.85rem;
+  padding: 1rem;
   border-radius: 0 6px 6px 0;
   font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.explainer-card strong {
+  color: var(--text-bright);
+}
+
+.explainer-card code {
+  background: #0d1117;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
 }
 
 .inspector-section h3 {
@@ -330,7 +353,7 @@ button:disabled {
   border-radius: 6px;
   border: 1px solid var(--border);
   min-height: 60px;
-  max-height: 180px;
+  max-height: 160px;
   overflow-y: auto;
 }
 
@@ -363,7 +386,7 @@ button:disabled {
 
 .prob-row {
   display: grid;
-  grid-template-columns: 100px 1fr 50px;
+  grid-template-columns: 90px 1fr 50px;
   align-items: center;
   gap: 0.5rem;
   font-family: 'Fira Code', monospace;
@@ -379,7 +402,7 @@ button:disabled {
 .prob-bar-track {
   background: #21262d;
   border-radius: 3px;
-  height: 14px;
+  height: 16px;
   overflow: hidden;
 }
 
@@ -421,12 +444,13 @@ button:disabled {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  max-width: 600px;
+  max-width: 620px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-.modal-card .badge {
+.modal-card .badge,
+.tour-card .badge {
   background: rgba(88, 166, 255, 0.15);
   color: var(--accent);
   font-size: 0.75rem;
@@ -480,5 +504,69 @@ button:disabled {
 }
 
 .modal-footer {
+  text-align: right;
+}
+
+/* Tour Callout Card */
+.tour-card {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  max-width: 480px;
+  background: #1c2128;
+  border: 2px solid var(--purple);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.7);
+  z-index: 900;
+  animation: slideUp 0.3s ease-out;
+}
+
+.tour-card.hidden {
+  display: none;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.tour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--text-bright);
+}
+
+.tour-card h3 {
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  margin-bottom: 0.5rem;
+}
+
+.tour-body {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.tour-body strong {
+  color: var(--text-bright);
+}
+
+.tour-footer {
   text-align: right;
 }

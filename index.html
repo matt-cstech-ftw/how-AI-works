@@ -11,72 +11,87 @@
 </head>
 <body>
 
-  <!-- Modal -->
+  <!-- Welcome Modal -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="badge">Demystifying GenAI</div>
       <h2>Have you ever wanted to know EXACTLY what is happening when you interface with generative AI?</h2>
       <p class="modal-intro">
-        Whether you use ChatGPT, Claude, Gemini, or a local model, they don't "think" in sentences. They are real-time probability calculators trained on internet-scale data. This sandbox exposes the hidden machinery.
+        Whether you use ChatGPT, Claude, Gemini, or this small local model, they don't think in human concepts. They are statistical engines calculating one token at a time. This interactive walkthrough breaks down the machinery behind every AI response.
       </p>
 
       <div class="modal-grid">
         <div class="modal-feature">
-          <span class="f-icon">🧩</span>
+          <span class="f-icon">⚡</span>
           <div>
-            <strong>1. Tokenization</strong>
-            <p>Text is chopped into subword numbers. The model never sees letters or words directly.</p>
+            <strong>1. The "Thinking" Phase (Prefill)</strong>
+            <p>What happens before word #1 appears? How the model converts your prompt into spatial vectors.</p>
           </div>
         </div>
         <div class="modal-feature">
           <span class="f-icon">🔦</span>
           <div>
-            <strong>2. Attention & Weighting</strong>
-            <p>Every word connects back to prior words to pinpoint context and meaning.</p>
+            <strong>2. Attention Spotlight</strong>
+            <p>How the neural net connects the question mark and keywords to narrow its grammatical path.</p>
           </div>
         </div>
         <div class="modal-feature">
           <span class="f-icon">📊</span>
           <div>
-            <strong>3. Live Logit Leaderboards</strong>
-            <p>Every single step is an election across the dictionary for the next token.</p>
+            <strong>3. The Probability Election</strong>
+            <p>Every word is a live election where candidate tokens compete based on training data patterns.</p>
           </div>
         </div>
         <div class="modal-feature">
-          <span class="f-icon">🧠</span>
+          <span class="f-icon">🎲</span>
           <div>
-            <strong>4. Training Patterns</strong>
-            <p>See why specific words win based on statistical correlations from training datasets.</p>
+            <strong>4. Sampling & "Creativity"</strong>
+            <p>Watch temperature roll the dice and cause the model to pick surprise runner-up words.</p>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button id="btn-modal-agree" class="btn-primary">I Understand — Take Me Under The Hood</button>
+        <button id="btn-modal-agree" class="btn-primary">Take Me Under The Hood</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Interactive Guided Tour Popover Callout -->
+  <div id="tour-card" class="tour-card hidden">
+    <div class="tour-header">
+      <span class="badge" id="tour-step-badge">Stage Insight</span>
+      <button id="btn-close-tour" class="close-btn">&times;</button>
+    </div>
+    <h3 id="tour-title">How Word #1 Was Born</h3>
+    <div id="tour-body" class="tour-body">
+      <!-- Injected by JS -->
+    </div>
+    <div class="tour-footer">
+      <button id="btn-continue-tour" class="btn-primary">Continue Watching ▶</button>
     </div>
   </div>
 
   <header>
     <div>
-      <h1>Inside The Transformer <span>/ Educational Sandbox</span></h1>
-      <p class="tagline">Real-time token breakdown, real model logits, and step-by-step autoregression.</p>
+      <h1>Inside The Transformer <span>/ Interactive Walkthrough</span></h1>
+      <p class="tagline">An educational look at how prompts turn into answers in modern Large Language Models.</p>
     </div>
     <div class="status-pill" id="model-status">
       <span class="dot" id="status-dot"></span> <span id="status-text">Click "Initialize Engine" below</span>
     </div>
   </header>
 
-  <!-- Progress bar -->
+  <!-- Download Progress Bar -->
   <div id="download-progress-bar" class="progress-bar-container hidden">
     <div class="progress-track">
       <div id="progress-fill" class="progress-fill"></div>
     </div>
-    <span id="progress-status" class="progress-status-text">Downloading SmolLM2 weights...</span>
+    <span id="progress-status" class="progress-status-text">Downloading neural weights...</span>
   </div>
 
   <main class="dashboard-grid">
-    <!-- Left Column -->
+    <!-- Left Column: Prompt & Generation Console -->
     <section class="panel console-panel">
       <h2>1. The Prompt & Controls</h2>
       <label for="prompt-input" class="label-muted">Enter any prompt or question:</label>
@@ -86,60 +101,60 @@
         <div class="control-group">
           <label for="temp-slider">Temperature: <span id="temp-val">0.7</span></label>
           <input type="range" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7">
-          <small class="tip">Lower = rigid & factual; Higher = diverse & random</small>
+          <small class="tip">Lower = rigid & predictable; Higher = diverse & wild</small>
         </div>
         <div class="control-group">
-          <label for="topk-slider">Top-K Candidates: <span id="topk-val">5</span></label>
+          <label for="topk-slider">Candidates Displayed: <span id="topk-val">5</span></label>
           <input type="range" id="topk-slider" min="3" max="10" step="1" value="5">
-          <small class="tip">Number of top candidate words shown</small>
+          <small class="tip">Leaderboard candidates visualized below</small>
         </div>
       </div>
 
       <div class="action-buttons">
         <button id="btn-init" class="btn-init">⚡ Initialize Engine (SmolLM2)</button>
-        <button id="btn-step" class="btn-primary" disabled>▶ Step (1 Word)</button>
-        <button id="btn-stream" class="btn-secondary" disabled>⏩ Auto Play</button>
+        <button id="btn-step" class="btn-primary" disabled>▶ Step (Next Token)</button>
+        <button id="btn-stream" class="btn-secondary" disabled>⏩ Guided Auto Play</button>
         <button id="btn-reset" class="btn-tertiary">↺ Reset</button>
       </div>
 
       <div class="output-container">
-        <label class="label-muted">Generated Text (Click any blue word to inspect its history):</label>
+        <label class="label-muted">Generated Response (Click any word to inspect how it won):</label>
         <div id="live-text" class="live-text-box"></div>
       </div>
     </section>
 
-    <!-- Right Column -->
+    <!-- Right Column: Educational Telemetry -->
     <section class="panel telemetry-panel">
-      <h2>2. Neural Inspection & Explanation</h2>
+      <h2>2. What Just Happened?</h2>
       
       <div class="flow-stepper">
-        <div class="step-badge active" id="badge-tok">1. Tokenize</div>
+        <div class="step-badge" id="badge-prefill">1. Prefill (Read)</div>
         <div class="arrow">→</div>
-        <div class="step-badge active" id="badge-att">2. Attention</div>
+        <div class="step-badge" id="badge-attention">2. Attention</div>
         <div class="arrow">→</div>
-        <div class="step-badge active" id="badge-prob">3. Probability</div>
+        <div class="step-badge" id="badge-logits">3. Probability</div>
         <div class="arrow">→</div>
-        <div class="step-badge active" id="badge-samp">4. Append</div>
+        <div class="step-badge" id="badge-sample">4. Sample & Loop</div>
       </div>
 
-      <!-- Plain English Dynamic Explainer -->
+      <!-- Plain English Dynamic Narrative -->
       <div class="explainer-card" id="explainer-text">
-        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Step</strong> or <strong>Auto Play</strong> to see the real neural weights in action.
+        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Guided Auto Play</strong> to watch the model write while explaining how it works at each stage.
       </div>
 
-      <!-- Token Chips -->
+      <!-- Token Representation -->
       <div class="inspector-section">
-        <h3>Tokens in Attention Context Window</h3>
+        <h3>Tokens In Context Window (The Model's Working Memory)</h3>
         <div id="token-chips" class="token-chips-container">
-          <div class="empty-state">Context tokens will appear here.</div>
+          <div class="empty-state">Context tokens will appear here after starting.</div>
         </div>
       </div>
 
-      <!-- Probabilities Chart -->
+      <!-- Live Logits Bar Chart -->
       <div class="inspector-section">
-        <h3>Next-Token Probability Leaderboard (Actual Model Weights)</h3>
+        <h3>Live Next-Token Candidate Election (Logit Probabilities)</h3>
         <div id="probability-chart" class="chart-container">
-          <div class="empty-state">Inference chart will render here upon stepping.</div>
+          <div class="empty-state">Candidate probabilities will render here during generation.</div>
         </div>
       </div>
     </section>
