@@ -2,189 +2,355 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Under the Hood: How LLMs Actually Work</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Inside The Transformer — How ChatGPT, Gemini & LLMs Actually Work</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
+  <!-- Ambient Background Glows -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
 
   <!-- Welcome Modal -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-card">
-      <div class="badge">Demystifying GenAI</div>
-      <h2>Have you ever wanted to know EXACTLY what is happening when you interface with generative AI?</h2>
+      <div class="modal-top-bar">
+        <span class="badge badge-accent">Interactive AI Deconstructor</span>
+        <span class="version-tag">100% Client-Side Neural Net</span>
+      </div>
+      
+      <h2>Ever wondered what is <em>actually</em> happening inside ChatGPT, Gemini, or Claude?</h2>
       <p class="modal-intro">
-        Whether you use ChatGPT, Claude, Gemini, or this small local model, they don't think in human concepts. They are statistical engines calculating one token at a time. This interactive walkthrough breaks down the machinery behind every AI response.
+        When you chat with frontier AI systems, it feels like talking to a mind that plans out paragraphs. <strong>It isn't.</strong> Every Large Language Model (LLM) on Earth runs on the exact same mathematical loop—predicting strictly <em>one token at a time</em>. This sandbox slows a real neural network down to human speed so you can see inside the black box.
       </p>
 
       <div class="modal-grid">
         <div class="modal-feature">
-          <span class="f-icon">⚡</span>
+          <div class="f-icon-wrap">🧩</div>
           <div>
-            <strong>1. Ingestion & Prefill</strong>
-            <p>Your prompt is split into numbers and translated into mathematical vector coordinates.</p>
+            <strong>1. Subword Tokenization</strong>
+            <p>AI doesn't see letters or words. It slices your prompt into numerical IDs from a fixed dictionary before doing any math.</p>
           </div>
         </div>
         <div class="modal-feature">
-          <span class="f-icon">🔦</span>
+          <div class="f-icon-wrap">🔦</div>
           <div>
-            <strong>2. Attention Spotlight</strong>
-            <p>The model compares every word against every prior word to understand context.</p>
+            <strong>2. Self-Attention & Context</strong>
+            <p>Every word calculates mathematical connections to prior words to lock onto grammar, tone, and topic constraints.</p>
           </div>
         </div>
         <div class="modal-feature">
-          <span class="f-icon">📊</span>
+          <div class="f-icon-wrap">📊</div>
           <div>
-            <strong>3. The Probability Election</strong>
-            <p>Every word is predicted one by one from candidate odds formed during training.</p>
+            <strong>3. The Logit Election</strong>
+            <p>For every single blank slot, the model scores its entire vocabulary. Watch the top candidates compete in real time.</p>
           </div>
         </div>
         <div class="modal-feature">
-          <span class="f-icon">🔀</span>
+          <div class="f-icon-wrap">🎲</div>
           <div>
-            <strong>4. Branching Possibilities</strong>
-            <p>Temperature rolls the dice. Change one word, and the entire sentence trajectory shifts.</p>
+            <strong>4. Temperature & Timeline Forking</strong>
+            <p>Drag the Temperature slider to reshape the odds live, or click any generated word to rewrite history down a new branch.</p>
           </div>
         </div>
+      </div>
+
+      <div class="legal-disclaimer">
+        <strong>Educational Notice:</strong> The transformer architecture shown here (Tokenization → Self-Attention → Logit Softmax → Autoregressive Sampling) is the exact mathematical foundation used by OpenAI's ChatGPT, Google's Gemini, and Anthropic's Claude, scaled down to run privately inside your browser. <em>This is an independent educational tool and is not affiliated with, endorsed by, or sponsored by OpenAI, Google, Anthropic, or Hugging Face.</em>
       </div>
 
       <div class="modal-footer">
-        <button id="btn-modal-agree" class="btn-primary">Take Me Under The Hood</button>
+        <button id="btn-modal-agree" class="btn-primary btn-lg">
+          I Understand — Take Me Under The Hood 🚀
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Header -->
-  <header>
-    <div class="header-titles">
-      <h1>Inside The Transformer <span>/ Interactive Walkthrough</span></h1>
-      <p class="tagline">An educational look at how prompts turn into answers in modern Large Language Models.</p>
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-group">
+      <div class="logo-mark">⚡</div>
+      <div>
+        <h1>Inside The Transformer <span class="sub-brand">/ LLM Telemetry Sandbox</span></h1>
+        <p class="tagline">Exposing the real-time math behind ChatGPT, Gemini, Claude & modern generative AI</p>
+      </div>
     </div>
-    <div class="status-pill" id="model-status">
-      <span class="dot" id="status-dot"></span> <span id="status-text">Click "Initialize Engine" below</span>
+
+    <div class="header-controls">
+      <div class="model-selector-wrap">
+        <label for="model-select" class="sr-only">Select Model</label>
+        <select id="model-select" class="model-select" title="Choose in-browser neural network size">
+          <option value="HuggingFaceTB/SmolLM2-135M-Instruct">⚡ SmolLM2-135M (Fast / Mobile ~90MB)</option>
+          <option value="HuggingFaceTB/SmolLM2-360M-Instruct">🧠 SmolLM2-360M (Smarter / Desktop ~230MB)</option>
+        </select>
+      </div>
+
+      <button id="btn-share" class="btn-glass" title="Copy shareable link to this prompt & temperature">
+        🔗 Share Experiment
+      </button>
+
+      <div class="status-pill" id="model-status">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Engine Standby</span>
+      </div>
     </div>
   </header>
 
-  <!-- Download Progress Bar -->
-  <div id="download-progress-bar" class="progress-bar-container hidden">
+  <!-- Download Progress Banner -->
+  <div id="download-progress-bar" class="progress-banner hidden">
+    <div class="progress-info">
+      <span id="progress-status">Downloading neural weights into browser cache...</span>
+      <span id="progress-pct">0%</span>
+    </div>
     <div class="progress-track">
       <div id="progress-fill" class="progress-fill"></div>
     </div>
-    <span id="progress-status" class="progress-status-text">Downloading neural weights...</span>
   </div>
 
-  <main class="dashboard-grid">
-    <!-- Left Column: Controls & Text Output -->
-    <section class="panel console-panel">
-      <div class="panel-header">
-        <h2>1. The Prompt & Controls</h2>
+  <!-- Main Responsive Workspace (Works across 16:9, 21:9, and 9:16 Portrait) -->
+  <main class="workspace-grid">
+    
+    <!-- LEFT PANE: Prompt, Presets, Controls & Live Output -->
+    <section class="card-panel left-pane">
+      <div class="panel-title-bar">
+        <h2>1. Input & Sampling Controls</h2>
+        <span class="step-pill">Interactive Input</span>
       </div>
 
-      <label for="prompt-input" class="label-muted">Type any prompt or question:</label>
-      <textarea id="prompt-input" rows="3">Who are you and what do you do?</textarea>
-
-      <div class="controls-row">
-        <div class="control-group">
-          <label for="temp-slider">Temperature: <span id="temp-val">0.7</span></label>
-          <input type="range" id="temp-slider" min="0.0" max="1.4" step="0.1" value="0.7">
-          <small class="tip">0.0 = Deterministic/Strict; Higher = Creative/Diverse</small>
+      <!-- Curated Preset Pills -->
+      <div class="presets-bar">
+        <span class="label-tiny">Try an Experiment:</span>
+        <div class="preset-pills">
+          <button class="preset-pill" data-prompt="Complete this famous proverb in one sentence: Early to bed and early to rise" data-temp="0.2">
+            🔒 99% Lock-In (Idiom)
+          </button>
+          <button class="preset-pill" data-prompt="What is your favorite color and why does it inspire you?" data-temp="0.8">
+            🎨 Creative Crossroads
+          </button>
+          <button class="preset-pill" data-prompt="Who are you and how do you generate answers?" data-temp="0.5">
+            🤖 AI Self-Identity
+          </button>
+          <button class="preset-pill" data-prompt="Write a vivid one-sentence description of a cyberpunk coffee shop." data-temp="1.1">
+            🎲 High-Temp Wildcard
+          </button>
         </div>
-        <div class="control-group">
-          <label for="topk-slider">Candidates Displayed: <span id="topk-val">5</span></label>
+      </div>
+
+      <!-- Prompt Textarea -->
+      <div class="input-group">
+        <label for="prompt-input" class="label-muted">Your Prompt:</label>
+        <textarea id="prompt-input" rows="2" placeholder="Ask anything or type a partial sentence...">What is your favorite color and why?</textarea>
+      </div>
+
+      <!-- Interactive Sliders with Live Math Explanations -->
+      <div class="sliders-container">
+        <div class="slider-box" id="temp-box">
+          <div class="slider-header">
+            <label for="temp-slider">Temperature (Creativity Dial)</label>
+            <span class="slider-badge" id="temp-val">0.7 — Balanced</span>
+          </div>
+          <input type="range" id="temp-slider" min="0.0" max="1.5" step="0.1" value="0.7">
+          <p class="slider-explainer" id="temp-explainer">
+            <strong>How it works:</strong> Divides raw scores before Softmax ($z_i / T$). Dragging this reshapes the candidate bars on the right in real time!
+          </p>
+        </div>
+
+        <div class="slider-box">
+          <div class="slider-header">
+            <label for="topk-slider">Top-K Candidates Pool</label>
+            <span class="slider-badge" id="topk-val">Top 5 Words</span>
+          </div>
           <input type="range" id="topk-slider" min="3" max="10" step="1" value="5">
-          <small class="tip">Number of top candidate words shown</small>
+          <p class="slider-explainer">
+            <strong>How it works:</strong> Cuts off the long tail of 49,000+ dictionary tokens so the dice roll only considers the top $K$ finalists.
+          </p>
         </div>
       </div>
 
-      <div class="action-buttons">
-        <button id="btn-init" class="btn-init">⚡ Initialize Engine (SmolLM2)</button>
-        <button id="btn-stream" class="btn-primary" disabled>▶ Run Guided Walkthrough</button>
-        <button id="btn-reset" class="btn-tertiary">↺ New Prompt</button>
+      <!-- Primary Action Bar -->
+      <div class="action-bar">
+        <button id="btn-init" class="btn-init">
+          ⚡ Initialize Neural Engine
+        </button>
+        <button id="btn-stream" class="btn-primary" disabled>
+          ▶ Run Guided Walkthrough
+        </button>
+        <div class="speed-toggle-wrap">
+          <label for="speed-select" class="label-tiny">Pace:</label>
+          <select id="speed-select" class="speed-select">
+            <option value="650">🐢 Slow (Teach Me)</option>
+            <option value="320" selected>🚶 Normal</option>
+            <option value="80">⚡ Fast Stream</option>
+          </select>
+        </div>
+        <button id="btn-reset" class="btn-ghost" title="Clear and start fresh">
+          ↺ Reset
+        </button>
       </div>
 
-      <div class="output-container">
-        <div class="output-header-row">
-          <label class="label-muted">Generated Text Stream:</label>
-          <span id="output-hint" class="output-hint hidden">💡 Click any word to inspect odds or fork generation</span>
+      <!-- Live Output Stream & Confidence Heatmap -->
+      <div class="output-section">
+        <div class="output-header">
+          <span class="label-muted">Autoregressive Output Stream</span>
+          <div class="heatmap-legend">
+            <span class="legend-item" title=">75% probability"><i class="dot-lock"></i> Lock-in</span>
+            <span class="legend-item" title="Competitive #1 choice"><i class="dot-comp"></i> #1 Pick</span>
+            <span class="legend-item" title="Runner-up chosen via Temperature"><i class="dot-upset"></i> 🎲 Temp Upset</span>
+          </div>
         </div>
-        <div id="live-text" class="live-text-box"></div>
+
+        <!-- Ghosted Previous Timeline (Appears when user forks a branch) -->
+        <div id="fork-comparison-banner" class="fork-banner hidden">
+          <div class="fork-banner-title">🔀 Timeline Forked! Comparing Alternate Realities:</div>
+          <div class="fork-old-timeline">
+            <span>Original Branch:</span> <em id="fork-old-text"></em>
+          </div>
+        </div>
+
+        <div id="live-text" class="live-output-box" data-placeholder="Initialize engine and click 'Run Guided Walkthrough' to watch tokens appear here..."></div>
+        
+        <div id="output-footer-hint" class="output-footer-hint hidden">
+          👆 <strong>Interactive History:</strong> Click any generated word above to inspect the exact election odds and roulette spin that created it!
+        </div>
       </div>
     </section>
 
-    <!-- Right Column: Single Unified Telemetry -->
-    <section class="panel telemetry-panel" id="telemetry-panel">
-      <div class="telemetry-header-row">
-        <h2>2. Neural Inspection & Explanations</h2>
+    <!-- RIGHT PANE: Real-Time Telemetry, Roulette Visualizer & Explanations -->
+    <section class="card-panel right-pane" id="telemetry-panel">
+      <div class="panel-title-bar">
+        <h2>2. Live Neural Telemetry</h2>
         
-        <div id="replay-controls" class="replay-controls hidden">
-          <span class="label-muted">Step:</span>
-          <button id="btn-replay-prev" class="btn-sm btn-secondary" title="Previous Word">◀</button>
-          <span id="replay-step-indicator" class="replay-step-text">0/0</span>
-          <button id="btn-replay-next" class="btn-sm btn-secondary" title="Next Word">▶</button>
+        <!-- Step-by-Step History Scrubber -->
+        <div id="replay-controls" class="replay-scrubber hidden">
+          <button id="btn-replay-prev" class="btn-icon" title="Previous Token">◀</button>
+          <span id="replay-step-indicator" class="scrubber-readout">Word 0 / 0</span>
+          <button id="btn-replay-next" class="btn-icon" title="Next Token">▶</button>
         </div>
       </div>
 
-      <div class="flow-stepper">
-        <div class="step-badge" id="badge-prefill">1. Prefill (Read)</div>
-        <div class="arrow">→</div>
-        <div class="step-badge" id="badge-attention">2. Attention</div>
-        <div class="arrow">→</div>
-        <div class="step-badge" id="badge-logits">3. Probability</div>
-        <div class="arrow">→</div>
-        <div class="step-badge" id="badge-sample">4. Sample & Loop</div>
-      </div>
-
-      <!-- Single Unified Explanation Box -->
-      <div class="explainer-card" id="unified-explainer">
-        <div class="explainer-header">
-          <span class="badge" id="explainer-badge">Engine Status</span>
+      <!-- 4-Stage Pipeline Indicator -->
+      <div class="pipeline-stepper">
+        <div class="pipe-node" id="badge-prefill">
+          <span class="pipe-num">1</span>
+          <span class="pipe-name">Tokenize</span>
         </div>
-        <div id="explainer-content">
-          Click <strong>Initialize Engine</strong>. Once ready, click <strong>Run Guided Walkthrough</strong> to watch the model think and generate.
+        <div class="pipe-line"></div>
+        <div class="pipe-node" id="badge-attention">
+          <span class="pipe-num">2</span>
+          <span class="pipe-name">Attention</span>
         </div>
-        <div id="explainer-actions" class="explainer-actions hidden">
-          <button id="btn-continue-milestone" class="btn-primary btn-sm">Continue Walkthrough ▶</button>
+        <div class="pipe-line"></div>
+        <div class="pipe-node" id="badge-logits">
+          <span class="pipe-num">3</span>
+          <span class="pipe-name">Logit Odds</span>
         </div>
-      </div>
-
-      <!-- Live Logits Probability Chart -->
-      <div class="inspector-section">
-        <div class="chart-header-row">
-          <h3>Candidate Logit Election (What Competed for This Slot)</h3>
-          <button id="btn-fork-selection" class="btn-fork hidden">🔀 Pick This & Fork Timeline</button>
-        </div>
-        <div id="probability-chart" class="chart-container">
-          <div class="empty-state">Leaderboard probabilities will appear here during generation.</div>
+        <div class="pipe-line"></div>
+        <div class="pipe-node" id="badge-sample">
+          <span class="pipe-num">4</span>
+          <span class="pipe-name">Sample</span>
         </div>
       </div>
 
-      <!-- Context Window Tokens -->
-      <div class="inspector-section">
-        <h3>Tokens in Active Context Window</h3>
-        <div id="token-chips" class="token-chips-container">
-          <div class="empty-state">Tokens will appear here once inference begins.</div>
+      <!-- Unified Narrative & Milestone Callout Box -->
+      <div class="narrative-card" id="unified-explainer">
+        <div class="narrative-top">
+          <span class="badge" id="explainer-badge">Waiting for Engine</span>
+          <span class="entropy-readout" id="entropy-readout"></span>
+        </div>
+        <div id="explainer-content" class="narrative-body">
+          Click <strong>⚡ Initialize Neural Engine</strong> on the left. Once loaded, we'll trace how your prompt turns into vectors, probabilities, and words—just like inside ChatGPT or Gemini.
+        </div>
+        <div id="explainer-actions" class="narrative-actions hidden">
+          <button id="btn-continue-milestone" class="btn-primary btn-sm">
+            Got It — Continue Walkthrough ▶
+          </button>
         </div>
       </div>
 
-      <!-- Embedded Completion Summary (Non-obstructive) -->
-      <div id="completion-summary" class="completion-summary hidden">
-        <div class="summary-header">
-          <span class="badge badge-success">Thought Complete</span>
-          <h4>How This Generation Happened</h4>
+      <!-- Candidate Election & Live Roulette Strip -->
+      <div class="telemetry-block">
+        <div class="block-header">
+          <div>
+            <h3>Next-Token Probability Election (Softmax)</h3>
+            <p class="block-sub">Drag the Temperature slider to see these bars reshape live! Click any bar to fork the timeline.</p>
+          </div>
+          <button id="btn-fork-selection" class="btn-fork hidden">
+            🔀 Force This Word & Fork
+          </button>
         </div>
-        <p class="summary-text" id="summary-narrative"></p>
-        <div class="summary-stats-row">
-          <div class="s-stat"><span id="stat-tokens">0</span><small>Tokens</small></div>
-          <div class="s-stat"><span id="stat-deviations">0</span><small>Sampling Shifts</small></div>
-          <div class="s-stat"><span id="stat-avg-conf">0%</span><small>Avg Confidence</small></div>
+
+        <!-- Roulette Wheel Visualizer -->
+        <div id="roulette-container" class="roulette-container hidden">
+          <div class="roulette-label-row">
+            <span>🎲 Sampling Roulette Strip (0% → 100%)</span>
+            <span id="roulette-roll-text">Rolled: --</span>
+          </div>
+          <div class="roulette-Bar-wrap">
+            <div id="roulette-strip" class="roulette-strip"></div>
+            <div id="roulette-needle" class="roulette-needle" style="left: 0%;">▼</div>
+          </div>
+        </div>
+
+        <div id="probability-chart" class="chart-box">
+          <div class="empty-placeholder">Candidate leaderboard will animate here during generation.</div>
+        </div>
+      </div>
+
+      <!-- Active Context Window (Token Chips) -->
+      <div class="telemetry-block">
+        <div class="block-header">
+          <div>
+            <h3>Context Window Memory (Subword Tokens)</h3>
+            <p class="block-sub">Notice how every newly chosen token gets glued to the end of the prompt for the next pass.</p>
+          </div>
+          <span id="token-count-badge" class="badge-mono">0 Tokens</span>
+        </div>
+        <div id="token-chips" class="token-chips-box">
+          <div class="empty-placeholder">Token IDs will populate here once inference begins.</div>
+        </div>
+      </div>
+
+      <!-- Inline Completion Debrief & Share Receipt -->
+      <div id="completion-summary" class="completion-card hidden">
+        <div class="completion-top">
+          <div>
+            <span class="badge badge-success">Generation Complete</span>
+            <h4>Neural Telemetry Receipt</h4>
+          </div>
+          <button id="btn-copy-receipt" class="btn-glass btn-sm">📋 Copy Summary</button>
+        </div>
+        <p id="summary-narrative" class="completion-text"></p>
+        <div class="metrics-row">
+          <div class="metric-pill">
+            <span id="stat-tokens">0</span>
+            <small>Tokens Generated</small>
+          </div>
+          <div class="metric-pill">
+            <span id="stat-deviations">0</span>
+            <small>🎲 Temp Upsets</small>
+          </div>
+          <div class="metric-pill">
+            <span id="stat-avg-conf">0%</span>
+            <small>Avg Winner Odds</small>
+          </div>
         </div>
       </div>
 
     </section>
   </main>
+
+  <footer class="app-footer">
+    <p>Built as an open educational sandbox demonstrating autoregressive Transformer mechanics. Runs 100% locally via WebGPU / WebAssembly.</p>
+    <p class="footer-legal">Not affiliated with OpenAI (ChatGPT), Google (Gemini), or Anthropic (Claude). Trademarks belong to their respective owners.</p>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">Copied to clipboard!</div>
 
   <script type="module" src="app.js"></script>
 </body>
