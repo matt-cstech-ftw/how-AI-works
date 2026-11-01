@@ -57,25 +57,24 @@
     </div>
   </div>
 
-  <!-- Interactive Guided Tour Popover Callout -->
+  <!-- Non-blocking floating tour callout (Positioned safely away from the chart) -->
   <div id="tour-card" class="tour-card hidden">
     <div class="tour-header">
       <span class="badge" id="tour-step-badge">Stage Insight</span>
-      <button id="btn-close-tour" class="close-btn">&times;</button>
+      <button id="btn-close-tour" class="close-btn" aria-label="Close">&times;</button>
     </div>
     <h3 id="tour-title">How Word #1 Was Born</h3>
-    <div id="tour-body" class="tour-body">
-      <!-- Injected by JS -->
-    </div>
+    <div id="tour-body" class="tour-body"></div>
     <div class="tour-footer">
-      <button id="btn-continue-tour" class="btn-primary">Continue Watching ▶</button>
+      <button id="btn-continue-tour" class="btn-primary btn-sm">Continue Watching ▶</button>
     </div>
   </div>
 
+  <!-- Header -->
   <header>
-    <div>
-      <h1>Inside The Transformer <span>/ Interactive Walkthrough</span></h1>
-      <p class="tagline">An educational look at how prompts turn into answers in modern Large Language Models.</p>
+    <div class="header-titles">
+      <h1>Inside The Transformer <span>/ Educational Sandbox</span></h1>
+      <p class="tagline">An interactive look at how prompts turn into answers in modern Large Language Models.</p>
     </div>
     <div class="status-pill" id="model-status">
       <span class="dot" id="status-dot"></span> <span id="status-text">Click "Initialize Engine" below</span>
@@ -91,7 +90,7 @@
   </div>
 
   <main class="dashboard-grid">
-    <!-- Left Column: Prompt & Generation Console -->
+    <!-- Left Column: Controls & Generation Console -->
     <section class="panel console-panel">
       <h2>1. The Prompt & Controls</h2>
       <label for="prompt-input" class="label-muted">Enter any prompt or question:</label>
@@ -101,7 +100,7 @@
         <div class="control-group">
           <label for="temp-slider">Temperature: <span id="temp-val">0.7</span></label>
           <input type="range" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7">
-          <small class="tip">Lower = rigid & predictable; Higher = diverse & wild</small>
+          <small class="tip">Lower = rigid & factual; Higher = diverse & wild</small>
         </div>
         <div class="control-group">
           <label for="topk-slider">Candidates Displayed: <span id="topk-val">5</span></label>
@@ -118,14 +117,23 @@
       </div>
 
       <div class="output-container">
-        <label class="label-muted">Generated Response (Click any word to inspect how it won):</label>
+        <label class="label-muted">Generated Text (Click any word to inspect how it won):</label>
         <div id="live-text" class="live-text-box"></div>
       </div>
     </section>
 
-    <!-- Right Column: Educational Telemetry -->
+    <!-- Right Column: Educational Telemetry & Ending Debrief -->
     <section class="panel telemetry-panel">
-      <h2>2. What Just Happened?</h2>
+      <div class="telemetry-header-row">
+        <h2>2. Neural Inspection & Explanations</h2>
+        <!-- Replay slider appears when complete -->
+        <div id="replay-controls" class="replay-controls hidden">
+          <span class="label-muted">Replay:</span>
+          <button id="btn-replay-prev" class="btn-sm btn-secondary">◀</button>
+          <span id="replay-step-indicator" class="replay-step-text">0/0</span>
+          <button id="btn-replay-next" class="btn-sm btn-secondary">▶</button>
+        </div>
+      </div>
       
       <div class="flow-stepper">
         <div class="step-badge" id="badge-prefill">1. Prefill (Read)</div>
@@ -139,10 +147,10 @@
 
       <!-- Plain English Dynamic Narrative -->
       <div class="explainer-card" id="explainer-text">
-        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Guided Auto Play</strong> to watch the model write while explaining how it works at each stage.
+        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Guided Auto Play</strong> to watch the model write and explain its internal mechanics.
       </div>
 
-      <!-- Token Representation -->
+      <!-- Token Chips -->
       <div class="inspector-section">
         <h3>Tokens In Context Window (The Model's Working Memory)</h3>
         <div id="token-chips" class="token-chips-container">
@@ -155,6 +163,43 @@
         <h3>Live Next-Token Candidate Election (Logit Probabilities)</h3>
         <div id="probability-chart" class="chart-container">
           <div class="empty-state">Candidate probabilities will render here during generation.</div>
+        </div>
+      </div>
+
+      <!-- Debrief & Mini-Game Section (Triggered at end of generation) -->
+      <div id="debrief-panel" class="debrief-panel hidden">
+        <div class="debrief-header">
+          <span class="badge badge-success">Generation Complete</span>
+          <h3>The Transformer Debrief</h3>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-num" id="stat-total-tokens">0</span>
+            <span class="stat-label">Tokens Generated</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-deviations">0</span>
+            <span class="stat-label">Temperature Surprises</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-avg-confidence">0%</span>
+            <span class="stat-label">Avg Winner Odds</span>
+          </div>
+        </div>
+
+        <!-- Interactive Mini-Game -->
+        <div class="minigame-card">
+          <h4>🎮 Quick Challenge: "Be The Neural Network"</h4>
+          <p id="minigame-question" class="minigame-text">
+            Can you guess which candidate word had the highest odds before temperature sampling picked the winner?
+          </p>
+          <div id="minigame-options" class="minigame-options"></div>
+          <div id="minigame-result" class="minigame-result hidden"></div>
+        </div>
+
+        <div class="debrief-actions">
+          <button id="btn-restart-app" class="btn-primary">↺ Restart with a New Prompt</button>
         </div>
       </div>
     </section>

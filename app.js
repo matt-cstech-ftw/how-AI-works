@@ -7,10 +7,11 @@ env.useBrowserCache = true;
 let tokenizer = null;
 let model = null;
 let currentInputIds = null;
-let tokenHistory = []; // { tokenStr, tokenId, candidatePool, explanation, rationale, isDeviation }
+let tokenHistory = []; // { tokenStr, tokenId, candidatePool, explanation, rationale, isDeviation, topCandidate }
 let isPlaying = false;
 let isBusy = false;
 let shownMilestones = new Set();
+let replayIndex = 0;
 
 // DOM Elements
 const modal = document.getElementById("welcome-modal");
@@ -42,11 +43,25 @@ const tourBody = document.getElementById("tour-body");
 const btnCloseTour = document.getElementById("btn-close-tour");
 const btnContinueTour = document.getElementById("btn-continue-tour");
 
-// Flow stepper badges
+// Flow badges
 const badgePrefill = document.getElementById("badge-prefill");
 const badgeAttention = document.getElementById("badge-attention");
 const badgeLogits = document.getElementById("badge-logits");
 const badgeSample = document.getElementById("badge-sample");
+
+// Debrief & Replay Elements
+const debriefPanel = document.getElementById("debrief-panel");
+const statTotalTokens = document.getElementById("stat-total-tokens");
+const statDeviations = document.getElementById("stat-deviations");
+const statAvgConfidence = document.getElementById("stat-avg-confidence");
+const minigameQuestion = document.getElementById("minigame-question");
+const minigameOptions = document.getElementById("minigame-options");
+const minigameResult = document.getElementById("minigame-result");
+const btnRestartApp = document.getElementById("btn-restart-app");
+const replayControls = document.getElementById("replay-controls");
+const btnReplayPrev = document.getElementById("btn-replay-prev");
+const btnReplayNext = document.getElementById("btn-replay-next");
+const replayStepIndicator = document.getElementById("replay-step-indicator");
 
 // Dismiss Modal
 if (btnModalAgree && modal) {
@@ -56,7 +71,7 @@ if (btnModalAgree && modal) {
 tempSlider.addEventListener("input", (e) => { tempVal.textContent = e.target.value; });
 topkSlider.addEventListener("input", (e) => { topkVal.textContent = e.target.value; });
 
-// WebGPU check
+// Check WebGPU availability
 async function checkWebGPUSupport() {
   if (!navigator.gpu) return false;
   try {
@@ -74,7 +89,7 @@ btnInit.addEventListener("click", async () => {
   btnInit.disabled = true;
   btnInit.textContent = "Loading Engine...";
   progressBarContainer.classList.remove("hidden");
-  statusText.textContent = "Detecting device capabilities...";
+  statusText.textContent = "Detecting device hardware...";
 
   const MODEL_ID = 'HuggingFaceTB/SmolLM2-135M-Instruct';
 
@@ -130,7 +145,7 @@ function onEngineReady(device) {
   explainerText.innerHTML = `<strong>Engine Ready!</strong> Type any prompt and click <strong>Guided Auto Play</strong> to watch the model write and explain its internal mechanics.`;
 }
 
-// Wrap user prompt with SmolLM chat format so raw tags don't leak
+// Chat formatting
 function formatChatPrompt(userText) {
   return `<|im_start|>user\n${userText}<|im_end|>\n<|im_start|>assistant\n`;
 }
@@ -159,7 +174,7 @@ function getTopKSoftmax(logitsSlice, topK, temperature) {
   }));
 }
 
-// Show Tour Popover and Pause Playback
+// Show Tour Popover (Safely anchored top-right without covering the chart)
 function triggerTourMilestone(stepKey, title, badge, contentHtml) {
   if (shownMilestones.has(stepKey)) return;
   shownMilestones.add(stepKey);
@@ -169,14 +184,12 @@ function triggerTourMilestone(stepKey, title, badge, contentHtml) {
   tourBody.innerHTML = contentHtml;
   tourCard.classList.remove("hidden");
 
-  // Pause stream so user can absorb the concept
   if (isPlaying) {
     isPlaying = false;
     btnStream.textContent = "⏩ Resume Auto Play";
   }
 }
 
-// Close Tour Callout
 btnCloseTour.addEventListener("click", () => tourCard.classList.add("hidden"));
 btnContinueTour.addEventListener("click", () => {
   tourCard.classList.add("hidden");
@@ -218,7 +231,6 @@ function renderProbChart(candidatePool, chosenId) {
   });
 }
 
-// Highlight the active stage on the visual stepper
 function highlightStepper(stage) {
   [badgePrefill, badgeAttention, badgeLogits, badgeSample].forEach(b => b.classList.remove("highlight"));
   if (stage === "prefill") badgePrefill.classList.add("highlight");
@@ -227,7 +239,6 @@ function highlightStepper(stage) {
   if (stage === "sample") badgeSample.classList.add("highlight");
 }
 
-// Explain how words originate and what patterns triggered them
 function analyzeTokenGeneration(selectedToken, candidatePool, stepIndex, userPrompt) {
   const clean = selectedToken.trim().toLowerCase();
   const topCandidate = candidatePool[0];
@@ -236,51 +247,40 @@ function analyzeTokenGeneration(selectedToken, candidatePool, stepIndex, userPro
 
   let rationale = "";
 
-  // Step 1: Starting the response
   if (stepIndex === 0) {
     rationale = `
       <strong>How the First Thought Began (The "Prefill" Phase):</strong><br>
       When you click submit, the model doesn't start typing immediately. It first ingests your entire prompt simultaneously. 
-      Because your prompt begins with <em>"What is..."</em>, billions of conversation pairs in the training data taught the model 
+      Because your prompt begins with <em>"What is..."</em>, conversation pairs in the pre-training data taught the model 
       that answers should start from the speaker's perspective. That is why candidate tokens like <code>"I"</code>, <code>"My"</code>, 
       or <code>"As"</code> dominated the probability leaderboard.
     `;
-  }
-  // Temperature sampling deviation (e.g. 7% beating 51%)
-  else if (isDeviation) {
+  } else if (isDeviation) {
     rationale = `
       <strong>🎲 The Randomness Dial (Temperature in Action):</strong><br>
       Notice the leaderboard below! The statistical favorite was actually <code>"${topCandidate.token.replace(/\s/g, '·')}"</code> (${(topCandidate.prob * 100).toFixed(1)}%). 
       However, because temperature is set above 0.0, the model deliberately rolled a die across the candidates instead of greedily picking #1. 
       It selected runner-up <code>"${selectedToken.replace(/\s/g, '·')}"</code>, which shifts the rest of the sentence onto a fresh trajectory!
     `;
-  }
-  // Concept keywords (Colors, entities)
-  else if (['blue', 'green', 'red', 'purple', 'black', 'yellow', 'cyan', 'orange'].includes(clean)) {
+  } else if (['blue', 'green', 'red', 'purple', 'black', 'yellow', 'cyan', 'orange'].includes(clean)) {
     rationale = `
       <strong>Where Did the Knowledge Come From?</strong><br>
       The model doesn't have a personal favorite color. In pre-training text (web scrapes, Wikipedia, books), questions asking 
       <em>"What is your favorite color"</em> correlate overwhelmingly with popular color tokens like <code>"${clean}"</code> and <code>"green"</code>. 
       The multi-head attention spotlight linked back to the word <code>color</code> in your prompt, activating the weights for this specific answer.
     `;
-  }
-  // Reasoning keywords
-  else if (['because', 'as', 'since', 'reminds', 'feels', 'symbolizes'].includes(clean)) {
+  } else if (['because', 'as', 'since', 'reminds', 'feels', 'symbolizes'].includes(clean)) {
     rationale = `
       <strong>Answering the "Why" Constraint:</strong><br>
       The model maintains attention on every preceding token. Because your prompt contained the instruction <em>"...and why?"</em>, 
       the model's grammar weights heavily elevate causal conjunctions like <code>"${clean}"</code> to bridge into an explanation.
     `;
-  }
-  // Punctuation and cadence
-  else if (['.', ',', ';'].includes(clean)) {
+  } else if (['.', ',', ';'].includes(clean)) {
     rationale = `
       <strong>Grammatical Cadence & Completion:</strong><br>
       The model detected that a complete grammatical clause just finished. Punctuation tokens spiked in probability to close the thought before generating the next idea.
     `;
-  }
-  // Structural grammar / verbs
-  else {
+  } else {
     rationale = `
       <strong>Autoregressive Prediction:</strong><br>
       The model evaluated its vocabulary given all previous words. <code>"${selectedToken.replace(/\s/g, '·')}"</code> won this slot with 
@@ -289,8 +289,100 @@ function analyzeTokenGeneration(selectedToken, candidatePool, stepIndex, userPro
     `;
   }
 
-  return { rationale, isDeviation };
+  return { rationale, isDeviation, topCandidate };
 }
+
+// Complete the run and show the debrief panel
+function concludeGeneration() {
+  isPlaying = false;
+  btnStream.textContent = "⏩ Guided Auto Play";
+  tourCard.classList.add("hidden");
+  debriefPanel.classList.remove("hidden");
+  replayControls.classList.remove("hidden");
+
+  // Calculate telemetry stats
+  const totalTokens = tokenHistory.length;
+  const deviations = tokenHistory.filter(t => t.isDeviation).length;
+  const avgConf = (tokenHistory.reduce((acc, t) => {
+    const winnerItem = t.candidatePool.find(c => c.id === t.tokenId);
+    return acc + (winnerItem ? winnerItem.prob : 0.5);
+  }, 0) / (totalTokens || 1) * 100).toFixed(1);
+
+  statTotalTokens.textContent = totalTokens;
+  statDeviations.textContent = deviations;
+  statAvgConfidence.textContent = `${avgConf}%`;
+
+  replayIndex = totalTokens - 1;
+  updateReplayDisplay();
+
+  // Setup Mini-Game
+  setupMiniGame();
+
+  explainerText.innerHTML = `
+    <strong>Generation Finished!</strong><br>
+    The model has reached an end boundary. Review the summary metrics below or use the <strong>Replay (◀ / ▶)</strong> controls at the top right to walk through the model's choices token-by-token.
+  `;
+}
+
+// Setup the "Guess the Model Choice" mini-game
+function setupMiniGame() {
+  minigameResult.classList.add("hidden");
+  minigameOptions.innerHTML = "";
+
+  // Find a step where candidate pool had a competitive race
+  const interestingStep = tokenHistory.find(t => t.candidatePool.length >= 3 && t.candidatePool[0].prob < 0.7) || tokenHistory[1];
+  if (!interestingStep) {
+    minigameQuestion.textContent = "The model generated its thoughts cleanly with high confidence across all tokens.";
+    return;
+  }
+
+  const stepNum = tokenHistory.indexOf(interestingStep) + 1;
+  const winner = interestingStep.tokenStr.trim();
+  const topOdds = interestingStep.topCandidate.token.trim();
+
+  minigameQuestion.innerHTML = `At word #${stepNum}, which token was the #1 statistical choice before sampling?`;
+
+  // Create choices from candidate pool
+  const choices = interestingStep.candidatePool.slice(0, 3).map(c => c.token.trim());
+  // Shuffle
+  choices.sort(() => Math.random() - 0.5);
+
+  choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.className = "btn-game-opt";
+    btn.textContent = `"${choice}"`;
+    btn.addEventListener("click", () => {
+      minigameResult.classList.remove("hidden");
+      if (choice === topOdds) {
+        minigameResult.innerHTML = `🎉 <strong>Correct!</strong> <code>"${topOdds}"</code> was the favorite at ${(interestingStep.topCandidate.prob * 100).toFixed(1)}% odds. The model ended up selecting <code>"${winner}"</code>.`;
+      } else {
+        minigameResult.innerHTML = `❌ <strong>Not quite!</strong> The actual #1 statistical favorite was <code>"${topOdds}"</code> (${(interestingStep.topCandidate.prob * 100).toFixed(1)}%).`;
+      }
+    });
+    minigameOptions.appendChild(btn);
+  });
+}
+
+// Step replay controls
+function updateReplayDisplay() {
+  if (tokenHistory.length === 0) return;
+  replayStepIndicator.textContent = `${replayIndex + 1}/${tokenHistory.length}`;
+  inspectHistoryStep(replayIndex);
+}
+
+btnReplayPrev.addEventListener("click", () => {
+  if (replayIndex > 0) {
+    replayIndex--;
+    updateReplayDisplay();
+  }
+});
+
+btnReplayNext.addEventListener("click", () => {
+  if (replayIndex < tokenHistory.length - 1) {
+    replayIndex++;
+    updateReplayDisplay();
+  }
+});
 
 // Single Autoregressive Inference Step
 async function stepModel() {
@@ -304,7 +396,6 @@ async function stepModel() {
       return;
     }
 
-    // First step: Prefill setup
     if (!currentInputIds) {
       highlightStepper("prefill");
       const formatted = formatChatPrompt(rawPrompt);
@@ -313,13 +404,14 @@ async function stepModel() {
       tokenHistory = [];
       liveText.innerHTML = "";
       shownMilestones.clear();
+      debriefPanel.classList.add("hidden");
+      replayControls.classList.add("hidden");
 
-      // Trigger educational milestone about prefill
       triggerTourMilestone(
         "prefill",
         "The 'Thinking' Phase: Prompt Prefill",
         "Prefill Phase",
-        `Before an AI generates word #1, it does not plan out a sentence. It converts your entire prompt into numbers, loads them into high-dimensional vector space, and runs self-attention to see which words relate to each other. Watch how it predicts its very first token!`
+        `Before an AI generates word #1, it doesn't plan sentences. It translates your entire prompt into token numbers, loads them into high-dimensional vector space, and runs self-attention to see how words relate. Watch how it predicts its very first token!`
       );
     }
 
@@ -328,7 +420,6 @@ async function stepModel() {
 
     highlightStepper("attention");
 
-    // Forward pass
     const seqLength = currentInputIds.dims[1];
     const maskData = new BigInt64Array(seqLength).fill(1n);
     const attentionMask = new Tensor('int64', maskData, [1, seqLength]);
@@ -340,7 +431,6 @@ async function stepModel() {
 
     highlightStepper("logits");
 
-    // Extract logits for last position
     const vocabSize = output.logits.dims[2];
     const lastOffset = (seqLength - 1) * vocabSize;
     const logitsSlice = output.logits.data.subarray(lastOffset, lastOffset + vocabSize);
@@ -351,7 +441,6 @@ async function stepModel() {
 
     highlightStepper("sample");
 
-    // Roulette sampling
     const rand = Math.random();
     let cumulative = 0;
     let selected = candidatePool[0];
@@ -364,24 +453,20 @@ async function stepModel() {
       }
     }
 
-    // Check for EOS
+    // Check for EOS token
     if (selected.token.includes("<|im_end|>") || selected.id === 2 || selected.id === 0) {
-      explainerText.innerHTML = `<strong>Response Complete:</strong> The model predicted the End-of-Sequence token (<code>&lt;|im_end|&gt;</code>), indicating that it has concluded its thought.`;
-      isPlaying = false;
-      btnStream.textContent = "⏩ Guided Auto Play";
+      concludeGeneration();
       isBusy = false;
       return;
     }
 
-    // Render live logit bars
     renderProbChart(candidatePool, selected.id);
 
-    // Deep educational analysis
     const stepIdx = tokenHistory.length;
-    const { rationale, isDeviation } = analyzeTokenGeneration(selected.token, candidatePool, stepIdx, rawPrompt);
+    const { rationale, isDeviation, topCandidate } = analyzeTokenGeneration(selected.token, candidatePool, stepIdx, rawPrompt);
     explainerText.innerHTML = rationale;
 
-    // Check for notable tour moments to pause and explain
+    // Tour callouts
     if (stepIdx === 0) {
       triggerTourMilestone(
         "first_word",
@@ -405,15 +490,15 @@ async function stepModel() {
       );
     }
 
-    // Record step history for interactive word clicks
     tokenHistory.push({
       tokenStr: selected.token,
       tokenId: selected.id,
       candidatePool: candidatePool,
-      explanation: rationale
+      explanation: rationale,
+      isDeviation: isDeviation,
+      topCandidate: topCandidate
     });
 
-    // Append to live text box with inspect capability
     const span = document.createElement("span");
     span.className = "new-token";
     span.title = "Click to inspect this token's probability leaderboard";
@@ -421,7 +506,6 @@ async function stepModel() {
     span.addEventListener("click", () => inspectHistoryStep(stepIdx));
     liveText.appendChild(span);
 
-    // Append to tensor for the next autoregressive iteration
     const nextBigInt = BigInt(selected.id);
     const nextArr = new BigInt64Array(currentTokensArray.length + 1);
     for (let i = 0; i < currentTokensArray.length; i++) {
@@ -440,7 +524,6 @@ async function stepModel() {
   }
 }
 
-// Rewind and inspect an earlier word when clicked
 function inspectHistoryStep(index) {
   const step = tokenHistory[index];
   if (!step) return;
@@ -452,6 +535,24 @@ function inspectHistoryStep(index) {
   allSpans.forEach((span, i) => {
     span.classList.toggle('active-inspect', i === index);
   });
+}
+
+// Reset Handler
+function resetState() {
+  isPlaying = false;
+  isBusy = false;
+  btnStream.textContent = "⏩ Guided Auto Play";
+  currentInputIds = null;
+  tokenHistory = [];
+  shownMilestones.clear();
+  tourCard.classList.add("hidden");
+  debriefPanel.classList.add("hidden");
+  replayControls.classList.add("hidden");
+  liveText.innerHTML = "";
+  probChart.innerHTML = '<div class="empty-state">Inference reset. Ready for a new prompt.</div>';
+  explainerText.innerHTML = 'Prompt reset. Enter any prompt and click <strong>Step</strong> or <strong>Guided Auto Play</strong>.';
+  tokenChips.innerHTML = '<div class="empty-state">Context tokens will appear here after starting.</div>';
+  [badgePrefill, badgeAttention, badgeLogits, badgeSample].forEach(b => b.classList.remove("highlight"));
 }
 
 // Event Bindings
@@ -472,25 +573,13 @@ btnStream.addEventListener("click", async () => {
   for (let i = 0; i < 35; i++) {
     if (!isPlaying) break;
     await stepModel();
-    // 600ms pacing allows users to watch probabilities update cleanly
     await new Promise(r => setTimeout(r, 600));
   }
 
-  isPlaying = false;
-  btnStream.textContent = "⏩ Guided Auto Play";
+  if (isPlaying) {
+    concludeGeneration();
+  }
 });
 
-btnReset.addEventListener("click", () => {
-  isPlaying = false;
-  isBusy = false;
-  btnStream.textContent = "⏩ Guided Auto Play";
-  currentInputIds = null;
-  tokenHistory = [];
-  shownMilestones.clear();
-  tourCard.classList.add("hidden");
-  liveText.innerHTML = "";
-  probChart.innerHTML = '<div class="empty-state">Inference reset. Ready for a new prompt.</div>';
-  explainerText.innerHTML = 'Prompt reset. Enter any prompt and click <strong>Step</strong> or <strong>Guided Auto Play</strong>.';
-  tokenChips.innerHTML = '<div class="empty-state">Context tokens will appear here after starting.</div>';
-  [badgePrefill, badgeAttention, badgeLogits, badgeSample].forEach(b => b.classList.remove("highlight"));
-});
+btnReset.addEventListener("click", resetState);
+btnRestartApp.addEventListener("click", resetState);
