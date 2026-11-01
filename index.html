@@ -11,13 +11,13 @@
 </head>
 <body>
 
-  <!-- Introductory Modal -->
+  <!-- Modal -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="badge">Demystifying GenAI</div>
       <h2>Have you ever wanted to know EXACTLY what is happening when you interface with generative AI?</h2>
       <p class="modal-intro">
-        Whether you use ChatGPT, Claude, Gemini, or local models, they all share the exact same mathematical loop. This interactive sandbox brings the machine down to human speed using a real in-browser neural network.
+        Whether you use ChatGPT, Claude, Gemini, or a local model, they don't "think" in sentences. They are real-time probability calculators trained on internet-scale data. This sandbox exposes the hidden machinery.
       </p>
 
       <div class="modal-grid">
@@ -25,28 +25,28 @@
           <span class="f-icon">🧩</span>
           <div>
             <strong>1. Tokenization</strong>
-            <p>AI doesn't read letters. It converts your prompt into specific numerical IDs from its dictionary.</p>
+            <p>Text is chopped into subword numbers. The model never sees letters or words directly.</p>
           </div>
         </div>
         <div class="modal-feature">
           <span class="f-icon">🔦</span>
           <div>
-            <strong>2. Attention & Context</strong>
-            <p>Every token references every other token to weigh context and determine meaning.</p>
+            <strong>2. Attention & Weighting</strong>
+            <p>Every word connects back to prior words to pinpoint context and meaning.</p>
           </div>
         </div>
         <div class="modal-feature">
           <span class="f-icon">📊</span>
           <div>
-            <strong>3. Logits & Odds</strong>
-            <p>The AI does not write sentences; it ranks candidates from its dictionary for the next slot.</p>
+            <strong>3. Live Logit Leaderboards</strong>
+            <p>Every single step is an election across the dictionary for the next token.</p>
           </div>
         </div>
         <div class="modal-feature">
-          <span class="f-icon">🎲</span>
+          <span class="f-icon">🧠</span>
           <div>
-            <strong>4. Temperature & Sampling</strong>
-            <p>Control the randomness of the selection before picking the winning token and looping.</p>
+            <strong>4. Training Patterns</strong>
+            <p>See why specific words win based on statistical correlations from training datasets.</p>
           </div>
         </div>
       </div>
@@ -57,91 +57,89 @@
     </div>
   </div>
 
-  <!-- Header -->
   <header>
     <div>
       <h1>Inside The Transformer <span>/ Educational Sandbox</span></h1>
       <p class="tagline">Real-time token breakdown, real model logits, and step-by-step autoregression.</p>
     </div>
     <div class="status-pill" id="model-status">
-      <span class="dot" id="status-dot"></span> <span id="status-text">Click "Load Engine" to start</span>
+      <span class="dot" id="status-dot"></span> <span id="status-text">Click "Initialize Engine" below</span>
     </div>
   </header>
 
-  <!-- Progress bar during download -->
+  <!-- Progress bar -->
   <div id="download-progress-bar" class="progress-bar-container hidden">
     <div class="progress-track">
       <div id="progress-fill" class="progress-fill"></div>
     </div>
-    <span id="progress-status" class="progress-status-text">Downloading SmolLM2 weights (cached in browser after first run)...</span>
+    <span id="progress-status" class="progress-status-text">Downloading SmolLM2 weights...</span>
   </div>
 
-  <!-- Main Grid -->
   <main class="dashboard-grid">
-    <!-- Left: Controls & Generation Console -->
+    <!-- Left Column -->
     <section class="panel console-panel">
       <h2>1. The Prompt & Controls</h2>
-      <label for="prompt-input" class="label-muted">Type any prompt or question:</label>
+      <label for="prompt-input" class="label-muted">Enter any prompt or question:</label>
       <textarea id="prompt-input" rows="3">What is your favorite color and why?</textarea>
 
       <div class="controls-row">
         <div class="control-group">
           <label for="temp-slider">Temperature: <span id="temp-val">0.7</span></label>
           <input type="range" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7">
-          <small class="tip">Lower = deterministic, Higher = creative/wild</small>
+          <small class="tip">Lower = rigid & factual; Higher = diverse & random</small>
         </div>
         <div class="control-group">
           <label for="topk-slider">Top-K Candidates: <span id="topk-val">5</span></label>
-          <input type="range" id="topk-slider" min="2" max="15" step="1" value="5">
+          <input type="range" id="topk-slider" min="3" max="10" step="1" value="5">
           <small class="tip">Number of top candidate words shown</small>
         </div>
       </div>
 
       <div class="action-buttons">
         <button id="btn-init" class="btn-init">⚡ Initialize Engine (SmolLM2)</button>
-        <button id="btn-step" class="btn-primary" disabled>▶ Step (Predict 1 Token)</button>
-        <button id="btn-stream" class="btn-secondary" disabled>⏩ Auto Generate</button>
+        <button id="btn-step" class="btn-primary" disabled>▶ Step (1 Word)</button>
+        <button id="btn-stream" class="btn-secondary" disabled>⏩ Auto Play</button>
         <button id="btn-reset" class="btn-tertiary">↺ Reset</button>
       </div>
 
       <div class="output-container">
-        <label class="label-muted">Generated Response:</label>
+        <label class="label-muted">Generated Text (Click any blue word to inspect its history):</label>
         <div id="live-text" class="live-text-box"></div>
       </div>
     </section>
 
-    <!-- Right: Telemetry & Explanations -->
+    <!-- Right Column -->
     <section class="panel telemetry-panel">
-      <h2>2. What Just Happened?</h2>
+      <h2>2. Neural Inspection & Explanation</h2>
       
       <div class="flow-stepper">
         <div class="step-badge active" id="badge-tok">1. Tokenize</div>
         <div class="arrow">→</div>
-        <div class="step-badge" id="badge-att">2. Context</div>
+        <div class="step-badge active" id="badge-att">2. Attention</div>
         <div class="arrow">→</div>
-        <div class="step-badge" id="badge-prob">3. Probability</div>
+        <div class="step-badge active" id="badge-prob">3. Probability</div>
         <div class="arrow">→</div>
-        <div class="step-badge" id="badge-samp">4. Select</div>
+        <div class="step-badge active" id="badge-samp">4. Append</div>
       </div>
 
-      <!-- Plain-English Explanation -->
+      <!-- Plain English Dynamic Explainer -->
       <div class="explainer-card" id="explainer-text">
-        Type any prompt on the left, then click <strong>Initialize Engine</strong>. Once ready, you can step through every token calculation one by one.
+        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Step</strong> or <strong>Auto Play</strong> to see the real neural weights in action.
       </div>
 
       <!-- Token Chips -->
       <div class="inspector-section">
-        <h3>Tokens in Current Context Window (What AI sees)</h3>
+        <h3>Tokens in Attention Context Window</h3>
         <div id="token-chips" class="token-chips-container">
-          <!-- Populated by JS -->
+          <div class="empty-state">Context tokens will appear here.</div>
         </div>
       </div>
 
-      <!-- Live Logits / Softmax Chart -->
+      <!-- Probabilities Chart -->
       <div class="inspector-section">
-        <h3>Actual Next-Token Candidates (Logit Probabilities)</h3>
+        <h3>Next-Token Probability Leaderboard (Actual Model Weights)</h3>
         <div id="probability-chart" class="chart-container">
-          <div class="empty-state">Load engine and click Step to view real model probabilities.</div>
+          <div class="empty-state">Inference chart will render here upon stepping.</div>
         </div>
       </div>
     </section>
