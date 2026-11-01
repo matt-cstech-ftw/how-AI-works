@@ -3,6 +3,8 @@ import { AutoTokenizer, AutoModelForCausalLM, env, Tensor } from 'https://cdn.js
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
+const TOP_K_COUNT = 5; // Fixed to Top 5 contenders for clean, beginner-friendly visual clarity
+
 // State
 let tokenizer = null;
 let model = null;
@@ -28,10 +30,10 @@ const promptInput = document.getElementById("prompt-input");
 const tempSlider = document.getElementById("temp-slider");
 const tempVal = document.getElementById("temp-val");
 const tempExplainer = document.getElementById("temp-explainer");
-const topkSlider = document.getElementById("topk-slider");
-const topkVal = document.getElementById("topk-val");
 const speedSelect = document.getElementById("speed-select");
 const btnInit = document.getElementById("btn-init");
+const startHereBeacon = document.getElementById("start-here-beacon");
+const step2Beacon = document.getElementById("step2-beacon");
 const btnStream = document.getElementById("btn-stream");
 const btnReset = document.getElementById("btn-reset");
 const liveText = document.getElementById("live-text");
@@ -93,12 +95,7 @@ const btnReplayNext = document.getElementById("btn-replay-next");
 const replayStepIndicator = document.getElementById("replay-step-indicator");
 const toast = document.getElementById("toast");
 
-const ROULETTE_COLORS = ['#34d399', '#38bdf8', '#c084fc', '#fbbf24', '#f87171', '#a3e635', '#fb923c', '#818cf8', '#2dd4bf', '#e879f9'];
-
-// Collapse Token Accordion by default on narrow phone screens
-if (window.innerWidth < 768 && tokenAccordion) {
-  tokenAccordion.removeAttribute("open");
-}
+const ROULETTE_COLORS = ['#34d399', '#38bdf8', '#c084fc', '#fbbf24', '#f87171'];
 
 function showToast(msg) {
   toast.textContent = msg;
@@ -113,7 +110,7 @@ function setDrawerCollapsed(collapse) {
     btnToggleDrawer.classList.remove("hidden");
     collapsedPromptBar.classList.remove("hidden");
     cpPromptPreview.textContent = `"${promptInput.value.trim()}"`;
-    cpTempPreview.textContent = `Temp: ${tempSlider.value}`;
+    cpTempPreview.textContent = `Creativity: ${tempSlider.value}`;
   } else {
     setupDrawer.classList.remove("collapsed");
     btnToggleDrawer.classList.add("hidden");
@@ -128,7 +125,7 @@ btnToggleDrawer.addEventListener("click", () => {
 
 collapsedPromptBar.addEventListener("click", () => setDrawerCollapsed(false));
 
-// RAM & Cache Lifecycle Management (Auto-Sleep after 3 mins hidden or 5 mins idle)
+// RAM & Cache Lifecycle Management
 async function unloadModelFromRAM(reason = "manual") {
   if (!model) return;
   isPlaying = false;
@@ -144,24 +141,25 @@ async function unloadModelFromRAM(reason = "manual") {
   loadedModelId = null;
 
   statusDot.classList.remove("ready");
-  statusText.textContent = "Slept (0 MB RAM)";
+  statusText.textContent = "AI Brain: Sleeping";
   btnUnloadRam.classList.add("hidden");
   btnInit.style.display = "inline-flex";
   btnInit.disabled = false;
-  btnInit.textContent = "⚡ Wake Neural Engine";
+  btnInit.textContent = "⚡ Step 1: Wake Up AI Brain";
+  startHereBeacon.classList.remove("hidden");
+  step2Beacon.classList.add("hidden");
   btnStream.disabled = true;
 
   if (reason === "auto") {
-    showToast("💤 Model auto-unloaded from RAM due to inactivity.");
+    showToast("💤 AI Brain went to sleep to save your device's memory.");
   } else {
-    showToast("🧹 Freed model weights from active RAM!");
+    showToast("🧹 Turned off AI Brain and freed memory!");
   }
 }
 
 function resetIdleTimer() {
   if (idleRamTimer) clearTimeout(idleRamTimer);
   if (model) {
-    // Auto-free RAM after 5 minutes of total inactivity
     idleRamTimer = setTimeout(() => {
       if (!isPlaying && model) unloadModelFromRAM("auto");
     }, 5 * 60 * 1000);
@@ -171,7 +169,6 @@ function resetIdleTimer() {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && model) {
     if (idleRamTimer) clearTimeout(idleRamTimer);
-    // If tab is left in background on phone for 3 minutes, free RAM automatically
     idleRamTimer = setTimeout(() => {
       if (document.hidden && model) unloadModelFromRAM("auto");
     }, 3 * 60 * 1000);
@@ -190,7 +187,7 @@ btnClearCache.addEventListener("click", async () => {
       if (key.includes("transformers")) await caches.delete(key);
     }
   }
-  showToast("🗑️ Deleted cached model weights from browser storage!");
+  showToast("🗑️ Deleted saved AI files from your browser!");
 });
 
 // URL Parameter Restoration
@@ -219,23 +216,23 @@ document.querySelectorAll(".preset-pill").forEach(pill => {
   });
 });
 
-// Live Temperature Slider & Real-Time Softmax Recalculation
+// Plain-English Creativity ("Temperature") Slider & Live Bar Recalculation
 function updateTemperatureUI(temp) {
   let label = "Balanced";
   let desc = "";
 
   if (temp <= 0.1) {
-    label = "0.0 — Greedy Lock";
-    desc = `<strong>Ice-Cold Deterministic:</strong> The #1 highest-scoring token captures ~100% of the odds. Zero randomness.`;
+    label = "0.0 — Robot Mode (Strict)";
+    desc = `<strong>🧊 Zero Randomness:</strong> The AI is forced to pick the #1 most obvious word 100% of the time. Great for math or facts, but sounds robotic and repetitive.`;
   } else if (temp <= 0.5) {
-    label = `${temp.toFixed(1)} — Focused`;
-    desc = `<strong>Sharpened Curve:</strong> Divides logits by ${temp.toFixed(1)}, amplifying the gap between the front-runner and runner-ups.`;
+    label = `${temp.toFixed(1)} — Playing It Safe`;
+    desc = `<strong>🎯 Focused & Predictable:</strong> The #1 favorite word gets a huge boost in the contest, so the AI rarely takes risks.`;
   } else if (temp <= 0.9) {
     label = `${temp.toFixed(1)} — Balanced`;
-    desc = `<strong>Default Chat Setting:</strong> The sweet spot used by ChatGPT & Gemini. #1 is favored, but runner-ups can win the dice roll.`;
+    desc = `<strong>⚖️ Normal Chat Setting:</strong> This is how ChatGPT and Gemini usually run! The #1 word is favored, but runner-up words can still win the dice roll to keep sentences natural.`;
   } else {
-    label = `${temp.toFixed(1)} — Wild / Creative`;
-    desc = `<strong>Flattened Distribution:</strong> Dividing logits by ${temp.toFixed(1)} compresses the lead, giving dark-horse tokens a big chance to win!`;
+    label = `${temp.toFixed(1)} — Wild & Creative`;
+    desc = `<strong>🔥 High Risk / High Creativity:</strong> Shrinks the gap between the #1 word and the underdogs, giving surprise words a huge chance to win! (Too high makes AI ramble or make things up).`;
   }
 
   tempVal.textContent = label;
@@ -243,8 +240,7 @@ function updateTemperatureUI(temp) {
 
   if (tokenHistory.length > 0 && tokenHistory[replayIndex]) {
     const step = tokenHistory[replayIndex];
-    const topK = parseInt(topkSlider.value, 10);
-    const recalcPool = computeSoftmaxFromRaw(step.topLogits, topK, temp);
+    const recalcPool = computeSoftmaxFromRaw(step.topLogits, TOP_K_COUNT, temp);
     renderProbChart(recalcPool, step.tokenId, step.rollValue);
   }
 }
@@ -253,21 +249,10 @@ tempSlider.addEventListener("input", (e) => {
   updateTemperatureUI(parseFloat(e.target.value));
 });
 
-topkSlider.addEventListener("input", (e) => {
-  const k = parseInt(e.target.value, 10);
-  topkVal.textContent = `Top ${k} Words`;
-  if (tokenHistory.length > 0 && tokenHistory[replayIndex]) {
-    const step = tokenHistory[replayIndex];
-    const temp = parseFloat(tempSlider.value);
-    const recalcPool = computeSoftmaxFromRaw(step.topLogits, k, temp);
-    renderProbChart(recalcPool, step.tokenId, step.rollValue);
-  }
-});
-
 modelSelect.addEventListener("change", async () => {
   if (loadedModelId && loadedModelId !== modelSelect.value) {
     await unloadModelFromRAM("manual");
-    btnInit.textContent = "⚡ Load Selected Model";
+    btnInit.textContent = "⚡ Step 1: Load Selected AI Brain";
   }
 });
 
@@ -281,29 +266,29 @@ async function checkWebGPUSupport() {
   }
 }
 
-// Initialize Neural Engine
+// Initialize AI Brain
 btnInit.addEventListener("click", async () => {
   if (model) return;
 
   const MODEL_ID = modelSelect.value;
   btnInit.disabled = true;
-  btnInit.textContent = "⏳ Loading Neural Weights...";
+  startHereBeacon.classList.add("hidden");
+  btnInit.textContent = "⏳ Waking Up AI Brain...";
   progressBarContainer.classList.remove("hidden");
-  statusText.textContent = "Initializing...";
+  statusText.textContent = "Loading AI...";
 
   const progressCallback = (info) => {
     if (info.status === 'progress' && info.total) {
       const pct = Math.round((info.loaded / info.total) * 100);
       progressFill.style.width = `${pct}%`;
       progressPct.textContent = `${pct}%`;
-      progressStatus.textContent = `Caching ${info.file || 'weights'} (0 MB data on next visit)...`;
+      progressStatus.textContent = `Downloading miniature AI brain (saves in browser for instant use next time)...`;
     }
   };
 
   try {
     const hasWebGPU = await checkWebGPUSupport();
     const targetDevice = hasWebGPU ? 'webgpu' : 'wasm';
-    statusText.textContent = `Loading (${targetDevice.toUpperCase()})...`;
 
     tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, { progress_callback: progressCallback });
     model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
@@ -313,11 +298,10 @@ btnInit.addEventListener("click", async () => {
     });
 
     loadedModelId = MODEL_ID;
-    onEngineReady(targetDevice);
+    onEngineReady();
   } catch (err) {
-    console.warn("WebGPU load failed, falling back to CPU WASM:", err);
+    console.warn("WebGPU load failed, using standard CPU mode:", err);
     try {
-      statusText.textContent = "Loading CPU WASM...";
       tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, { progress_callback: progressCallback });
       model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
         dtype: 'q4',
@@ -325,36 +309,38 @@ btnInit.addEventListener("click", async () => {
         progress_callback: progressCallback
       });
       loadedModelId = MODEL_ID;
-      onEngineReady('wasm');
+      onEngineReady();
     } catch (fallbackErr) {
       statusText.textContent = "Load Error";
-      explainerContent.innerHTML = `<span style="color: #f87171;">Failed to initialize model: ${fallbackErr.message}</span>`;
+      explainerContent.innerHTML = `<span style="color: #f87171;">Couldn't load the AI brain: ${fallbackErr.message}</span>`;
       btnInit.disabled = false;
-      btnInit.textContent = "Retry Initialization";
+      btnInit.textContent = "Retry Turning On AI";
+      startHereBeacon.classList.remove("hidden");
     }
   }
 });
 
-function onEngineReady(device) {
+function onEngineReady() {
   statusDot.classList.add("ready");
-  const shortName = modelSelect.value.includes("360M") ? "360M" : "135M";
-  statusText.textContent = `Active (${shortName} ${device.toUpperCase()})`;
+  statusText.textContent = `AI Brain: Ready!`;
   progressBarContainer.classList.add("hidden");
   btnInit.style.display = "none";
+  startHereBeacon.classList.add("hidden");
+  step2Beacon.classList.remove("hidden");
   btnUnloadRam.classList.remove("hidden");
   btnStream.disabled = false;
   resetIdleTimer();
 
-  explainerBadge.textContent = "Engine Online";
+  explainerBadge.textContent = "AI Brain Ready!";
   explainerBadge.className = "badge badge-success";
-  explainerContent.innerHTML = `<strong>Neural Network Active in RAM!</strong> Tap <strong>▶ Run Guided Walkthrough</strong> to watch your prompt turn into probabilities and words.`;
+  explainerContent.innerHTML = `<strong>Awesome, the AI is awake!</strong> Now click the blue <strong>▶ Step 2: Watch It Think</strong> button to watch how it builds an answer one word at a time.`;
 }
 
 function formatChatPrompt(userText) {
-  return `<|im_start|>system\nYou are a concise, friendly AI assistant. Answer the user's question clearly in 1 or 2 short sentences.<|im_end|>\n<|im_start|>user\n${userText}<|im_end|>\n<|im_start|>assistant\n`;
+  return `<|im_start|>system\nYou are a friendly, clear AI assistant. Answer the user's question in 1 or 2 simple, complete sentences.<|im_end|>\n<|im_start|>user\n${userText}<|im_end|>\n<|im_start|>assistant\n`;
 }
 
-function extractTopRawLogits(logitsSlice, maxPool = 15) {
+function extractTopRawLogits(logitsSlice, maxPool = 10) {
   const indexed = [];
   for (let i = 0; i < logitsSlice.length; i++) {
     indexed.push({ id: i, rawLogit: logitsSlice[i] });
@@ -387,6 +373,7 @@ function computeSoftmaxFromRaw(topRawLogits, topK, temperature) {
 function renderCleanTokens(tokenIds) {
   tokenChips.innerHTML = "";
   const userAndGeneratedIds = tokenIds.slice(Math.max(0, promptTokenLength - 12));
+  let count = 0;
 
   userAndGeneratedIds.forEach(id => {
     const textChunk = tokenizer.decode([id]);
@@ -398,13 +385,14 @@ function renderCleanTokens(tokenIds) {
       textChunk === "user"
     ) return;
 
+    count++;
     const chip = document.createElement("div");
     chip.className = "token-chip";
     chip.innerHTML = `<span>${textChunk.replace(/\s/g, "·")}</span><span class="tok-id">#${id}</span>`;
     tokenChips.appendChild(chip);
   });
 
-  tokenCountBadge.textContent = `${tokenIds.length} Tokens`;
+  tokenCountBadge.textContent = `${count} Pieces`;
   tokenChips.scrollTop = tokenChips.scrollHeight;
 }
 
@@ -425,7 +413,7 @@ function renderProbChart(candidatePool, chosenId, rollValue = null) {
     const color = ROULETTE_COLORS[idx % ROULETTE_COLORS.length];
 
     row.innerHTML = `
-      <div class="prob-label" title="Token ID #${item.id}">
+      <div class="prob-label" title="Click to force the AI to pick this word instead!">
         <span style="color:${color}">●</span> ${item.token.replace(/\s/g, "·")}
       </div>
       <div class="prob-bar-track">
@@ -439,7 +427,7 @@ function renderProbChart(candidatePool, chosenId, rollValue = null) {
       row.classList.add("candidate-selected");
       selectedCandidateForFork = item;
       btnForkSelection.classList.remove("hidden");
-      btnForkSelection.textContent = `🔀 Force "${item.token.trim() || 'space'}" & Fork`;
+      btnForkSelection.textContent = `🔀 Use "${item.token.trim() || 'space'}" Instead!`;
     });
 
     probChart.appendChild(row);
@@ -454,10 +442,11 @@ function renderProbChart(candidatePool, chosenId, rollValue = null) {
   if (rollValue !== null) {
     rouletteContainer.classList.remove("hidden");
     rouletteNeedle.style.left = `${Math.min(99, Math.max(1, rollValue * 100))}%`;
-    rouletteRollText.textContent = `Dice Spin: ${(rollValue * 100).toFixed(1)}%`;
+    rouletteRollText.textContent = `Dice Landed On: ${(rollValue * 100).toFixed(0)}%`;
   }
 }
 
+// Friendly, Everyday-English Explanations
 function analyzeTokenGeneration(selected, candidatePool, stepIndex, temp, rollValue) {
   const top1 = candidatePool[0];
   const top2 = candidatePool[1] || { prob: 0, token: "" };
@@ -469,34 +458,34 @@ function analyzeTokenGeneration(selected, candidatePool, stepIndex, temp, rollVa
   let rationale = "";
 
   if (stepIndex === 0) {
-    stateTag = "Stage 1: Prompt Prefill";
+    stateTag = "Starting the Answer";
     rationale = `
-      <strong>How the Model "Starts Thinking":</strong><br>
-      Before generating word #1, the model processed your entire prompt in parallel. Self-attention linked your question structure to conversational openings, giving <code>"${top1.token.replace(/\s/g, '·')}"</code> (${(top1.prob * 100).toFixed(1)}%) the early lead.
+      <strong>How the AI Picks Word #1:</strong><br>
+      The AI just read your question and looked at how millions of helpful answers usually begin. It gave <code>"${top1.token.replace(/\s/g, '·')}"</code> the highest score (<strong>${(top1.prob * 100).toFixed(0)}% chance</strong>) to kick off the sentence!
     `;
   } else if (isDeviation) {
-    stateTag = "🎲 Temperature Upset!";
+    stateTag = "🎲 Surprise Runner-Up Won!";
     rationale = `
-      <strong>Why Did the Runner-Up Win?</strong><br>
-      The #1 favorite was <code>"${top1.token.replace(/\s/g, '·')}"</code> (${(top1.prob * 100).toFixed(1)}%). However, the roulette needle spun <strong>${(rollValue * 100).toFixed(1)}%</strong>, landing inside <code>"${cleanTok}"</code> (${(selected.prob * 100).toFixed(1)}%). This single dice roll permanently alters every word that follows!
+      <strong>A Twist of the Dice!</strong><br>
+      Look at the bars below: <code>"${top1.token.replace(/\s/g, '·')}"</code> was actually the #1 favorite at <strong>${(top1.prob * 100).toFixed(0)}%</strong>. But because your Creativity Dial is turned up, the dice roll landed on runner-up <code>"${cleanTok}"</code> (<strong>${(selected.prob * 100).toFixed(0)}%</strong>) instead! That one surprise word changes the rest of the sentence.
     `;
   } else if (top1.prob >= 0.82) {
-    stateTag = "🔒 High-Certainty Lock-In";
+    stateTag = "🔒 No-Brainer Pick";
     rationale = `
-      <strong>Syntactic & Idiomatic Gravity:</strong><br>
-      <code>"${cleanTok}"</code> captured <strong>${(top1.prob * 100).toFixed(1)}%</strong> of the odds, leaving almost zero room for <code>"${top2.token.replace(/\s/g, '·')}"</code> (${(top2.prob * 100).toFixed(1)}%). Grammar rules and training patterns locked this word in place.
+      <strong>An Obvious Next Word:</strong><br>
+      <code>"${cleanTok}"</code> had a massive <strong>${(top1.prob * 100).toFixed(0)}% chance</strong> of winning here, beating <code>"${top2.token.replace(/\s/g, '·')}"</code> (${(top2.prob * 100).toFixed(0)}%). Because of basic English grammar or a common phrase, the AI was almost 100% sure what word belonged next.
     `;
   } else if (margin < 0.14) {
-    stateTag = "⚖️ Tight 50/50 Crossroads";
+    stateTag = "⚖️ Close Toss-Up";
     rationale = `
-      <strong>Competing Semantic Paths:</strong><br>
-      The network was genuinely split! <code>"${top1.token.replace(/\s/g, '·')}"</code> (${(top1.prob * 100).toFixed(1)}%) barely beat <code>"${top2.token.replace(/\s/g, '·')}"</code> (${(top2.prob * 100).toFixed(1)}%). Tap a runner-up bar below to fork the timeline!
+      <strong>Two Good Options:</strong><br>
+      The AI was nearly split 50/50! <code>"${top1.token.replace(/\s/g, '·')}"</code> (<strong>${(top1.prob * 100).toFixed(0)}%</strong>) barely beat <code>"${top2.token.replace(/\s/g, '·')}"</code> (<strong>${(top2.prob * 100).toFixed(0)}%</strong>). <em>Tip: Click the #2 bar below if you want to see what happens if the other word won!</em>
     `;
   } else {
-    stateTag = "📊 Standard Logit Election";
+    stateTag = "📊 Building the Sentence";
     rationale = `
-      <strong>Contextual Progression:</strong><br>
-      Self-attention favored <code>"${cleanTok}"</code> at <strong>${(selected.prob * 100).toFixed(1)}%</strong> over <code>"${top2.token.replace(/\s/g, '·')}"</code> (${(top2.prob * 100).toFixed(1)}%). The winning token is now glued onto the prompt buffer for step #${stepIndex + 2}.
+      <strong>Guessing the Next Piece:</strong><br>
+      Reading everything written so far, the AI gave <code>"${cleanTok}"</code> a <strong>${(selected.prob * 100).toFixed(0)}% chance</strong>, beating <code>"${top2.token.replace(/\s/g, '·')}"</code> (${(top2.prob * 100).toFixed(0)}%). Now it glues <code>"${cleanTok}"</code> onto the sentence and repeats the whole contest for the next word!
     `;
   }
 
@@ -513,7 +502,7 @@ function highlightStepper(stage) {
 
 function showMilestone(badgeText, htmlContent) {
   isPlaying = false;
-  btnStream.textContent = "⏩ Resume Walkthrough";
+  btnStream.textContent = "⏩ Keep Watching";
 
   unifiedExplainer.classList.add("milestone");
   explainerBadge.textContent = badgeText;
@@ -561,12 +550,11 @@ btnForkSelection.addEventListener("click", async () => {
   tokenHistory = tokenHistory.slice(0, targetStep);
 
   const temp = parseFloat(tempSlider.value);
-  const topK = parseInt(topkSlider.value, 10);
-  const candidatePool = computeSoftmaxFromRaw(oldStepData.topLogits, topK, temp);
+  const candidatePool = computeSoftmaxFromRaw(oldStepData.topLogits, TOP_K_COUNT, temp);
 
   const forcedRationale = `
-    <strong>🔀 Manual Timeline Fork:</strong><br>
-    You overrode the model's choice and forced <code>"${chosenCandidate.token.replace(/\s/g, '·')}"</code> (${(chosenCandidate.prob * 100).toFixed(1)}%). Watch how every subsequent word adapts to your new reality!
+    <strong>🔀 You Changed the Word!</strong><br>
+    You stepped in and forced the AI to use <code>"${chosenCandidate.token.replace(/\s/g, '·')}"</code>. Watch how changing just one word makes the AI write a completely different ending!
   `;
 
   tokenHistory.push({
@@ -575,7 +563,7 @@ btnForkSelection.addEventListener("click", async () => {
     topLogits: oldStepData.topLogits,
     candidatePool,
     explanation: forcedRationale,
-    stateTag: "🔀 User Forked Token",
+    stateTag: "🔀 Your Custom Pick",
     isDeviation: chosenCandidate.id !== candidatePool[0].id,
     topCandidate: candidatePool[0],
     rollValue: 0.5,
@@ -601,7 +589,7 @@ btnForkSelection.addEventListener("click", async () => {
   btnStream.click();
 });
 
-// Single Autoregressive Step
+// Single Word Step
 async function stepModel() {
   if (!model || !tokenizer || isBusy) return;
   isBusy = true;
@@ -648,10 +636,9 @@ async function stepModel() {
     const lastOffset = (seqLength - 1) * vocabSize;
     const logitsSlice = output.logits.data.subarray(lastOffset, lastOffset + vocabSize);
 
-    const topRawLogits = extractTopRawLogits(logitsSlice, 15);
+    const topRawLogits = extractTopRawLogits(logitsSlice, 10);
     const temp = parseFloat(tempSlider.value);
-    const topK = parseInt(topkSlider.value, 10);
-    const candidatePool = computeSoftmaxFromRaw(topRawLogits, topK, temp);
+    const candidatePool = computeSoftmaxFromRaw(topRawLogits, TOP_K_COUNT, temp);
 
     highlightStepper("sample");
 
@@ -668,7 +655,7 @@ async function stepModel() {
     }
 
     if (selected.token.includes("<|im_end|>") || selected.id === 2 || selected.id === 0) {
-      concludeGeneration("eos");
+      concludeGeneration();
       isBusy = false;
       return;
     }
@@ -680,7 +667,7 @@ async function stepModel() {
 
     explainerBadge.textContent = `Word #${stepIdx + 1} • ${stateTag}`;
     explainerBadge.className = isDeviation ? "badge badge-purple" : "badge";
-    entropyReadout.textContent = `Top Odds: ${(topCandidate.prob * 100).toFixed(1)}%`;
+    entropyReadout.textContent = `#1 Favorite: ${(topCandidate.prob * 100).toFixed(0)}%`;
     explainerContent.innerHTML = rationale;
 
     const pace = parseInt(speedSelect.value, 10);
@@ -688,14 +675,14 @@ async function stepModel() {
       if (stepIdx === 0 && !shownMilestones.has("m_first")) {
         shownMilestones.add("m_first");
         showMilestone(
-          "Milestone 1: Prompt Prefill & First Election",
-          `Look at the probability chart below! Just like ChatGPT or Gemini, this model never plans a full sentence ahead. It scored its dictionary for slot #1, and <code>"${selected.token.replace(/\s/g, '·')}"</code> won the opening election.`
+          " Pause & Look: Word #1!",
+          `Look at the bar chart below! Just like ChatGPT or Gemini, this AI <strong>never plans a full sentence ahead</strong>. It just held a contest for the very first word, and <code>"${selected.token.replace(/\s/g, '·')}"</code> won!`
         );
       } else if (isDeviation && !shownMilestones.has("m_upset")) {
         shownMilestones.add("m_upset");
         showMilestone(
-          "Milestone 2: Temperature Upset!",
-          `Look at the <strong>Sampling Roulette Strip</strong> below! Even though <code>"${topCandidate.token.replace(/\s/g, '·')}"</code> was the #1 favorite (${(topCandidate.prob * 100).toFixed(1)}%), the random needle landed on runner-up <code>"${selected.token.replace(/\s/g, '·')}"</code>!`
+          "🎲 Pause & Look: A Surprise Pick!",
+          `Look at the <strong>Dice Roll strip</strong> below! Even though <code>"${topCandidate.token.replace(/\s/g, '·')}"</code> was the #1 favorite (${(topCandidate.prob * 100).toFixed(0)}%), the random pointer landed on runner-up <code>"${selected.token.replace(/\s/g, '·')}"</code>! This is why AI gives a slightly different answer every time you ask.`
         );
       }
     }
@@ -732,15 +719,15 @@ async function stepModel() {
 
   } catch (err) {
     console.error("Inference error:", err);
-    explainerContent.innerHTML = `<span style="color: #f87171;">Inference error: ${err.message}</span>`;
+    explainerContent.innerHTML = `<span style="color: #f87171;">Oops, something hiccuped: ${err.message}</span>`;
   } finally {
     isBusy = false;
   }
 }
 
-function concludeGeneration(reason = "eos") {
+function concludeGeneration() {
   isPlaying = false;
-  btnStream.textContent = "▶ Run Guided Walkthrough";
+  btnStream.textContent = "▶ Watch It Think Again";
   unifiedExplainer.classList.remove("milestone");
   explainerActions.classList.add("hidden");
 
@@ -749,15 +736,15 @@ function concludeGeneration(reason = "eos") {
   const avgConf = (tokenHistory.reduce((acc, t) => {
     const w = t.candidatePool.find(c => c.id === t.tokenId);
     return acc + (w ? w.prob : 0.5);
-  }, 0) / (totalTokens || 1) * 100).toFixed(1);
+  }, 0) / (totalTokens || 1) * 100).toFixed(0);
 
   statTokens.textContent = totalTokens;
   statDeviations.textContent = deviations;
   statAvgConf.textContent = `${avgConf}%`;
 
   summaryNarrative.innerHTML = `
-    Response complete! Across <strong>${totalTokens}</strong> single-token elections, Temperature caused <strong>${deviations}</strong> runner-up upsets. 
-    <strong>Tap any colored word in the output box</strong> to inspect its candidate odds or fork the timeline!
+    The AI finished its thought! To write this answer, it played <strong>${totalTokens}</strong> separate word-guessing contests in a row, and the dice roll picked a surprise runner-up word <strong>${deviations}</strong> times. 
+    <strong>Click any colored word in the answer box</strong> to see what other words almost won!
   `;
 
   completionSummary.classList.remove("hidden");
@@ -771,13 +758,12 @@ function inspectHistoryStep(index) {
   replayStepIndicator.textContent = `Word ${index + 1} / ${tokenHistory.length}`;
 
   const temp = parseFloat(tempSlider.value);
-  const topK = parseInt(topkSlider.value, 10);
-  const livePool = computeSoftmaxFromRaw(step.topLogits, topK, temp);
+  const livePool = computeSoftmaxFromRaw(step.topLogits, TOP_K_COUNT, temp);
 
   renderProbChart(livePool, step.tokenId, step.rollValue);
-  explainerBadge.textContent = `Inspecting Word #${index + 1} • ${step.stateTag}`;
+  explainerBadge.textContent = `Rewinding: Word #${index + 1} • ${step.stateTag}`;
   explainerBadge.className = step.isDeviation ? "badge badge-purple" : "badge";
-  entropyReadout.textContent = `Rolled: ${(step.rollValue * 100).toFixed(1)}%`;
+  entropyReadout.textContent = `Dice Roll: ${(step.rollValue * 100).toFixed(0)}%`;
   explainerContent.innerHTML = step.explanation;
 
   const allSpans = liveText.querySelectorAll('.new-token');
@@ -797,7 +783,8 @@ btnReplayNext.addEventListener("click", () => {
 function resetState() {
   isPlaying = false;
   isBusy = false;
-  btnStream.textContent = "▶ Run Guided Walkthrough";
+  btnStream.textContent = "▶ Step 2: Watch It Think";
+  if (model) step2Beacon.classList.remove("hidden");
   currentInputIds = null;
   tokenHistory = [];
   shownMilestones.clear();
@@ -811,28 +798,32 @@ function resetState() {
   btnForkSelection.classList.add("hidden");
   unifiedExplainer.classList.remove("milestone");
   liveText.innerHTML = "";
-  probChart.innerHTML = '<div class="empty-placeholder">Candidate leaderboard will animate here during generation.</div>';
-  explainerBadge.textContent = model ? "Ready to Run" : "Waiting for Engine";
+  probChart.innerHTML = '<div class="empty-placeholder">The top 5 competing words and their percentage odds will appear here as the AI writes.</div>';
+  explainerBadge.textContent = model ? "AI Brain Ready" : "Waiting to Start";
   explainerBadge.className = "badge badge-success";
   entropyReadout.textContent = "";
-  explainerContent.innerHTML = 'Prompt ready. Tap <strong>▶ Run Guided Walkthrough</strong> to trace every token election.';
-  tokenChips.innerHTML = '<div class="empty-placeholder">Token IDs will populate here once inference begins.</div>';
-  tokenCountBadge.textContent = "0 Tokens";
+  explainerContent.innerHTML = model
+    ? 'Question ready! Click <strong>▶ Step 2: Watch It Think</strong> to watch how the AI guesses each word.'
+    : 'Click the green <strong>⚡ Step 1: Turn On AI Brain</strong> button on the left to start!';
+  tokenChips.innerHTML = '<div class="empty-placeholder">Numbered word pieces will appear here once the AI starts reading.</div>';
+  tokenCountBadge.textContent = "0 Pieces";
   [badgePrefill, badgeAttention, badgeLogits, badgeSample].forEach(b => b.classList.remove("highlight"));
 }
 
 btnStream.addEventListener("click", async () => {
+  step2Beacon.classList.add("hidden");
+
   if (isPlaying) {
     isPlaying = false;
-    btnStream.textContent = "▶ Resume Walkthrough";
+    btnStream.textContent = "▶ Keep Watching";
     return;
   }
 
   if (!completionSummary.classList.contains("hidden")) {
     resetState();
+    step2Beacon.classList.add("hidden");
   }
 
-  // Collapse setup drawer automatically and scroll into Theater Mode so mobile users see both output & telemetry
   setDrawerCollapsed(true);
   if (window.innerWidth < 960) {
     setTimeout(() => {
@@ -841,9 +832,9 @@ btnStream.addEventListener("click", async () => {
   }
 
   isPlaying = true;
-  btnStream.textContent = "⏸ Pause Walkthrough";
+  btnStream.textContent = "⏸ Pause";
 
-  for (let i = 0; i < 75; i++) {
+  for (let i = 0; i < 70; i++) {
     if (!isPlaying) break;
     await stepModel();
     const delay = parseInt(speedSelect.value, 10);
@@ -851,7 +842,7 @@ btnStream.addEventListener("click", async () => {
   }
 
   if (isPlaying) {
-    concludeGeneration("limit");
+    concludeGeneration();
   }
 });
 
@@ -865,12 +856,12 @@ btnShare.addEventListener("click", () => {
   url.searchParams.set("prompt", promptInput.value.trim());
   url.searchParams.set("temp", tempSlider.value);
   navigator.clipboard.writeText(url.toString());
-  showToast("🔗 Shareable experiment link copied!");
+  showToast("🔗 Link copied! Send it to a friend to try.");
 });
 
 btnCopyReceipt.addEventListener("click", () => {
   const outputStr = tokenHistory.map(t => t.tokenStr).join("");
-  const receipt = `⚡ Inside The Transformer — Neural Telemetry Receipt\nPrompt: "${promptInput.value.trim()}"\nOutput: "${outputStr.trim()}"\nTokens: ${statTokens.textContent} | Temp Upsets: ${statDeviations.textContent} | Avg Confidence: ${statAvgConf.textContent}\nTry it live: ${window.location.origin}${window.location.pathname}`;
+  const receipt = `⚡ How AI Actually Works — My Experiment\nQuestion: "${promptInput.value.trim()}"\nAI Answer: "${outputStr.trim()}"\nWords Guessed: ${statTokens.textContent} | Surprise Dice Rolls: ${statDeviations.textContent} | Avg Certainty: ${statAvgConf.textContent}\nSee inside the AI yourself: ${window.location.origin}${window.location.pathname}`;
   navigator.clipboard.writeText(receipt);
-  showToast("📋 Neural Receipt copied!");
+  showToast("📋 Summary copied to clipboard!");
 });
