@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Under the Hood: How LLMs Actually Work</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Introductory Modal -->
+  <div id="welcome-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="badge">Demystifying GenAI</div>
+      <h2>Have you ever wanted to know EXACTLY what is happening when you interface with generative AI?</h2>
+      <p class="modal-intro">
+        Whether you use ChatGPT, Claude, Gemini, or local models, they all share the exact same mathematical loop. This interactive sandbox brings the machine down to human speed.
+      </p>
+
+      <div class="modal-grid">
+        <div class="modal-feature">
+          <span class="f-icon">🧩</span>
+          <div>
+            <strong>1. Tokenization</strong>
+            <p>AI does not read letters or words. It slices text into numeric IDs called tokens.</p>
+          </div>
+        </div>
+        <div class="modal-feature">
+          <span class="f-icon">🔦</span>
+          <div>
+            <strong>2. Attention & Context</strong>
+            <p>Every token looks at every other token simultaneously to understand situational context.</p>
+          </div>
+        </div>
+        <div class="modal-feature">
+          <span class="f-icon">📊</span>
+          <div>
+            <strong>3. Logits & Odds</strong>
+            <p>The AI does not write sentences; it ranks candidates from its dictionary for the next slot.</p>
+          </div>
+        </div>
+        <div class="modal-feature">
+          <span class="f-icon">🎲</span>
+          <div>
+            <strong>4. Temperature & Sampling</strong>
+            <p>Adjust how "creative" or strict the model is when rolling the dice on candidate tokens.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-modal-agree" class="btn-primary">I Understand — Take Me Under The Hood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div>
+      <h1>Inside The Transformer <span>/ Educational Sandbox</span></h1>
+      <p class="tagline">Real-time tokenizer inspection, candidate probabilities, and autoregressive generation.</p>
+    </div>
+    <div class="status-pill" id="model-status">
+      <span class="dot"></span> <span id="status-text">Ready to run</span>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main class="dashboard-grid">
+    <!-- Left Column: Controls & Generation Console -->
+    <section class="panel console-panel">
+      <h2>1. The Prompt & Generation</h2>
+      <label for="prompt-input" class="label-muted">Enter a starting thought:</label>
+      <textarea id="prompt-input" rows="3">The quick brown fox jumps over the lazy</textarea>
+
+      <div class="controls-row">
+        <div class="control-group">
+          <label for="temp-slider">Temperature: <span id="temp-val">0.7</span></label>
+          <input type="range" id="temp-slider" min="0.0" max="1.5" step="0.1" value="0.7">
+          <small class="tip">Lower = predictable, Higher = creative/wild</small>
+        </div>
+        <div class="control-group">
+          <label for="topk-slider">Top-K: <span id="topk-val">5</span></label>
+          <input type="range" id="topk-slider" min="1" max="20" step="1" value="5">
+          <small class="tip">Pool of highest-ranked tokens considered</small>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="btn-step" class="btn-primary">▶ Step (Predict 1 Token)</button>
+        <button id="btn-stream" class="btn-secondary">⏩ Auto Generate</button>
+        <button id="btn-reset" class="btn-tertiary">↺ Reset</button>
+      </div>
+
+      <div class="output-container">
+        <label class="label-muted">Live Output Stream:</label>
+        <div id="live-text" class="live-text-box"></div>
+      </div>
+    </section>
+
+    <!-- Right Column: Educational Inspection Telemetry -->
+    <section class="panel telemetry-panel">
+      <h2>2. What Just Happened?</h2>
+      
+      <!-- Stage Indicator -->
+      <div class="flow-stepper">
+        <div class="step-badge active" id="badge-tok">1. Tokenize</div>
+        <div class="arrow">→</div>
+        <div class="step-badge" id="badge-att">2. Context</div>
+        <div class="arrow">→</div>
+        <div class="step-badge" id="badge-prob">3. Probability</div>
+        <div class="arrow">→</div>
+        <div class="step-badge" id="badge-samp">4. Select</div>
+      </div>
+
+      <!-- Plain English Explanation Box -->
+      <div class="explainer-card" id="explainer-text">
+        Click <strong>Step</strong> to execute one cycle of the transformer loop and inspect candidate logits.
+      </div>
+
+      <!-- Sub-Tab A: Token Breakdown -->
+      <div class="inspector-section">
+        <h3>Token Representation (What the Model "Sees")</h3>
+        <div id="token-chips" class="token-chips-container">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Sub-Tab B: Top Candidate Probability Chart -->
+      <div class="inspector-section">
+        <h3>Top Next-Token Candidates (Logits / Softmax)</h3>
+        <div id="probability-chart" class="chart-container">
+          <div class="empty-state">No inference run yet.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
