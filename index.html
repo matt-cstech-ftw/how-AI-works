@@ -57,24 +57,10 @@
     </div>
   </div>
 
-  <!-- Non-blocking floating tour callout (Positioned safely away from the chart) -->
-  <div id="tour-card" class="tour-card hidden">
-    <div class="tour-header">
-      <span class="badge" id="tour-step-badge">Stage Insight</span>
-      <button id="btn-close-tour" class="close-btn" aria-label="Close">&times;</button>
-    </div>
-    <h3 id="tour-title">How Word #1 Was Born</h3>
-    <div id="tour-body" class="tour-body"></div>
-    <div class="tour-footer">
-      <button id="btn-continue-tour" class="btn-primary btn-sm">Continue Watching ▶</button>
-    </div>
-  </div>
-
-  <!-- Header -->
   <header>
     <div class="header-titles">
-      <h1>Inside The Transformer <span>/ Educational Sandbox</span></h1>
-      <p class="tagline">An interactive look at how prompts turn into answers in modern Large Language Models.</p>
+      <h1>Inside The Transformer <span>/ Interactive Walkthrough</span></h1>
+      <p class="tagline">An educational look at how prompts turn into answers in modern Large Language Models.</p>
     </div>
     <div class="status-pill" id="model-status">
       <span class="dot" id="status-dot"></span> <span id="status-text">Click "Initialize Engine" below</span>
@@ -90,10 +76,13 @@
   </div>
 
   <main class="dashboard-grid">
-    <!-- Left Column: Controls & Generation Console -->
+    <!-- Left Column: Controls & Text Output -->
     <section class="panel console-panel">
-      <h2>1. The Prompt & Controls</h2>
-      <label for="prompt-input" class="label-muted">Enter any prompt or question:</label>
+      <div class="panel-header">
+        <h2>1. The Prompt & Controls</h2>
+      </div>
+
+      <label for="prompt-input" class="label-muted">Type any prompt or question:</label>
       <textarea id="prompt-input" rows="3">What is your favorite color and why?</textarea>
 
       <div class="controls-row">
@@ -111,30 +100,29 @@
 
       <div class="action-buttons">
         <button id="btn-init" class="btn-init">⚡ Initialize Engine (SmolLM2)</button>
-        <button id="btn-step" class="btn-primary" disabled>▶ Step (Next Token)</button>
-        <button id="btn-stream" class="btn-secondary" disabled>⏩ Guided Auto Play</button>
-        <button id="btn-reset" class="btn-tertiary">↺ Reset</button>
+        <button id="btn-stream" class="btn-primary" disabled>▶ Run Guided Walkthrough</button>
+        <button id="btn-reset" class="btn-tertiary">↺ New Prompt</button>
       </div>
 
       <div class="output-container">
-        <label class="label-muted">Generated Text (Click any word to inspect how it won):</label>
+        <label class="label-muted">Generated Response (Click any word to inspect how it won):</label>
         <div id="live-text" class="live-text-box"></div>
       </div>
     </section>
 
-    <!-- Right Column: Educational Telemetry & Ending Debrief -->
-    <section class="panel telemetry-panel">
+    <!-- Right Column: Single Unified Telemetry & Narrative -->
+    <section class="panel telemetry-panel" id="telemetry-panel">
       <div class="telemetry-header-row">
-        <h2>2. Neural Inspection & Explanations</h2>
-        <!-- Replay slider appears when complete -->
+        <h2>2. Neural Inspection & Explanation</h2>
+        
         <div id="replay-controls" class="replay-controls hidden">
           <span class="label-muted">Replay:</span>
-          <button id="btn-replay-prev" class="btn-sm btn-secondary">◀</button>
+          <button id="btn-replay-prev" class="btn-sm btn-secondary" title="Previous Word">◀</button>
           <span id="replay-step-indicator" class="replay-step-text">0/0</span>
-          <button id="btn-replay-next" class="btn-sm btn-secondary">▶</button>
+          <button id="btn-replay-next" class="btn-sm btn-secondary" title="Next Word">▶</button>
         </div>
       </div>
-      
+
       <div class="flow-stepper">
         <div class="step-badge" id="badge-prefill">1. Prefill (Read)</div>
         <div class="arrow">→</div>
@@ -145,63 +133,75 @@
         <div class="step-badge" id="badge-sample">4. Sample & Loop</div>
       </div>
 
-      <!-- Plain English Dynamic Narrative -->
-      <div class="explainer-card" id="explainer-text">
-        Click <strong>Initialize Engine</strong>. Once ready, click <strong>Guided Auto Play</strong> to watch the model write and explain its internal mechanics.
-      </div>
-
-      <!-- Token Chips -->
-      <div class="inspector-section">
-        <h3>Tokens In Context Window (The Model's Working Memory)</h3>
-        <div id="token-chips" class="token-chips-container">
-          <div class="empty-state">Context tokens will appear here after starting.</div>
+      <!-- Single Unified Explanation Box (Dynamically handles standard steps & paused milestones) -->
+      <div class="explainer-card" id="unified-explainer">
+        <div class="explainer-header">
+          <span class="badge" id="explainer-badge">Engine Status</span>
+        </div>
+        <div id="explainer-content">
+          Click <strong>Initialize Engine</strong>. Once ready, click <strong>Run Guided Walkthrough</strong> to watch the model generate while pausing to explain key mechanics.
+        </div>
+        <div id="explainer-actions" class="explainer-actions hidden">
+          <button id="btn-continue-milestone" class="btn-primary btn-sm">Continue Walkthrough ▶</button>
         </div>
       </div>
 
-      <!-- Live Logits Bar Chart -->
+      <!-- Live Logits Probability Chart -->
       <div class="inspector-section">
         <h3>Live Next-Token Candidate Election (Logit Probabilities)</h3>
         <div id="probability-chart" class="chart-container">
-          <div class="empty-state">Candidate probabilities will render here during generation.</div>
+          <div class="empty-state">Leaderboard probabilities will appear here during generation.</div>
         </div>
       </div>
 
-      <!-- Debrief & Mini-Game Section (Triggered at end of generation) -->
-      <div id="debrief-panel" class="debrief-panel hidden">
-        <div class="debrief-header">
-          <span class="badge badge-success">Generation Complete</span>
-          <h3>The Transformer Debrief</h3>
-        </div>
-        
-        <div class="stats-grid">
-          <div class="stat-box">
-            <span class="stat-num" id="stat-total-tokens">0</span>
-            <span class="stat-label">Tokens Generated</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-num" id="stat-deviations">0</span>
-            <span class="stat-label">Temperature Surprises</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-num" id="stat-avg-confidence">0%</span>
-            <span class="stat-label">Avg Winner Odds</span>
-          </div>
-        </div>
-
-        <!-- Interactive Mini-Game -->
-        <div class="minigame-card">
-          <h4>🎮 Quick Challenge: "Be The Neural Network"</h4>
-          <p id="minigame-question" class="minigame-text">
-            Can you guess which candidate word had the highest odds before temperature sampling picked the winner?
-          </p>
-          <div id="minigame-options" class="minigame-options"></div>
-          <div id="minigame-result" class="minigame-result hidden"></div>
-        </div>
-
-        <div class="debrief-actions">
-          <button id="btn-restart-app" class="btn-primary">↺ Restart with a New Prompt</button>
+      <!-- Context Tokens (Cleaned to show real conversational words) -->
+      <div class="inspector-section">
+        <h3>Tokens in Attention Window (Working Memory)</h3>
+        <div id="token-chips" class="token-chips-container">
+          <div class="empty-state">Tokens will appear here once inference begins.</div>
         </div>
       </div>
+
+      <!-- Polished Debrief Modal / Overlay when Finished -->
+      <div id="debrief-overlay" class="debrief-overlay hidden">
+        <div class="debrief-card">
+          <div class="debrief-header">
+            <span class="badge badge-success">Walkthrough Complete</span>
+            <h3>How That Answer Was Born</h3>
+            <p class="tagline">The model finished generating. Here is the mathematical summary of what occurred:</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-num" id="stat-total-tokens">0</span>
+              <span class="stat-label">Tokens Predicted</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num" id="stat-deviations">0</span>
+              <span class="stat-label">Sampling Surprises</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num" id="stat-avg-confidence">0%</span>
+              <span class="stat-label">Average Confidence</span>
+            </div>
+          </div>
+
+          <div class="minigame-card">
+            <h4>🎮 Knowledge Check: "Be The Neural Network"</h4>
+            <p id="minigame-question" class="minigame-text">
+              Can you guess which candidate word had the highest odds before temperature sampling picked the winner?
+            </p>
+            <div id="minigame-options" class="minigame-options"></div>
+            <div id="minigame-result" class="minigame-result hidden"></div>
+          </div>
+
+          <div class="debrief-footer">
+            <button id="btn-close-debrief" class="btn-secondary">Inspect & Replay Tokens 🔍</button>
+            <button id="btn-restart-app" class="btn-primary">↺ Try Another Prompt</button>
+          </div>
+        </div>
+      </div>
+
     </section>
   </main>
 

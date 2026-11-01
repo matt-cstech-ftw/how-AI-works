@@ -130,11 +130,15 @@ header {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
 }
 
 .panel h2 {
   font-size: 1.1rem;
   color: var(--text-bright);
+}
+
+.panel-header {
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
 }
@@ -145,11 +149,6 @@ header {
   align-items: center;
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
-}
-
-.telemetry-header-row h2 {
-  border-bottom: none;
-  padding-bottom: 0;
 }
 
 .replay-controls {
@@ -228,7 +227,7 @@ textarea:focus {
 
 button {
   cursor: pointer;
-  padding: 0.55rem 1rem;
+  padding: 0.6rem 1.1rem;
   font-size: 0.85rem;
   font-weight: 600;
   border-radius: 6px;
@@ -245,8 +244,8 @@ button:disabled {
 }
 
 .btn-sm {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
 }
 
 .btn-init {
@@ -351,6 +350,7 @@ button:disabled {
   padding: 0 0.25rem;
 }
 
+/* Single Unified Explainer */
 .explainer-card {
   background: #1c2128;
   border-left: 4px solid var(--accent);
@@ -358,6 +358,26 @@ button:disabled {
   border-radius: 0 6px 6px 0;
   font-size: 0.9rem;
   line-height: 1.6;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.explainer-card.milestone {
+  border-left-color: var(--purple);
+  background: #1e1d2b;
+  box-shadow: 0 4px 20px rgba(188, 140, 255, 0.1);
+}
+
+.explainer-header {
+  margin-bottom: 0.4rem;
+}
+
+.explainer-actions {
+  margin-top: 0.85rem;
+  text-align: right;
+}
+
+.explainer-actions.hidden {
+  display: none;
 }
 
 .explainer-card strong {
@@ -458,120 +478,12 @@ button:disabled {
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85rem;
-  padding: 1.5rem 0;
+  padding: 1.25rem 0;
 }
 
-/* Debrief & Mini Game Panel */
-.debrief-panel {
-  background: #161b22;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  animation: fadeIn 0.4s ease-out;
-}
-
-.debrief-panel.hidden {
-  display: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.debrief-header h3 {
-  font-size: 1.15rem;
-  color: var(--text-bright);
-  margin-top: 0.4rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.stat-box {
-  background: #0d1117;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.75rem;
-  text-align: center;
-}
-
-.stat-num {
-  display: block;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.minigame-card {
-  background: #0d1117;
-  border: 1px solid var(--purple);
-  border-radius: 6px;
-  padding: 1rem;
-}
-
-.minigame-card h4 {
-  font-size: 0.95rem;
-  color: var(--purple);
-  margin-bottom: 0.4rem;
-}
-
-.minigame-text {
-  font-size: 0.85rem;
-  color: var(--text-main);
-  margin-bottom: 0.75rem;
-}
-
-.minigame-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.btn-game-opt {
-  background: #21262d;
-  color: var(--text-bright);
-  border: 1px solid var(--border);
-  padding: 0.4rem 0.8rem;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.85rem;
-}
-
-.btn-game-opt:hover {
-  border-color: var(--accent);
-}
-
-.minigame-result {
-  font-size: 0.85rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  background: #1c2128;
-}
-
-.minigame-result.hidden {
-  display: none;
-}
-
-.debrief-actions {
-  text-align: center;
-  padding-top: 0.5rem;
-}
-
-/* Modals & Safely-Positioned Tour Card */
-.modal-overlay {
+/* Modals & Overlays */
+.modal-overlay,
+.debrief-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
@@ -583,11 +495,13 @@ button:disabled {
   z-index: 1000;
 }
 
-.modal-overlay.hidden {
+.modal-overlay.hidden,
+.debrief-overlay.hidden {
   display: none;
 }
 
-.modal-card {
+.modal-card,
+.debrief-card {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -597,11 +511,19 @@ button:disabled {
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   max-height: 90vh;
   overflow-y: auto;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.modal-card .badge,
-.tour-card .badge,
-.debrief-panel .badge {
+.debrief-card {
+  border-color: var(--purple);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.badge {
   background: rgba(88, 166, 255, 0.15);
   color: var(--accent);
   font-size: 0.75rem;
@@ -613,16 +535,22 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.badge-purple {
+  background: rgba(188, 140, 255, 0.15);
+  color: var(--purple);
+}
+
 .badge-success {
   background: rgba(63, 185, 80, 0.15) !important;
   color: var(--success) !important;
 }
 
-.modal-card h2 {
+.modal-card h2,
+.debrief-header h3 {
   font-size: 1.25rem;
   color: var(--text-bright);
   line-height: 1.3;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .modal-intro {
@@ -663,66 +591,94 @@ button:disabled {
   text-align: right;
 }
 
-/* Tour Card: Anchored top-right of the viewport to NEVER obscure the bottom-right chart */
-.tour-card {
-  position: fixed;
-  top: 5.5rem;
-  right: 1.5rem;
-  max-width: 420px;
-  width: calc(100% - 3rem);
-  background: #1c2128;
-  border: 2px solid var(--purple);
-  border-radius: 10px;
-  padding: 1.1rem;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.7);
-  z-index: 800;
-  animation: slideDown 0.3s ease-out;
+/* Debrief Specifics */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
 }
 
-.tour-card.hidden {
-  display: none;
+.stat-box {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  text-align: center;
 }
 
-@keyframes slideDown {
-  from { transform: translateY(-15px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.stat-num {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: 'Fira Code', monospace;
 }
 
-.tour-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.close-btn {
-  background: transparent;
+.stat-label {
+  font-size: 0.75rem;
   color: var(--text-muted);
-  font-size: 1.3rem;
-  padding: 0;
-  border: none;
-  cursor: pointer;
 }
 
-.tour-card h3 {
-  font-size: 1.05rem;
-  color: var(--text-bright);
+.minigame-card {
+  background: #0d1117;
+  border: 1px solid var(--purple);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.minigame-card h4 {
+  font-size: 0.95rem;
+  color: var(--purple);
   margin-bottom: 0.4rem;
 }
 
-.tour-body {
+.minigame-text {
   font-size: 0.85rem;
   color: var(--text-main);
-  line-height: 1.5;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
-.tour-footer {
-  text-align: right;
+.minigame-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-/* =========================================================
-   Mobile & Small Screen Responsiveness
-   ========================================================= */
+.btn-game-opt {
+  background: #21262d;
+  color: var(--text-bright);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.8rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+
+.btn-game-opt:hover {
+  border-color: var(--accent);
+}
+
+.minigame-result {
+  font-size: 0.85rem;
+  padding: 0.6rem;
+  border-radius: 4px;
+  background: #1c2128;
+  margin-top: 0.5rem;
+}
+
+.minigame-result.hidden {
+  display: none;
+}
+
+.debrief-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* Mobile & Touch */
 @media (max-width: 860px) {
   body {
     padding: 0.75rem;
@@ -757,19 +713,14 @@ button:disabled {
 
   .action-buttons button {
     flex: 1 1 calc(50% - 0.5rem);
-    min-height: 44px; /* Touch target */
+    min-height: 44px;
   }
 
   .btn-tertiary {
     margin-left: 0;
   }
 
-  .tour-card {
-    top: auto;
-    bottom: 1rem;
-    right: 1rem;
-    left: 1rem;
-    width: auto;
-    max-width: none;
+  .debrief-footer {
+    flex-direction: column;
   }
 }
