@@ -1,6 +1,6 @@
 import { AutoTokenizer, AutoModelForCausalLM, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 
-// Configure ONNX Web runtime paths and fallbacks
+// Configure ONNX Web runtime
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
@@ -8,6 +8,7 @@ env.useBrowserCache = true;
 let tokenizer = null;
 let model = null;
 let currentInputIds = null;
+let currentAttentionMask = null;
 let generatedTokens = [];
 let isStreaming = false;
 let isBusy = false;
@@ -34,14 +35,12 @@ const progressBarContainer = document.getElementById("download-progress-bar");
 const progressFill = document.getElementById("progress-fill");
 const progressStatus = document.getElementById("progress-status");
 
-// Modal Dismiss
 if (btnModalAgree && modal) {
   btnModalAgree.addEventListener("click", () => {
     modal.classList.add("hidden");
   });
 }
 
-// Sliders
 tempSlider.addEventListener("input", (e) => {
   tempVal.textContent = e.target.value;
 });
@@ -50,7 +49,6 @@ topkSlider.addEventListener("input", (e) => {
   topkVal.textContent = e.target.value;
 });
 
-// Helper: Check if WebGPU is genuinely accessible
 async function checkWebGPUSupport() {
   if (!navigator.gpu) return false;
   try {
@@ -61,7 +59,7 @@ async function checkWebGPUSupport() {
   }
 }
 
-// Initialize engine with dynamic device detection
+// Initialize engine
 btnInit.addEventListener("click", async () => {
   if (model) return;
 
@@ -88,12 +86,10 @@ btnInit.addEventListener("click", async () => {
     
     statusText.textContent = `Loading on ${targetDevice.toUpperCase()}...`;
 
-    // 1. Load Tokenizer
     tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
       progress_callback: progressCallback
     });
 
-    // 2. Load Model (WebGPU if supported, otherwise pure WebAssembly)
     model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
       dtype: 'q4',
       device: targetDevice,
@@ -107,10 +103,10 @@ btnInit.addEventListener("click", async () => {
     btnStep.disabled = false;
     btnStream.disabled = false;
 
-    explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M via <strong>${targetDevice.toUpperCase()}</strong>. Type your prompt and click <strong>Step</strong> to run.`;
+    explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M on <strong>${targetDevice.toUpperCase()}</strong>. Type your prompt and click <strong>Step</strong>.`;
 
   } catch (err) {
-    console.warn("Primary load failed, forcing fallback to CPU WASM:", err);
+    console.warn("Primary load failed, trying WASM CPU fallback:", err);
     try {
       statusText.textContent = "Retrying in safe CPU (WASM) mode...";
       
@@ -131,19 +127,19 @@ btnInit.addEventListener("click", async () => {
       btnStep.disabled = false;
       btnStream.disabled = false;
 
-      explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M via CPU WebAssembly. Type your prompt and click <strong>Step</strong> to inspect.`;
+      explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M via CPU WebAssembly. Type your prompt and click <strong>Step</strong>.`;
     } catch (fallbackErr) {
-      console.error("Fatal initialization error:", fallbackErr);
+      console.error("Initialization error:", fallbackErr);
       statusText.textContent = "Initialization Failed";
       progressBarContainer.classList.add("hidden");
-      explainerText.innerHTML = `<span style="color: #f85149;">Failed to initialize model: ${fallbackErr.message}</span>`;
+      explainerText.innerHTML = `<span style="color: #f85149;">Error initializing model: ${fallbackErr.message}</span>`;
       btnInit.disabled = false;
       btnInit.textContent = "Retry";
     }
   }
 });
 
-// Render token chips
+// Render token badges
 function renderTokens(tokenIds) {
   tokenChips.innerHTML = "";
   for (let i = 0; i < tokenIds.length; i++) {
@@ -156,13 +152,13 @@ function renderTokens(tokenIds) {
   }
 }
 
-// Compute Softmax over top-K logits
-function getTopKWithSoftmax(logitsArray, topK, temperature) {
+// Compute Softmax probabilities over Top-K
+function getTopKWithSoftmax(logitsSlice, topK, temperature) {
   const temp = Math.max(0.01, parseFloat(temperature));
-  
   const indexed = [];
-  for (let i = 0; i < logitsArray.length; i++) {
-    indexed.push({ id: i, logit: logitsArray[i] });
+
+  for (let i = 0; i < logitsSlice.length; i++) {
+    indexed.push({ id: i, logit: logitsSlice[i] });
   }
 
   indexed.sort((a, b) => b.logit - a.logit);
@@ -180,7 +176,7 @@ function getTopKWithSoftmax(logitsArray, topK, temperature) {
   }));
 }
 
-// Render candidate probabilities chart
+// Render probability bars
 function renderProbabilities(candidates, chosenTokenId) {
   probChart.innerHTML = "";
   candidates.forEach(item => {
@@ -200,12 +196,13 @@ function renderProbabilities(candidates, chosenTokenId) {
   });
 }
 
-// Predict one token using the real model
+// Single step prediction
 async function stepModel() {
   if (!model || !tokenizer || isBusy) return;
   isBusy = true;
 
   try {
+    // Fresh run: Tokenize user prompt
     if (!currentInputIds) {
       const text = promptInput.value;
       if (!text.trim()) {
@@ -214,6 +211,7 @@ async function stepModel() {
       }
       const encoded = await tokenizer(text);
       currentInputIds = encoded.input_ids;
+      currentAttentionMask = encoded.attention_mask;
       generatedTokens = [];
       liveText.textContent = "";
     }
@@ -221,69 +219,68 @@ async function stepModel() {
     const currentTokensArray = Array.from(currentInputIds.data).map(Number);
     renderTokens(currentTokensArray);
 
-    // Forward pass
-    const output = await model({ input_ids: currentInputIds });
-    
-    const seqLength = currentInputIds.dims[1];
-    const vocabSize = output.logits.dims[2];
-    
-    const lastTokenLogitsOffset = (seqLength - 1) * vocabSize;
-    const logitsSlice = output.logits.data.subarray(lastTokenLogitsOffset, lastTokenLogitsOffset + vocabSize);
+    // Call generate with full mask to get logits cleanly
+    const genResult = await model.generate({
+      input_ids: currentInputIds,
+      attention_mask: currentAttentionMask,
+      max_new_tokens: 1,
+      return_dict_in_generate: true,
+      output_logits: true
+    });
 
-    const temp = parseFloat(tempSlider.value);
-    const topK = parseInt(topkSlider.value, 10);
-    const candidatePool = getTopKWithSoftmax(logitsSlice, topK, temp);
+    // Extract logits for candidate visualization
+    const logitsTensor = genResult.logits ? genResult.logits[0] : null;
+    let candidatePool = [];
+    let selectedTokenId = null;
 
-    // Roulette-wheel sampling
-    const rand = Math.random();
-    let cumulative = 0;
-    let selectedItem = candidatePool[0];
-
-    for (const item of candidatePool) {
-      cumulative += item.prob;
-      if (rand <= cumulative) {
-        selectedItem = item;
-        break;
-      }
+    if (logitsTensor) {
+      const vocabSize = logitsTensor.dims[logitsTensor.dims.length - 1];
+      const logitsData = logitsTensor.data.subarray(logitsTensor.data.length - vocabSize);
+      const temp = parseFloat(tempSlider.value);
+      const topK = parseInt(topkSlider.value, 10);
+      candidatePool = getTopKWithSoftmax(logitsData, topK, temp);
     }
 
-    renderProbabilities(candidatePool, selectedItem.id);
+    // Determine chosen token from sequence output
+    const allOutTokens = Array.from(genResult.sequences.data).map(Number);
+    selectedTokenId = allOutTokens[allOutTokens.length - 1];
+    const selectedTokenStr = tokenizer.decode([selectedTokenId]);
 
-    // Concatenate new token to input tensor
-    const nextId = BigInt(selectedItem.id);
-    const newLength = currentTokensArray.length + 1;
-    const newBigIntArray = new BigInt64Array(newLength);
-    for (let i = 0; i < currentTokensArray.length; i++) {
-      newBigIntArray[i] = BigInt(currentTokensArray[i]);
-    }
-    newBigIntArray[newLength - 1] = nextId;
-
+    // Update input_ids and attention_mask tensors for the next autoregressive cycle
+    currentInputIds = genResult.sequences;
     const Tensor = currentInputIds.constructor;
-    currentInputIds = new Tensor('int64', newBigIntArray, [1, newLength]);
+    const newMaskData = new BigInt64Array(currentInputIds.dims[1]).fill(1n);
+    currentAttentionMask = new Tensor('int64', newMaskData, [1, currentInputIds.dims[1]]);
 
-    // Update text
-    generatedTokens.push(selectedItem.token);
+    // Render candidate rankings
+    if (candidatePool.length > 0) {
+      renderProbabilities(candidatePool, selectedTokenId);
+    }
+
+    generatedTokens.push(selectedTokenStr);
     liveText.innerHTML = generatedTokens.map(t => `<span class="new-token">${t}</span>`).join("");
+
+    const topWord = candidatePool.length > 0 ? candidatePool[0].token.replace(/\s/g, '·') : selectedTokenStr;
+    const topPct = candidatePool.length > 0 ? (candidatePool[0].prob * 100).toFixed(1) : '100';
 
     explainerText.innerHTML = `
       <strong>Autoregressive Step Complete:</strong><br>
-      The network scanned all <code>${currentTokensArray.length}</code> tokens in memory. Its #1 calculated 
-      candidate was <code>"${candidatePool[0].token.replace(/\s/g, '·')}"</code> (${(candidatePool[0].prob * 100).toFixed(1)}%). 
-      With temperature at <strong>${temp}</strong>, it sampled <code>"${selectedItem.token.replace(/\s/g, '·')}"</code> 
-      and appended it to the prompt.
+      The model processed all <code>${currentTokensArray.length}</code> tokens. 
+      The highest-probability candidate was <code>"${topWord}"</code> (${topPct}%). 
+      The model selected <code>"${selectedTokenStr.replace(/\s/g, '·')}"</code> and fed it back into context.
     `;
 
-    renderTokens(Array.from(newBigIntArray).map(Number));
+    renderTokens(Array.from(currentInputIds.data).map(Number));
 
   } catch (err) {
-    console.error("Inference step error:", err);
+    console.error("Step execution error:", err);
     explainerText.innerHTML = `<span style="color: #f85149;">Error during inference: ${err.message}</span>`;
   } finally {
     isBusy = false;
   }
 }
 
-// Event Listeners
+// Event bindings
 btnStep.addEventListener("click", () => {
   stepModel();
 });
@@ -313,6 +310,7 @@ btnReset.addEventListener("click", () => {
   isBusy = false;
   btnStream.textContent = "⏩ Auto Generate";
   currentInputIds = null;
+  currentAttentionMask = null;
   generatedTokens = [];
   liveText.innerHTML = "";
   probChart.innerHTML = '<div class="empty-state">Inference reset. Ready for new prompt.</div>';
