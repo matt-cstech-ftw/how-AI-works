@@ -1,4 +1,8 @@
-import { AutoTokenizer, AutoModelForCausalLM } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
+import { AutoTokenizer, AutoModelForCausalLM, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
+
+// Configure ONNX Web runtime paths and fallbacks
+env.allowLocalModels = false;
+env.useBrowserCache = true;
 
 // State
 let tokenizer = null;
@@ -31,11 +35,13 @@ const progressFill = document.getElementById("progress-fill");
 const progressStatus = document.getElementById("progress-status");
 
 // Modal Dismiss
-btnModalAgree.addEventListener("click", () => {
-  modal.classList.add("hidden");
-});
+if (btnModalAgree && modal) {
+  btnModalAgree.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+}
 
-// Slider inputs
+// Sliders
 tempSlider.addEventListener("input", (e) => {
   tempVal.textContent = e.target.value;
 });
@@ -44,65 +50,93 @@ topkSlider.addEventListener("input", (e) => {
   topkVal.textContent = e.target.value;
 });
 
-// Initialize real in-browser SmolLM2 engine
+// Helper: Check if WebGPU is genuinely accessible
+async function checkWebGPUSupport() {
+  if (!navigator.gpu) return false;
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    return !!adapter;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Initialize engine with dynamic device detection
 btnInit.addEventListener("click", async () => {
   if (model) return;
 
   btnInit.disabled = true;
   btnInit.textContent = "Loading Engine...";
   progressBarContainer.classList.remove("hidden");
-  statusText.textContent = "Downloading model weights...";
+  statusText.textContent = "Checking hardware acceleration...";
+
+  const MODEL_ID = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+
+  const progressCallback = (info) => {
+    if (info.status === 'progress' && info.total) {
+      const pct = Math.round((info.loaded / info.total) * 100);
+      progressFill.style.width = `${pct}%`;
+      progressStatus.textContent = `Downloading ${info.file || 'weights'}: ${pct}%`;
+    } else if (info.status === 'done') {
+      progressStatus.textContent = `Loaded ${info.file || 'file'}`;
+    }
+  };
 
   try {
-    const MODEL_ID = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+    const hasWebGPU = await checkWebGPUSupport();
+    const targetDevice = hasWebGPU ? 'webgpu' : 'wasm';
+    
+    statusText.textContent = `Loading on ${targetDevice.toUpperCase()}...`;
 
-    const progressCallback = (info) => {
-      if (info.status === 'progress' && info.total) {
-        const pct = Math.round((info.loaded / info.total) * 100);
-        progressFill.style.width = `${pct}%`;
-        progressStatus.textContent = `Downloading ${info.file}: ${pct}%`;
-      } else if (info.status === 'done') {
-        progressStatus.textContent = `Loaded ${info.file}`;
-      }
-    };
-
-    // Load Tokenizer
+    // 1. Load Tokenizer
     tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
       progress_callback: progressCallback
     });
 
-    // Load quantized ONNX weights (runs via WebGPU or WASM)
+    // 2. Load Model (WebGPU if supported, otherwise pure WebAssembly)
     model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
       dtype: 'q4',
-      device: 'webgpu',
+      device: targetDevice,
       progress_callback: progressCallback
     });
 
     statusDot.classList.add("ready");
-    statusText.textContent = "Engine Ready (SmolLM2-135M)";
+    statusText.textContent = `Ready (${targetDevice.toUpperCase()} Engine)`;
     progressBarContainer.classList.add("hidden");
     btnInit.style.display = "none";
     btnStep.disabled = false;
     btnStream.disabled = false;
 
-    explainerText.innerHTML = `<strong>Engine Loaded!</strong> Type anything in the box and click <strong>Step</strong> to see the model calculate real word predictions.`;
+    explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M via <strong>${targetDevice.toUpperCase()}</strong>. Type your prompt and click <strong>Step</strong> to run.`;
+
   } catch (err) {
-    console.warn("WebGPU not available or download failed, falling back to WASM:", err);
+    console.warn("Primary load failed, forcing fallback to CPU WASM:", err);
     try {
-      const MODEL_ID = 'HuggingFaceTB/SmolLM2-135M-Instruct';
+      statusText.textContent = "Retrying in safe CPU (WASM) mode...";
+      
+      tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
+        progress_callback: progressCallback
+      });
+
       model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
         dtype: 'q4',
-        device: 'wasm'
+        device: 'wasm',
+        progress_callback: progressCallback
       });
+
       statusDot.classList.add("ready");
-      statusText.textContent = "Engine Ready (WASM CPU Mode)";
+      statusText.textContent = "Ready (CPU WASM Engine)";
       progressBarContainer.classList.add("hidden");
       btnInit.style.display = "none";
       btnStep.disabled = false;
       btnStream.disabled = false;
+
+      explainerText.innerHTML = `<strong>Engine Ready!</strong> Running SmolLM2-135M via CPU WebAssembly. Type your prompt and click <strong>Step</strong> to inspect.`;
     } catch (fallbackErr) {
-      statusText.textContent = "Failed to load model";
-      explainerText.innerHTML = `<span style="color: #f85149;">Error loading model: ${fallbackErr.message}</span>`;
+      console.error("Fatal initialization error:", fallbackErr);
+      statusText.textContent = "Initialization Failed";
+      progressBarContainer.classList.add("hidden");
+      explainerText.innerHTML = `<span style="color: #f85149;">Failed to initialize model: ${fallbackErr.message}</span>`;
       btnInit.disabled = false;
       btnInit.textContent = "Retry";
     }
@@ -113,7 +147,7 @@ btnInit.addEventListener("click", async () => {
 function renderTokens(tokenIds) {
   tokenChips.innerHTML = "";
   for (let i = 0; i < tokenIds.length; i++) {
-    const id = tokenIds[i];
+    const id = Number(tokenIds[i]);
     const textChunk = tokenizer.decode([id]);
     const chip = document.createElement("div");
     chip.className = "token-chip";
@@ -126,17 +160,14 @@ function renderTokens(tokenIds) {
 function getTopKWithSoftmax(logitsArray, topK, temperature) {
   const temp = Math.max(0.01, parseFloat(temperature));
   
-  // Create indexed list of [id, logit]
   const indexed = [];
   for (let i = 0; i < logitsArray.length; i++) {
     indexed.push({ id: i, logit: logitsArray[i] });
   }
 
-  // Sort descending
   indexed.sort((a, b) => b.logit - a.logit);
   const candidates = indexed.slice(0, topK);
 
-  // Softmax with temperature scaling
   const scaled = candidates.map(c => c.logit / temp);
   const maxScaled = Math.max(...scaled);
   const exps = scaled.map(s => Math.exp(s - maxScaled));
@@ -175,7 +206,6 @@ async function stepModel() {
   isBusy = true;
 
   try {
-    // If starting a fresh run, tokenize the user prompt
     if (!currentInputIds) {
       const text = promptInput.value;
       if (!text.trim()) {
@@ -188,17 +218,15 @@ async function stepModel() {
       liveText.textContent = "";
     }
 
-    const currentTokensArray = Array.from(currentInputIds.data);
+    const currentTokensArray = Array.from(currentInputIds.data).map(Number);
     renderTokens(currentTokensArray);
 
-    // Forward pass through transformer
+    // Forward pass
     const output = await model({ input_ids: currentInputIds });
     
-    // Output logits shape: [batch, sequence_length, vocab_size]
     const seqLength = currentInputIds.dims[1];
     const vocabSize = output.logits.dims[2];
     
-    // Extract logits for the very last token position
     const lastTokenLogitsOffset = (seqLength - 1) * vocabSize;
     const logitsSlice = output.logits.data.subarray(lastTokenLogitsOffset, lastTokenLogitsOffset + vocabSize);
 
@@ -206,7 +234,7 @@ async function stepModel() {
     const topK = parseInt(topkSlider.value, 10);
     const candidatePool = getTopKWithSoftmax(logitsSlice, topK, temp);
 
-    // Sample next token (Roulette-wheel)
+    // Roulette-wheel sampling
     const rand = Math.random();
     let cumulative = 0;
     let selectedItem = candidatePool[0];
@@ -219,10 +247,9 @@ async function stepModel() {
       }
     }
 
-    // Append chosen token
     renderProbabilities(candidatePool, selectedItem.id);
 
-    // Concat to input_ids for autoregression
+    // Concatenate new token to input tensor
     const nextId = BigInt(selectedItem.id);
     const newLength = currentTokensArray.length + 1;
     const newBigIntArray = new BigInt64Array(newLength);
@@ -231,23 +258,22 @@ async function stepModel() {
     }
     newBigIntArray[newLength - 1] = nextId;
 
-    // Update tensor
     const Tensor = currentInputIds.constructor;
     currentInputIds = new Tensor('int64', newBigIntArray, [1, newLength]);
 
-    // Update UI
+    // Update text
     generatedTokens.push(selectedItem.token);
     liveText.innerHTML = generatedTokens.map(t => `<span class="new-token">${t}</span>`).join("");
 
     explainerText.innerHTML = `
-      <strong>Step Generated:</strong><br>
-      The model read all <code>${currentTokensArray.length}</code> preceding tokens. Based on context, 
-      its top prediction was <code>"${candidatePool[0].token.replace(/\s/g, '·')}"</code> (${(candidatePool[0].prob * 100).toFixed(1)}%). 
-      With temperature at <strong>${temp}</strong>, it sampled <code>"${selectedItem.token.replace(/\s/g, '·')}"</code> and fed it back into the context buffer.
+      <strong>Autoregressive Step Complete:</strong><br>
+      The network scanned all <code>${currentTokensArray.length}</code> tokens in memory. Its #1 calculated 
+      candidate was <code>"${candidatePool[0].token.replace(/\s/g, '·')}"</code> (${(candidatePool[0].prob * 100).toFixed(1)}%). 
+      With temperature at <strong>${temp}</strong>, it sampled <code>"${selectedItem.token.replace(/\s/g, '·')}"</code> 
+      and appended it to the prompt.
     `;
 
-    // Re-render chips to show the appended token
-    renderTokens(Array.from(newBigIntArray));
+    renderTokens(Array.from(newBigIntArray).map(Number));
 
   } catch (err) {
     console.error("Inference step error:", err);
@@ -272,12 +298,10 @@ btnStream.addEventListener("click", async () => {
   isStreaming = true;
   btnStream.textContent = "⏹ Stop Generation";
 
-  // Run up to 25 autoregressive iterations
   for (let i = 0; i < 25; i++) {
     if (!isStreaming) break;
     await stepModel();
-    // Allow UI to breathe
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 60));
   }
 
   isStreaming = false;
