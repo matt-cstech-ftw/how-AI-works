@@ -165,6 +165,25 @@ header {
   font-family: 'Fira Code', monospace;
   font-size: 0.8rem;
   color: var(--accent);
+  min-width: 45px;
+  text-align: center;
+}
+
+.output-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.output-hint {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-family: inherit;
+}
+
+.output-hint.hidden {
+  display: none;
 }
 
 .label-muted {
@@ -284,6 +303,24 @@ button:disabled {
   margin-left: auto;
 }
 
+.btn-fork {
+  background: rgba(188, 140, 255, 0.15);
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.btn-fork:hover {
+  background: var(--purple);
+  color: #0d1117;
+}
+
+.btn-fork.hidden {
+  display: none;
+}
+
 .live-text-box {
   min-height: 140px;
   background: #0d1117;
@@ -401,6 +438,17 @@ button:disabled {
   letter-spacing: 0.05em;
 }
 
+.chart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.chart-header-row h3 {
+  margin-bottom: 0;
+}
+
 .token-chips-container {
   display: flex;
   flex-wrap: wrap;
@@ -409,8 +457,8 @@ button:disabled {
   padding: 0.6rem;
   border-radius: 6px;
   border: 1px solid var(--border);
-  min-height: 60px;
-  max-height: 140px;
+  min-height: 55px;
+  max-height: 120px;
   overflow-y: auto;
 }
 
@@ -448,6 +496,18 @@ button:disabled {
   gap: 0.5rem;
   font-family: 'Fira Code', monospace;
   font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.prob-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.prob-row.candidate-selected {
+  outline: 1px dashed var(--purple);
 }
 
 .prob-label {
@@ -474,6 +534,10 @@ button:disabled {
   background: var(--success);
 }
 
+.prob-bar-fill.branch-choice {
+  background: var(--purple);
+}
+
 .empty-state {
   text-align: center;
   color: var(--text-muted);
@@ -481,9 +545,68 @@ button:disabled {
   padding: 1.25rem 0;
 }
 
-/* Modals & Overlays */
-.modal-overlay,
-.debrief-overlay {
+/* Completion Summary (Inline, non-obstructive) */
+.completion-summary {
+  background: #141c26;
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.completion-summary.hidden {
+  display: none;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-header h4 {
+  font-size: 0.95rem;
+  color: var(--text-bright);
+}
+
+.summary-text {
+  font-size: 0.86rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.summary-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.s-stat {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.s-stat span {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: 'Fira Code', monospace;
+}
+
+.s-stat small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Modals */
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
@@ -495,13 +618,11 @@ button:disabled {
   z-index: 1000;
 }
 
-.modal-overlay.hidden,
-.debrief-overlay.hidden {
+.modal-overlay.hidden {
   display: none;
 }
 
-.modal-card,
-.debrief-card {
+.modal-card {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -512,10 +633,6 @@ button:disabled {
   max-height: 90vh;
   overflow-y: auto;
   animation: fadeIn 0.3s ease-out;
-}
-
-.debrief-card {
-  border-color: var(--purple);
 }
 
 @keyframes fadeIn {
@@ -531,7 +648,6 @@ button:disabled {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   display: inline-block;
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
 }
 
@@ -545,11 +661,11 @@ button:disabled {
   color: var(--success) !important;
 }
 
-.modal-card h2,
-.debrief-header h3 {
+.modal-card h2 {
   font-size: 1.25rem;
   color: var(--text-bright);
   line-height: 1.3;
+  margin-top: 0.5rem;
   margin-bottom: 0.4rem;
 }
 
@@ -591,93 +707,6 @@ button:disabled {
   text-align: right;
 }
 
-/* Debrief Specifics */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.75rem;
-  margin: 1.25rem 0;
-}
-
-.stat-box {
-  background: #0d1117;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.75rem;
-  text-align: center;
-}
-
-.stat-num {
-  display: block;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: 'Fira Code', monospace;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.minigame-card {
-  background: #0d1117;
-  border: 1px solid var(--purple);
-  border-radius: 6px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.minigame-card h4 {
-  font-size: 0.95rem;
-  color: var(--purple);
-  margin-bottom: 0.4rem;
-}
-
-.minigame-text {
-  font-size: 0.85rem;
-  color: var(--text-main);
-  margin-bottom: 0.75rem;
-}
-
-.minigame-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.btn-game-opt {
-  background: #21262d;
-  color: var(--text-bright);
-  border: 1px solid var(--border);
-  padding: 0.4rem 0.8rem;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.85rem;
-}
-
-.btn-game-opt:hover {
-  border-color: var(--accent);
-}
-
-.minigame-result {
-  font-size: 0.85rem;
-  padding: 0.6rem;
-  border-radius: 4px;
-  background: #1c2128;
-  margin-top: 0.5rem;
-}
-
-.minigame-result.hidden {
-  display: none;
-}
-
-.debrief-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
 /* Mobile & Touch */
 @media (max-width: 860px) {
   body {
@@ -707,10 +736,6 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
   .action-buttons button {
     flex: 1 1 calc(50% - 0.5rem);
     min-height: 44px;
@@ -718,9 +743,5 @@ button:disabled {
 
   .btn-tertiary {
     margin-left: 0;
-  }
-
-  .debrief-footer {
-    flex-direction: column;
   }
 }
