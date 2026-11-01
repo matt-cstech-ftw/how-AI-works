@@ -25,7 +25,7 @@
       
       <h2>Ever wondered what is <em>actually</em> happening inside ChatGPT, Gemini, or Claude?</h2>
       <p class="modal-intro">
-        When you chat with frontier AI systems, it feels like talking to a mind that plans out paragraphs. <strong>It isn't.</strong> Every Large Language Model (LLM) on Earth runs on the exact same mathematical loop—predicting strictly <em>one token at a time</em>. This sandbox slows a real neural network down to human speed so you can see inside the black box.
+        When you chat with frontier AI systems, it feels like talking to a mind that plans out paragraphs. <strong>It isn't.</strong> Every Large Language Model (LLM) runs on the exact same mathematical loop—predicting strictly <em>one token at a time</em>. This sandbox slows a real neural network down to human speed so you can see inside the black box.
       </p>
 
       <div class="modal-grid">
@@ -33,7 +33,7 @@
           <div class="f-icon-wrap">🧩</div>
           <div>
             <strong>1. Subword Tokenization</strong>
-            <p>AI doesn't see letters or words. It slices your prompt into numerical IDs from a fixed dictionary before doing any math.</p>
+            <p>AI doesn't read letters. It slices your prompt into numerical IDs from a fixed dictionary before doing any math.</p>
           </div>
         </div>
         <div class="modal-feature">
@@ -54,13 +54,24 @@
           <div class="f-icon-wrap">🎲</div>
           <div>
             <strong>4. Temperature & Timeline Forking</strong>
-            <p>Drag the Temperature slider to reshape the odds live, or click any generated word to rewrite history down a new branch.</p>
+            <p>Drag the Temperature slider to reshape the odds live, or tap any generated word to rewrite history down a new branch.</p>
           </div>
         </div>
       </div>
 
+      <!-- Tiny Model Honesty Callout -->
+      <div class="tiny-brain-callout">
+        <span class="tb-icon">🧠</span>
+        <div>
+          <strong>Heads Up: "Pocket Brain" vs. Cloud Giants!</strong>
+          <p>
+            Cloud models like ChatGPT and Gemini run on massive data-center supercomputers with <strong>1,000+ Billion parameters</strong>. So that your own phone or laptop can run this without melting, this sandbox runs a tiny <strong>0.13 Billion parameter</strong> model right in your browser. It uses the <em>exact same Transformer math</em>, just with a much smaller, goofier brain!
+          </p>
+        </div>
+      </div>
+
       <div class="legal-disclaimer">
-        <strong>Educational Notice:</strong> The transformer architecture shown here (Tokenization → Self-Attention → Logit Softmax → Autoregressive Sampling) is the exact mathematical foundation used by OpenAI's ChatGPT, Google's Gemini, and Anthropic's Claude, scaled down to run privately inside your browser. <em>This is an independent educational tool and is not affiliated with, endorsed by, or sponsored by OpenAI, Google, Anthropic, or Hugging Face.</em>
+        <strong>Disclaimer & Memory Safety:</strong> This app runs locally in your browser and automatically frees RAM when idle. <em>Independent educational tool—not affiliated with, endorsed by, or sponsored by OpenAI, Google, Anthropic, or Hugging Face.</em>
       </div>
 
       <div class="modal-footer">
@@ -76,8 +87,8 @@
     <div class="brand-group">
       <div class="logo-mark">⚡</div>
       <div>
-        <h1>Inside The Transformer <span class="sub-brand">/ LLM Telemetry Sandbox</span></h1>
-        <p class="tagline">Exposing the real-time math behind ChatGPT, Gemini, Claude & modern generative AI</p>
+        <h1>Inside The Transformer <span class="sub-brand">/ LLM Telemetry</span></h1>
+        <p class="tagline">Exposing the real-time math behind ChatGPT, Gemini & generative AI</p>
       </div>
     </div>
 
@@ -90,13 +101,17 @@
         </select>
       </div>
 
+      <button id="btn-unload-ram" class="btn-glass hidden" title="Unload neural network from RAM to free device memory">
+        🧹 Free RAM
+      </button>
+
       <button id="btn-share" class="btn-glass" title="Copy shareable link to this prompt & temperature">
-        🔗 Share Experiment
+        🔗 Share
       </button>
 
       <div class="status-pill" id="model-status">
         <span class="dot" id="status-dot"></span>
-        <span id="status-text">Engine Standby</span>
+        <span id="status-text">Standby (0 MB RAM)</span>
       </div>
     </div>
   </header>
@@ -112,68 +127,82 @@
     </div>
   </div>
 
-  <!-- Main Responsive Workspace (Works across 16:9, 21:9, and 9:16 Portrait) -->
+  <!-- Main Responsive Workspace -->
   <main class="workspace-grid">
     
-    <!-- LEFT PANE: Prompt, Presets, Controls & Live Output -->
+    <!-- LEFT PANE: Prompt, Collapsible Controls & Live Output -->
     <section class="card-panel left-pane">
       <div class="panel-title-bar">
-        <h2>1. Input & Sampling Controls</h2>
-        <span class="step-pill">Interactive Input</span>
+        <h2>1. Prompt & Sampling Studio</h2>
+        <button id="btn-toggle-drawer" class="btn-drawer-toggle hidden">
+          ⚙️ Edit Prompt & Sliders ▼
+        </button>
       </div>
 
-      <!-- Curated Preset Pills -->
-      <div class="presets-bar">
-        <span class="label-tiny">Try an Experiment:</span>
-        <div class="preset-pills">
-          <button class="preset-pill" data-prompt="Complete this famous proverb in one sentence: Early to bed and early to rise" data-temp="0.2">
-            🔒 99% Lock-In (Idiom)
-          </button>
-          <button class="preset-pill" data-prompt="What is your favorite color and why does it inspire you?" data-temp="0.8">
-            🎨 Creative Crossroads
-          </button>
-          <button class="preset-pill" data-prompt="Who are you and how do you generate answers?" data-temp="0.5">
-            🤖 AI Self-Identity
-          </button>
-          <button class="preset-pill" data-prompt="Write a vivid one-sentence description of a cyberpunk coffee shop." data-temp="1.1">
-            🎲 High-Temp Wildcard
-          </button>
+      <!-- Compact Summary Bar (Shown when drawer auto-collapses during playback) -->
+      <div id="collapsed-prompt-bar" class="collapsed-prompt-bar hidden">
+        <div class="cp-text">
+          <span class="badge">Active Prompt</span>
+          <strong id="cp-prompt-preview"></strong>
         </div>
+        <span class="cp-meta" id="cp-temp-preview">Temp: 0.7</span>
       </div>
 
-      <!-- Prompt Textarea -->
-      <div class="input-group">
-        <label for="prompt-input" class="label-muted">Your Prompt:</label>
-        <textarea id="prompt-input" rows="2" placeholder="Ask anything or type a partial sentence...">What is your favorite color and why?</textarea>
-      </div>
-
-      <!-- Interactive Sliders with Live Math Explanations -->
-      <div class="sliders-container">
-        <div class="slider-box" id="temp-box">
-          <div class="slider-header">
-            <label for="temp-slider">Temperature (Creativity Dial)</label>
-            <span class="slider-badge" id="temp-val">0.7 — Balanced</span>
+      <!-- Collapsible Setup Drawer (Auto-collapses on mobile during walkthrough) -->
+      <div id="setup-drawer" class="setup-drawer">
+        <!-- Curated Preset Pills -->
+        <div class="presets-bar">
+          <span class="label-tiny">Tap an Experiment:</span>
+          <div class="preset-pills">
+            <button class="preset-pill" data-prompt="Complete this famous proverb in one sentence: Early to bed and early to rise" data-temp="0.2">
+              🔒 99% Lock-In
+            </button>
+            <button class="preset-pill" data-prompt="What is your favorite color and why does it inspire you?" data-temp="0.8">
+              🎨 Creative Crossroads
+            </button>
+            <button class="preset-pill" data-prompt="Who are you and how do you generate answers?" data-temp="0.5">
+              🤖 AI Identity
+            </button>
+            <button class="preset-pill" data-prompt="Write a vivid one-sentence description of a cyberpunk coffee shop." data-temp="1.1">
+              🎲 High-Temp Wildcard
+            </button>
           </div>
-          <input type="range" id="temp-slider" min="0.0" max="1.5" step="0.1" value="0.7">
-          <p class="slider-explainer" id="temp-explainer">
-            <strong>How it works:</strong> Divides raw scores before Softmax ($z_i / T$). Dragging this reshapes the candidate bars on the right in real time!
-          </p>
         </div>
 
-        <div class="slider-box">
-          <div class="slider-header">
-            <label for="topk-slider">Top-K Candidates Pool</label>
-            <span class="slider-badge" id="topk-val">Top 5 Words</span>
+        <!-- Prompt Textarea -->
+        <div class="input-group">
+          <label for="prompt-input" class="label-muted">Your Prompt:</label>
+          <textarea id="prompt-input" rows="2" placeholder="Ask anything or type a partial sentence...">What is your favorite color and why?</textarea>
+        </div>
+
+        <!-- Interactive Sliders with Live Math Explanations -->
+        <div class="sliders-container">
+          <div class="slider-box" id="temp-box">
+            <div class="slider-header">
+              <label for="temp-slider">Temperature (Creativity Dial)</label>
+              <span class="slider-badge" id="temp-val">0.7 — Balanced</span>
+            </div>
+            <input type="range" id="temp-slider" min="0.0" max="1.5" step="0.1" value="0.7">
+            <p class="slider-explainer" id="temp-explainer">
+              <strong>How it works:</strong> Divides raw scores before Softmax ($z_i / T$). Dragging this reshapes the candidate bars live!
+            </p>
           </div>
-          <input type="range" id="topk-slider" min="3" max="10" step="1" value="5">
-          <p class="slider-explainer">
-            <strong>How it works:</strong> Cuts off the long tail of 49,000+ dictionary tokens so the dice roll only considers the top $K$ finalists.
-          </p>
+
+          <div class="slider-box">
+            <div class="slider-header">
+              <label for="topk-slider">Top-K Candidates Pool</label>
+              <span class="slider-badge" id="topk-val">Top 5 Words</span>
+            </div>
+            <input type="range" id="topk-slider" min="3" max="10" step="1" value="5">
+            <p class="slider-explainer">
+              <strong>How it works:</strong> Cuts off the long tail of 49,000+ dictionary tokens so the dice roll only considers the top $K$ finalists.
+            </p>
+          </div>
         </div>
       </div>
 
-      <!-- Primary Action Bar -->
-      <div class="action-bar">
+      <!-- Primary Action Bar (Always Visible) -->
+      <div class="action-bar" id="live-stage-anchor">
         <button id="btn-init" class="btn-init">
           ⚡ Initialize Neural Engine
         </button>
@@ -183,9 +212,9 @@
         <div class="speed-toggle-wrap">
           <label for="speed-select" class="label-tiny">Pace:</label>
           <select id="speed-select" class="speed-select">
-            <option value="650">🐢 Slow (Teach Me)</option>
+            <option value="650">🐢 Slow (Teach)</option>
             <option value="320" selected>🚶 Normal</option>
-            <option value="80">⚡ Fast Stream</option>
+            <option value="80">⚡ Fast</option>
           </select>
         </div>
         <button id="btn-reset" class="btn-ghost" title="Clear and start fresh">
@@ -200,8 +229,13 @@
           <div class="heatmap-legend">
             <span class="legend-item" title=">75% probability"><i class="dot-lock"></i> Lock-in</span>
             <span class="legend-item" title="Competitive #1 choice"><i class="dot-comp"></i> #1 Pick</span>
-            <span class="legend-item" title="Runner-up chosen via Temperature"><i class="dot-upset"></i> 🎲 Temp Upset</span>
+            <span class="legend-item" title="Runner-up chosen via Temperature"><i class="dot-upset"></i> 🎲 Upset</span>
           </div>
+        </div>
+
+        <!-- Pocket Brain Reminder Strip -->
+        <div class="micro-model-note">
+          💡 <strong>Note:</strong> Generated by a tiny 135M-parameter local model so it can run on your device. It's much quirkier than giant cloud models, but the token-by-token math is 100% identical!
         </div>
 
         <!-- Ghosted Previous Timeline (Appears when user forks a branch) -->
@@ -212,10 +246,10 @@
           </div>
         </div>
 
-        <div id="live-text" class="live-output-box" data-placeholder="Initialize engine and click 'Run Guided Walkthrough' to watch tokens appear here..."></div>
+        <div id="live-text" class="live-output-box" data-placeholder="Initialize engine and tap 'Run Guided Walkthrough' to watch tokens appear here..."></div>
         
         <div id="output-footer-hint" class="output-footer-hint hidden">
-          👆 <strong>Interactive History:</strong> Click any generated word above to inspect the exact election odds and roulette spin that created it!
+          👆 <strong>Tap any colored word above</strong> to inspect its exact probability election and roulette spin below!
         </div>
       </div>
     </section>
@@ -263,7 +297,7 @@
           <span class="entropy-readout" id="entropy-readout"></span>
         </div>
         <div id="explainer-content" class="narrative-body">
-          Click <strong>⚡ Initialize Neural Engine</strong> on the left. Once loaded, we'll trace how your prompt turns into vectors, probabilities, and words—just like inside ChatGPT or Gemini.
+          Tap <strong>⚡ Initialize Neural Engine</strong>. Once loaded, we'll trace how your prompt turns into vectors, probabilities, and words—just like inside ChatGPT or Gemini.
         </div>
         <div id="explainer-actions" class="narrative-actions hidden">
           <button id="btn-continue-milestone" class="btn-primary btn-sm">
@@ -277,10 +311,10 @@
         <div class="block-header">
           <div>
             <h3>Next-Token Probability Election (Softmax)</h3>
-            <p class="block-sub">Drag the Temperature slider to see these bars reshape live! Click any bar to fork the timeline.</p>
+            <p class="block-sub">Tap any candidate bar below to force that word and fork the timeline!</p>
           </div>
           <button id="btn-fork-selection" class="btn-fork hidden">
-            🔀 Force This Word & Fork
+            🔀 Force Word & Fork
           </button>
         </div>
 
@@ -301,19 +335,19 @@
         </div>
       </div>
 
-      <!-- Active Context Window (Token Chips) -->
-      <div class="telemetry-block">
-        <div class="block-header">
+      <!-- Active Context Window (Collapsible Accordion on Mobile to save vertical space) -->
+      <details class="telemetry-accordion" id="token-accordion" open>
+        <summary class="accordion-summary">
           <div>
             <h3>Context Window Memory (Subword Tokens)</h3>
-            <p class="block-sub">Notice how every newly chosen token gets glued to the end of the prompt for the next pass.</p>
+            <p class="block-sub">Every chosen token gets glued to the prompt for the next pass.</p>
           </div>
           <span id="token-count-badge" class="badge-mono">0 Tokens</span>
-        </div>
+        </summary>
         <div id="token-chips" class="token-chips-box">
           <div class="empty-placeholder">Token IDs will populate here once inference begins.</div>
         </div>
-      </div>
+      </details>
 
       <!-- Inline Completion Debrief & Share Receipt -->
       <div id="completion-summary" class="completion-card hidden">
@@ -328,15 +362,15 @@
         <div class="metrics-row">
           <div class="metric-pill">
             <span id="stat-tokens">0</span>
-            <small>Tokens Generated</small>
+            <small>Tokens</small>
           </div>
           <div class="metric-pill">
             <span id="stat-deviations">0</span>
-            <small>🎲 Temp Upsets</small>
+            <small>🎲 Upsets</small>
           </div>
           <div class="metric-pill">
             <span id="stat-avg-conf">0%</span>
-            <small>Avg Winner Odds</small>
+            <small>Avg Odds</small>
           </div>
         </div>
       </div>
@@ -345,8 +379,13 @@
   </main>
 
   <footer class="app-footer">
-    <p>Built as an open educational sandbox demonstrating autoregressive Transformer mechanics. Runs 100% locally via WebGPU / WebAssembly.</p>
-    <p class="footer-legal">Not affiliated with OpenAI (ChatGPT), Google (Gemini), or Anthropic (Claude). Trademarks belong to their respective owners.</p>
+    <div>
+      <p>Runs 100% locally via WebGPU / WebAssembly. Automatically frees RAM after 3 minutes in background.</p>
+      <p class="footer-legal">Not affiliated with OpenAI (ChatGPT), Google (Gemini), or Anthropic (Claude). Trademarks belong to their respective owners.</p>
+    </div>
+    <button id="btn-clear-cache" class="btn-clear-cache" title="Delete downloaded model weights from browser storage">
+      🗑️ Clear Cached Weights
+    </button>
   </footer>
 
   <!-- Toast Notification -->
