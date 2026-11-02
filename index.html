@@ -2,384 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>How AI Actually Works — See Inside ChatGPT, Gemini & Claude</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How AI Works — Interactive Learning Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 </head>
 <body>
+  <div class="bg-grid"></div>
 
-  <!-- Ambient Background Glows -->
-  <div class="ambient-glow glow-1"></div>
-  <div class="ambient-glow glow-2"></div>
-
-  <!-- Welcome Modal -->
-  <div id="welcome-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-top-bar">
-        <span class="version-tag">Runs 100% On Your Device</span>
-      </div>
-      
-      <h2>Ever wondered what is <em>actually</em> happening when you talk to ChatGPT or Gemini?</h2>
-      <p class="modal-intro">
-        When you chat with AI, it feels like talking to a person who plans out whole sentences in their head. <strong>It doesn't!</strong> Under the hood, AI is essentially a super-powered autocomplete game—predicting strictly <em>one word at a time</em>. This app slows a real AI down to human speed so you can watch how it works.
-      </p>
-
-      <div class="modal-grid">
-        <div class="modal-feature">
-          <div class="f-icon-wrap">🧩</div>
-          <div>
-            <strong>1. Chop Words <small class="tech-sub">(Tokenization)</small></strong>
-            <p>AI chops your sentence into numbered puzzle pieces called <em>tokens</em>.</p>
-          </div>
+  <!-- Top Navigation -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-icon">
+          <i data-lucide="cpu" class="icon-sm"></i>
         </div>
-        <div class="modal-feature">
-          <div class="f-icon-wrap">🔦</div>
-          <div>
-            <strong>2. Find Clues <small class="tech-sub">(Self-Attention)</small></strong>
-            <p>The AI connects words together to lock onto grammar and topic rules.</p>
-          </div>
-        </div>
-        <div class="modal-feature">
-          <div class="f-icon-wrap">📊</div>
-          <div>
-            <strong>3. Score Words <small class="tech-sub">(Logits / Softmax)</small></strong>
-            <p>The AI holds a contest across its dictionary and gives candidate words percentage odds.</p>
-          </div>
-        </div>
-        <div class="modal-feature">
-          <div class="f-icon-wrap">🎲</div>
-          <div>
-            <strong>4. Roll the Dice <small class="tech-sub">(Sampling)</small></strong>
-            <p>Instead of picking the #1 word every time, it rolls a weighted die for creativity.</p>
-          </div>
+        <div class="brand-text">
+          <span class="brand-title">HOW AI WORKS</span>
+          <span class="brand-badge">INTERACTIVE LAB</span>
         </div>
       </div>
 
-      <!-- Tiny Model Honesty Callout -->
-      <div class="tiny-brain-callout">
-        <span class="tb-icon">🧠</span>
-        <div>
-          <strong>Why is this AI a little goofy? ("Pocket Brain" vs. Supercomputers)</strong>
-          <p>
-            Big AI tools like ChatGPT and Google Gemini run on giant data-center supercomputers. So that your own device can run this live without melting, this page loads a <strong>tiny, miniature AI brain</strong>. It isn't nearly as smart, but the step-by-step guessing game it plays is <strong>100% identical</strong> to the big ones!
-          </p>
+      <div class="topbar-stats">
+        <div class="stat-chip">
+          <i data-lucide="check-circle-2" class="icon-xs text-emerald"></i>
+          <span>Completed: <strong id="nav-completed">0/5</strong></span>
         </div>
-      </div>
-
-      <div class="legal-disclaimer">
-        <strong>Privacy & Independence:</strong> Everything runs privately inside your web browser. <em>This is an independent educational project and is not affiliated with OpenAI (ChatGPT), Google (Gemini), or Anthropic (Claude).</em>
-      </div>
-
-      <div class="modal-footer">
-        <button id="btn-modal-agree" class="btn-primary btn-lg">
-          Got It — Show Me How It Works 🚀
+        <div class="stat-chip">
+          <i data-lucide="zap" class="icon-xs text-amber"></i>
+          <span><strong id="nav-xp">0</strong> XP</span>
+        </div>
+        <button id="btn-reset-progress" class="btn-outline btn-xs" title="Reset all saved progress">
+          <i data-lucide="rotate-ccw" class="icon-xs"></i>
+          <span>Reset</span>
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Top Navigation Header -->
-  <header class="app-header">
-    <div class="brand-group">
-      <div class="logo-mark">⚡</div>
-      <div>
-        <h1>How AI Actually Works</h1>
-        <p class="tagline">See the step-by-step word guessing game inside ChatGPT, Gemini & modern AI</p>
-      </div>
-    </div>
-
-    <div class="header-controls">
-      <button id="btn-unload-ram" class="btn-glass hidden" title="Turn off the AI brain to free up your device's memory">
-        🧹 Turn Off AI
-      </button>
-
-      <button id="btn-share" class="btn-glass" title="Copy a link to share this experiment with friends">
-        🔗 Share with Friends
-      </button>
-
-      <div class="status-pill" id="model-status">
-        <span class="dot" id="status-dot"></span>
-        <span id="status-text">AI Brain: Off</span>
       </div>
     </div>
   </header>
 
-  <!-- Download Progress Banner -->
-  <div id="download-progress-bar" class="progress-banner hidden">
-    <div class="progress-info">
-      <span id="progress-status">Loading miniature AI brain into your browser...</span>
-      <span id="progress-pct">0%</span>
-    </div>
-    <div class="progress-track">
-      <div id="progress-fill" class="progress-fill"></div>
-    </div>
-  </div>
-
-  <!-- Main Workspace -->
-  <main class="workspace-grid">
-    
-    <!-- LEFT PANE -->
-    <section class="card-panel left-pane">
-      <div class="panel-title-bar">
-        <h2>1. Ask the AI Something</h2>
-        <button id="btn-toggle-drawer" class="btn-drawer-toggle hidden">
-          ✏️ Change Question or Creativity ▼
-        </button>
-      </div>
-
-      <div id="collapsed-prompt-bar" class="collapsed-prompt-bar hidden">
-        <div class="cp-text">
-          <span class="badge">Question</span>
-          <strong id="cp-prompt-preview"></strong>
+  <main class="dashboard-container">
+    <!-- Hero Overview Banner -->
+    <section class="hero-card">
+      <div class="hero-content">
+        <div class="eyebrow">
+          <span class="status-dot"></span>
+          <span>100% HANDS-ON • RUNS PRIVATELY ON YOUR DEVICE</span>
         </div>
-        <span class="cp-meta" id="cp-temp-preview">Creativity: 0.7</span>
-      </div>
-
-      <div id="setup-drawer" class="setup-drawer">
-        <div class="presets-bar">
-          <span class="label-tiny">Pick a Quick Example (or type your own below):</span>
-          <div class="preset-pills">
-            <button class="preset-pill" data-prompt="Complete this famous saying in one sentence: Early to bed and early to rise" data-temp="0.2">
-              🔒 Famous Saying (Predictable)
-            </button>
-            <button class="preset-pill" data-prompt="What is your favorite color and why?" data-temp="0.7">
-              🎨 Favorite Color
-            </button>
-            <button class="preset-pill" data-prompt="Who are you and how do you work?" data-temp="0.5">
-              🤖 Who Are You?
-            </button>
-            <button class="preset-pill" data-prompt="Describe a futuristic coffee shop on Mars in one sentence." data-temp="1.2">
-              🎲 Wild & Creative
-            </button>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label for="prompt-input" class="label-muted">Your Question or Starting Sentence:</label>
-          <textarea id="prompt-input" rows="2" placeholder="Type any question here...">What is your favorite color and why?</textarea>
-        </div>
-
-        <div class="slider-box" id="temp-box">
-          <div class="slider-header">
-            <label for="temp-slider">Creativity Dial <small class="tech-sub">(Temperature / Softmax Scaling)</small></label>
-            <span class="slider-badge" id="temp-val">0.7 — Balanced</span>
-          </div>
-          <input type="range" id="temp-slider" min="0.0" max="1.5" step="0.1" value="0.7">
-          <div class="slider-scale-labels">
-            <span>🧊 0.0 (Robot Mode)</span>
-            <span>⚖️ 0.7 (Normal)</span>
-            <span>🔥 1.5 (Wild)</span>
-          </div>
-          <p class="slider-explainer" id="temp-explainer">
-            <strong>What this does:</strong> Controls whether the AI plays it safe or takes chances on runner-up words.
-          </p>
+        <h1>See what actually happens inside ChatGPT & modern AI.</h1>
+        <p class="hero-sub">
+          When you chat with AI, it feels like talking to a person who plans out whole sentences in their head. <strong>It doesn't.</strong> Under the hood, AI plays a high-speed word-guessing game—one single piece at a time. Slow a real AI down to human speed and complete the interactive labs below.
+        </p>
+        <div class="hero-actions">
+          <a href="modules/01-transformer/index.html" id="hero-cta" class="btn-primary">
+            <span id="hero-cta-text">Start Lab 01: How AI Guesses the Next Word</span>
+            <i data-lucide="arrow-right" class="icon-sm"></i>
+          </a>
         </div>
       </div>
 
-      <div class="action-bar" id="live-stage-anchor">
-        <div class="start-btn-wrapper">
-          <button id="btn-init" class="btn-init">
-            ⚡ Step 1: Turn On AI Brain
-          </button>
-          <span id="start-here-beacon" class="start-beacon">
-            <span class="pulse-ring"></span>
-            👈 Start Here!
-          </span>
+      <!-- Radial Mastery Gauge -->
+      <div class="hero-gauge-card">
+        <div class="gauge-header">
+          <span>COURSE MASTERY</span>
+          <span id="mastery-pct-badge" class="mono-tag">0%</span>
         </div>
-
-        <div class="start-btn-wrapper">
-          <button id="btn-stream" class="btn-primary" disabled>
-            ▶ Step 2: Watch It Think
-          </button>
-          <span id="step2-beacon" class="start-beacon beacon-blue hidden">
-            <span class="pulse-ring"></span>
-            👈 Now Click Here!
-          </span>
-        </div>
-
-        <div class="speed-toggle-wrap">
-          <label for="speed-select" class="label-tiny">Speed:</label>
-          <select id="speed-select" class="speed-select">
-            <option value="900" selected>🐢 Slow (Easy to Read)</option>
-            <option value="400">🚶 Normal</option>
-            <option value="120">⚡ Fast</option>
-          </select>
-        </div>
-
-        <button id="btn-reset" class="btn-ghost" title="Clear and start over">
-          ↺ Start Over
-        </button>
-      </div>
-
-      <div class="output-section">
-        <div class="output-header">
-          <span class="label-muted">What the AI is Writing (One Word at a Time)</span>
-          <div class="heatmap-legend">
-            <span class="legend-item" title="Obvious choice (>75% chance)"><i class="dot-lock"></i> Obvious Pick</span>
-            <span class="legend-item" title="#1 favorite won"><i class="dot-comp"></i> #1 Winner</span>
-            <span class="legend-item" title="Surprise runner-up won the dice roll"><i class="dot-upset"></i> 🎲 Surprise Pick</span>
+        <div class="radial-wrap">
+          <svg viewBox="0 0 120 75" class="mastery-svg">
+            <path d="M 15 65 A 45 45 0 0 1 105 65" fill="none" stroke="#27272a" stroke-width="10" stroke-linecap="round" />
+            <path id="mastery-arc" d="M 15 65 A 45 45 0 0 1 105 65" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37" />
+          </svg>
+          <div class="radial-Readout">
+            <span id="gauge-big-num">0/5</span>
+            <small>LABS DONE</small>
           </div>
         </div>
-
-        <div class="micro-model-note">
-          🧠 <strong>Remember:</strong> This is a tiny "pocket AI" running on your device so you can see inside it. It uses the exact same token-by-token math as giant cloud models!
-        </div>
-
-        <div id="fork-comparison-banner" class="fork-banner hidden">
-          <div class="fork-banner-title">🔀 You Changed History! Comparing Answers:</div>
-          <div class="fork-old-timeline">
-            <span>Original Answer:</span> <em id="fork-old-text"></em>
-          </div>
-        </div>
-
-        <div id="live-text" class="live-output-box" data-placeholder="Click 'Step 1: Turn On AI Brain' above, then 'Step 2: Watch It Think' to see words appear here one by one..."></div>
-        
-        <div id="output-footer-hint" class="output-footer-hint hidden">
-          👆 <strong>Try This:</strong> Click any colored word above to rewind and see what other words almost won that spot!
+        <div class="gauge-footer">
+          <span>Complete labs & short quizzes to unlock the full track.</span>
         </div>
       </div>
     </section>
 
-    <!-- RIGHT PANE -->
-    <section class="card-panel right-pane" id="telemetry-panel">
-      <div class="panel-title-bar">
-        <h2>2. Inside the AI's Head</h2>
-        
-        <div id="replay-controls" class="replay-scrubber hidden">
-          <button id="btn-replay-prev" class="btn-icon" title="Previous Word">◀</button>
-          <span id="replay-step-indicator" class="scrubber-readout">Word 0 / 0</span>
-          <button id="btn-replay-next" class="btn-icon" title="Next Word">▶</button>
-        </div>
-      </div>
+    <!-- Section Header -->
+    <div class="section-bar">
+      <h2>Interactive Learning Modules</h2>
+      <span class="section-sub">Plain-English guides with live AI experiments</span>
+    </div>
 
-      <!-- 4-Stage Pipeline Indicator with Technical Subtitles -->
-      <div class="pipeline-stepper">
-        <div class="pipe-node" id="badge-prefill">
-          <span class="pipe-num">1</span>
-          <span class="pipe-name">Chop Words <small class="tech-sub">(Tokenization)</small></span>
-        </div>
-        <div class="pipe-line"></div>
-        <div class="pipe-node" id="badge-attention">
-          <span class="pipe-num">2</span>
-          <span class="pipe-name">Find Clues <small class="tech-sub">(Attention)</small></span>
-        </div>
-        <div class="pipe-line"></div>
-        <div class="pipe-node" id="badge-logits">
-          <span class="pipe-num">3</span>
-          <span class="pipe-name">Score Words <small class="tech-sub">(Logits)</small></span>
-        </div>
-        <div class="pipe-line"></div>
-        <div class="pipe-node" id="badge-sample">
-          <span class="pipe-num">4</span>
-          <span class="pipe-name">Roll Dice <small class="tech-sub">(Sampling)</small></span>
-        </div>
-      </div>
-
-      <div class="narrative-card" id="unified-explainer">
-        <div class="narrative-top">
-          <span class="badge" id="explainer-badge">Waiting to Start</span>
-          <span class="entropy-readout" id="entropy-readout"></span>
-        </div>
-        <div id="explainer-content" class="narrative-body">
-          Click the green <strong>⚡ Step 1: Turn On AI Brain</strong> button on the left. Once ready, we'll watch how it steps through all 4 phases for every single word!
-        </div>
-        <div id="explainer-actions" class="narrative-actions hidden">
-          <button id="btn-continue-milestone" class="btn-primary btn-sm">
-            Makes Sense — Keep Going ▶
-          </button>
-        </div>
-      </div>
-
-      <div class="telemetry-block">
-        <div class="block-header">
-          <div>
-            <h3>The Word Contest <small class="tech-sub">(Top 5 Logit Odds)</small></h3>
-            <p class="block-sub">The AI scores competing words. Click any bar below to force the AI to use that word instead.</p>
-          </div>
-          <button id="btn-fork-selection" class="btn-fork hidden">
-            🔀 Use This Word Instead!
-          </button>
-        </div>
-
-        <div id="roulette-container" class="roulette-container hidden">
-          <div class="roulette-label-row">
-            <span>🎲 The Dice Roll <small class="tech-sub">(Multinomial Sampling)</small></span>
-            <span id="roulette-roll-text">Spin: --</span>
-          </div>
-          <div class="roulette-Bar-wrap">
-            <div id="roulette-strip" class="roulette-strip"></div>
-            <div id="roulette-needle" class="roulette-needle" style="left: 0%;">▼</div>
-          </div>
-        </div>
-
-        <div id="probability-chart" class="chart-box">
-          <div class="empty-placeholder">The top 5 competing words and their percentage odds will appear here as the AI writes.</div>
-        </div>
-      </div>
-
-      <details class="telemetry-accordion" id="token-accordion">
-        <summary class="accordion-summary">
-          <div>
-            <h3>🧩 How the AI Reads ("Tokens" in Memory) <span class="expand-hint">(Click to Show/Hide)</span></h3>
-            <p class="block-sub">AI assigns every word or subword a secret ID number.</p>
-          </div>
-          <span id="token-count-badge" class="badge-mono">0 Pieces</span>
-        </summary>
-        <div id="token-chips" class="token-chips-box">
-          <div class="empty-placeholder">Numbered word pieces will appear here once the AI starts reading.</div>
-        </div>
-      </details>
-
-      <div id="completion-summary" class="completion-card hidden">
-        <div class="completion-top">
-          <div>
-            <span class="badge badge-success">Finished Writing!</span>
-            <h4>What Just Happened?</h4>
-          </div>
-          <button id="btn-copy-receipt" class="btn-glass btn-sm">📋 Share Summary</button>
-        </div>
-        <p id="summary-narrative" class="completion-text"></p>
-        <div class="metrics-row">
-          <div class="metric-pill">
-            <span id="stat-tokens">0</span>
-            <small>Words Guessed</small>
-          </div>
-          <div class="metric-pill">
-            <span id="stat-deviations">0</span>
-            <small>🎲 Surprise Picks</small>
-          </div>
-          <div class="metric-pill">
-            <span id="stat-avg-conf">0%</span>
-            <small>Avg Certainty</small>
-          </div>
-        </div>
-      </div>
-
+    <!-- Module Cards Grid -->
+    <section class="modules-grid" id="modules-grid">
+      <!-- Dynamically populated by dashboard.js -->
     </section>
   </main>
 
-  <footer class="app-footer">
-    <div>
-      <p>Runs 100% privately in your web browser. Automatically turns off after 3 minutes in the background.</p>
-      <p class="footer-legal">Independent educational guide. Not affiliated with OpenAI (ChatGPT), Google (Gemini), or Anthropic (Claude).</p>
-    </div>
-    <div class="footer-actions">
-      <select id="model-select" class="model-select" title="Switch AI brain size">
-        <option value="HuggingFaceTB/SmolLM2-135M-Instruct">Brain Size: Tiny & Fast (~90MB)</option>
-        <option value="HuggingFaceTB/SmolLM2-360M-Instruct">Brain Size: Medium & Smarter (~230MB)</option>
-      </select>
-      <button id="btn-clear-cache" class="btn-clear-cache" title="Remove downloaded AI files from your browser">
-        🗑️ Delete Saved AI Files
-      </button>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Runs locally in your browser via WebGPU / WASM. No account required.</span>
+      <span class="mono-muted">v2.0 // Interactive AI Curriculum</span>
     </div>
   </footer>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="toast hidden">Copied to clipboard!</div>
-
-  <script type="module" src="app.js"></script>
+  <script type="module" src="assets/js/dashboard.js"></script>
 </body>
 </html>

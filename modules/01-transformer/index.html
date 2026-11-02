@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 01: How AI Guesses the Next Word — How AI Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <link rel="stylesheet" href="../../assets/css/sandbox.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <div class="brand-icon">
+          <i data-lucide="arrow-left" class="icon-sm"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">BACK TO DASHBOARD</span>
+          <span class="brand-badge">LAB 01 // NEXT-WORD CONTEST</span>
+        </div>
+      </a>
+
+      <div class="topbar-stats">
+        <div class="stat-chip" id="engine-status-pill">
+          <i data-lucide="power" class="icon-xs text-amber" id="status-icon"></i>
+          <span id="status-text">AI Brain: Off</span>
+        </div>
+        <button id="btn-open-quiz" class="btn-primary btn-xs">
+          <i data-lucide="award" class="icon-xs"></i>
+          <span>Take Lab 01 Quiz</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="sandbox-main">
+    <!-- Guided Activity Checklist -->
+    <section class="mission-bar">
+      <div class="mission-title-group">
+        <span class="mission-label">LAB GOALS</span>
+        <strong style="font-size: 0.85rem;">Complete all 3 steps to master Lab 01:</strong>
+      </div>
+      <div class="mission-steps">
+        <div class="mission-step" id="goal-wake">
+          <i data-lucide="circle" class="icon-xs"></i>
+          <span>1. Turn on AI Brain</span>
+        </div>
+        <div class="mission-step" id="goal-stream">
+          <i data-lucide="circle" class="icon-xs"></i>
+          <span>2. Watch AI guess words</span>
+        </div>
+        <div class="mission-step" id="goal-fork">
+          <i data-lucide="circle" class="icon-xs"></i>
+          <span>3. Click a runner-up bar to change history</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download Progress Bar -->
+    <div id="dl-banner" class="dl-banner hidden">
+      <div class="dl-info">
+        <span id="dl-status">Downloading miniature AI model to browser cache...</span>
+        <span id="dl-pct">0%</span>
+      </div>
+      <div class="dl-track">
+        <div id="dl-fill" class="dl-fill"></div>
+      </div>
+    </div>
+
+    <!-- Main Cockpit -->
+    <div class="cockpit-grid">
+      <!-- LEFT PANEL: Input & Live Output -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2><i data-lucide="message-square" class="icon-sm text-cyan"></i> 1. Ask the AI & Watch It Write</h2>
+          <span class="mono-tag">SmolLM2-135M</span>
+        </div>
+
+        <div id="setup-drawer" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div class="preset-row">
+            <button class="preset-btn" data-prompt="Complete this famous saying in one sentence: Early to bed and early to rise" data-temp="0.2">
+              Famous Saying (High Certainty)
+            </button>
+            <button class="preset-btn" data-prompt="What is your favorite color and why?" data-temp="0.7">
+              Favorite Color (Balanced)
+            </button>
+            <button class="preset-btn" data-prompt="Describe a strange coffee shop on Mars in one sentence." data-temp="1.3">
+              Mars Coffee Shop (Wild)
+            </button>
+          </div>
+
+          <textarea id="prompt-input" class="prompt-box" rows="2">What is your favorite color and why?</textarea>
+
+          <!-- Thermal Entropy Dial -->
+          <div class="thermal-card">
+            <div class="thermal-head">
+              <span>Creativity Dial <small style="color:var(--text-muted); font-weight:400;">(Technical term: Temperature)</small></span>
+              <span id="temp-badge" class="mono-tag">0.7 — Balanced</span>
+            </div>
+            <input type="range" id="temp-slider" class="thermal-slider" min="0.0" max="1.5" step="0.1" value="0.7" />
+            <div class="thermal-labels">
+              <span>0.0 (Strict #1 Pick)</span>
+              <span>0.7 (Normal Chat)</span>
+              <span>1.5 (High Risk / Creative)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="controls-bar">
+          <button id="btn-init" class="btn-primary">
+            <i data-lucide="zap" class="icon-xs"></i>
+            <span>Step 1: Turn On AI Brain</span>
+          </button>
+
+          <button id="btn-stream" class="btn-secondary" disabled>
+            <i data-lucide="play" class="icon-xs"></i>
+            <span>Step 2: Watch It Think</span>
+          </button>
+
+          <select id="speed-select" class="select-input">
+            <option value="850" selected>Slow Speed</option>
+            <option value="400">Normal Speed</option>
+            <option value="120">Fast Speed</option>
+          </select>
+
+          <button id="btn-reset" class="btn-outline">
+            <i data-lucide="rotate-ccw" class="icon-xs"></i>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <!-- Fork Comparison Banner -->
+        <div id="fork-banner" class="dl-banner hidden" style="border-color: var(--violet);">
+          <div style="font-size: 0.76rem; color: var(--violet); font-weight: 600;">Alternate Reality Triggered! Previous sentence before you stepped in:</div>
+          <div id="fork-old-text" style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;"></div>
+        </div>
+
+        <!-- Output Stream Box -->
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.35rem;">
+            <span>LIVE WORD-BY-WORD OUTPUT (Click any colored word to inspect it)</span>
+          </div>
+          <div id="live-text" class="output-stream" data-placeholder="Click 'Step 1: Turn On AI Brain', then 'Step 2: Watch It Think'..."></div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: Telemetry Instruments -->
+      <section class="panel" id="instruments-panel">
+        <div class="panel-head">
+          <h2><i data-lucide="gauge" class="icon-sm text-emerald"></i> 2. Inside the AI's Head</h2>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <button id="btn-prev" class="btn-outline btn-xs" disabled><i data-lucide="chevron-left" class="icon-xs"></i></button>
+            <span id="step-counter" class="mono-tag">Word 0 / 0</span>
+            <button id="btn-next" class="btn-outline btn-xs" disabled><i data-lucide="chevron-right" class="icon-xs"></i></button>
+          </div>
+        </div>
+
+        <!-- Radial Certainty Speedometer + Plain English Narrative -->
+        <div class="instruments-top">
+          <div class="speedometer-box">
+            <span class="speedo-label">CERTAINTY METER</span>
+            <svg viewBox="0 0 150 90" class="speedo-svg">
+              <path d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#27272a" stroke-width="12" stroke-linecap="round" />
+              <path id="speedo-arc" d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#38bdf8" stroke-width="12" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5" />
+              <g id="speedo-needle" style="transform: rotate(-90deg);">
+                <line x1="75" y1="75" x2="75" y2="22" stroke="#fafafa" stroke-width="2.5" stroke-linecap="round" />
+                <circle cx="75" cy="75" r="5" fill="#fafafa" />
+              </g>
+            </svg>
+            <div id="speedo-pct" class="speedo-readout">--%</div>
+            <div id="speedo-zone" class="speedo-zone-tag">WAITING</div>
+          </div>
+
+          <div class="explainer-box">
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+                <span id="explainer-badge" class="mono-tag">READY TO START</span>
+                <span id="roll-readout" class="mono-tag">Dice Roll: --</span>
+              </div>
+              <div id="explainer-body" class="explainer-body">
+                Turn on the AI brain to see how it scores thousands of words in its dictionary and holds an election for every single word slot.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Word Election Leaderboard (Segmented Neon Meters) -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <div>
+              <strong style="font-size:0.82rem;">The Word Election Leaderboard</strong>
+              <span style="font-size:0.72rem; color:var(--text-muted); display:block;">Top 5 competing words (Logit probabilities). Click any row to force that word!</span>
+            </div>
+            <button id="btn-fork" class="btn-primary btn-xs hidden" style="background:var(--violet); color:#09090b;">
+              <i data-lucide="git-branch" class="icon-xs"></i>
+              <span id="btn-fork-text">Use This Word Instead</span>
+            </button>
+          </div>
+
+          <div id="leaderboard" class="leaderboard-box">
+            <div style="text-align:center; color:var(--text-muted); font-size:0.78rem; padding:1.2rem 0;">
+              Competing candidate words and their segmented power meters will appear here.
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Token Matrix ("Puzzle View") -->
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
+            <span style="font-size:0.76rem; color:var(--text-secondary); font-weight:600;">WORD PUZZLE PIECES IN MEMORY (Tokens & ID Numbers)</span>
+            <span id="token-count" class="mono-tag">0 Tokens</span>
+          </div>
+          <div id="token-matrix" class="token-matrix">
+            <span style="color:var(--text-muted); font-size:0.75rem;">Subword pieces and their secret ID numbers will appear here.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Interactive Assessment Modal -->
+  <div id="quiz-modal" class="modal-backdrop hidden">
+    <div class="quiz-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mission-label">LAB 01 ASSESSMENT</span>
+        <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
+      </div>
+      <h3>Quick Knowledge Check</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer both questions to earn your Lab 01 Mastery Badge and unlock Lab 02 on the dashboard.</p>
+
+      <div class="quiz-q" data-q="1">
+        <h4>1. When you ask an AI a question, how does it build its answer?</h4>
+        <button class="quiz-opt" data-correct="false">It plans out the entire paragraph in advance before typing.</button>
+        <button class="quiz-opt" data-correct="true">It holds a math contest (Logits) to guess strictly one word piece at a time.</button>
+      </div>
+
+      <div class="quiz-q" data-q="2">
+        <h4>2. Why does the AI sometimes pick the #2 or #3 runner-up word instead of the #1 favorite?</h4>
+        <button class="quiz-opt" data-correct="true">When the Creativity Dial (Temperature) is above 0, it rolls a weighted die so answers don't sound robotic.</button>
+        <button class="quiz-opt" data-correct="false">Because the computer made a math error while adding numbers.</button>
+      </div>
+
+      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.65rem; border-radius:var(--radius-sm);"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
+        <button id="btn-submit-quiz" class="btn-primary">Verify Answers & Claim XP</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
