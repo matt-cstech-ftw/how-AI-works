@@ -90,6 +90,12 @@ function refreshIcons() {
 }
 refreshIcons();
 
+// Check URL params if user clicked "Take Final Assessment" from Dashboard
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('quiz') === '1') {
+  quizModal.classList.remove('hidden');
+}
+
 // Show Interactive Walkthrough Popup with Custom SVG Visual Aid
 function triggerWalkthrough({ id, tag, title, svgHtml, bodyHtml, buttonLabel = 'Got It — Keep Watching', autoResume = true }) {
   if (seenWalkthroughs.has(id)) return false;
@@ -241,6 +247,40 @@ function computeSoftmax(topRawLogits, topK, temperature) {
   }));
 }
 
+// Helper: Finish generation cleanly after 1 concise sentence
+function finishGenerationCleanly() {
+  isPlaying = false;
+  btnStream.innerHTML = `<i data-lucide="play" class="icon-xs"></i><span>Watch Again</span>`;
+  refreshIcons();
+
+  if (!goals.fork) {
+    triggerWalkthrough({
+      id: 'wt_try_fork',
+      tag: 'FINAL LAB CHALLENGE',
+      title: 'Now Step In and Change History!',
+      svgHtml: `
+        <svg width="300" height="75" viewBox="0 0 300 75" fill="none">
+          <circle cx="40" cy="38" r="8" fill="#10b981"/>
+          <path d="M48 38 H120" stroke="#10b981" stroke-width="3"/>
+          <circle cx="120" cy="38" r="8" fill="#fafafa"/>
+          <path d="M128 38 L220 18" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
+          <path d="M128 38 L220 58" stroke="#c084fc" stroke-width="3"/>
+          <rect x="220" y="46" width="70" height="24" rx="4" fill="#c084fc"/>
+          <text x="255" y="62" fill="#09090b" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">New Ending</text>
+        </svg>
+      `,
+      bodyHtml: `
+        The AI finished its sentence! Now for the coolest part:<br><br>
+        1. Click <strong>any colored word</strong> in the output box on the left.<br>
+        2. Click one of the <strong>runner-up bars (#2 or #3)</strong> in the Word Election Leaderboard.<br>
+        3. Press the purple <strong>Force This Word Instead</strong> button to watch the AI write a brand-new ending!
+      `,
+      buttonLabel: 'Let Me Try It!',
+      autoResume: false
+    });
+  }
+}
+
 // STEP 1: Wake Up AI Brain & Reveal Cockpit
 btnInit.addEventListener('click', async () => {
   if (model) return;
@@ -304,15 +344,15 @@ btnInit.addEventListener('click', async () => {
           <path d="M105 40 H135" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="140" y="12" width="80" height="56" rx="8" fill="#052e16" stroke="#10b981" stroke-width="2"/>
           <text x="180" y="37" fill="#10b981" font-family="JetBrains Mono" font-size="11" font-weight="bold" text-anchor="middle">AI Brain</text>
-          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49,000 Words</text>
+          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49,000 Pieces</text>
           <path d="M225 40 H255" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="260" y="18" width="50" height="44" rx="6" fill="#18181b" stroke="#c084fc" stroke-width="1.5"/>
-          <text x="285" y="44" fill="#d8b4fe" font-family="JetBrains Mono" font-size="11" text-anchor="middle">1 Word</text>
+          <text x="285" y="44" fill="#d8b4fe" font-family="JetBrains Mono" font-size="11" text-anchor="middle">1 Piece</text>
         </svg>
       `,
       bodyHtml: `
         We just unlocked the <strong>Inside the AI's Head</strong> panel on the right.<br><br>
-        Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an <strong>election across 49,000 dictionary words</strong> to pick strictly <em>one word piece at a time</em>.<br><br>
+        Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an <strong>election across 49,000 word pieces</strong> to pick strictly <em>one piece at a time</em>.<br><br>
         Click the glowing blue <strong>Step 2: Watch It Think</strong> button next!
       `,
       buttonLabel: 'Got It — Let’s Watch It Think',
@@ -330,7 +370,8 @@ async function stepGeneration() {
 
   try {
     if (!currentInputIds) {
-      const chatPrompt = `<|im_start|>system\nYou are a helpful AI assistant. Answer in 1 or 2 clear sentences.<|im_end|>\n<|im_start|>user\n${promptInput.value.trim()}<|im_end|>\n<|im_start|>assistant\n`;
+      // Ultra-concise system instruction for 1 short sentence
+      const chatPrompt = `<|im_start|>system\nYou are a concise AI assistant. Reply in ONE short sentence under 15 words. Stop immediately after the first period.<|im_end|>\n<|im_start|>user\n${promptInput.value.trim()}<|im_end|>\n<|im_start|>assistant\n`;
       const encoded = await tokenizer(chatPrompt);
       currentInputIds = encoded.input_ids;
       promptTokenLength = currentInputIds.dims[1];
@@ -359,37 +400,7 @@ async function stepGeneration() {
     }
 
     if (selected.token.includes('<|im_end|>') || selected.id === 2 || selected.id === 0) {
-      isPlaying = false;
-      btnStream.innerHTML = `<i data-lucide="play" class="icon-xs"></i><span>Watch Again</span>`;
-      refreshIcons();
-
-      // Prompt user to try Timeline Forking if they haven't yet
-      if (!goals.fork) {
-        triggerWalkthrough({
-          id: 'wt_try_fork',
-          tag: 'FINAL LAB CHALLENGE',
-          title: 'Now Step In and Change History!',
-          svgHtml: `
-            <svg width="300" height="75" viewBox="0 0 300 75" fill="none">
-              <circle cx="40" cy="38" r="8" fill="#10b981"/>
-              <path d="M48 38 H120" stroke="#10b981" stroke-width="3"/>
-              <circle cx="120" cy="38" r="8" fill="#fafafa"/>
-              <path d="M128 38 L220 18" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
-              <path d="M128 38 L220 58" stroke="#c084fc" stroke-width="3"/>
-              <rect x="220" y="46" width="70" height="24" rx="4" fill="#c084fc"/>
-              <text x="255" y="62" fill="#09090b" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">New Ending</text>
-            </svg>
-          `,
-          bodyHtml: `
-            The AI finished its sentence! Now for the coolest part:<br><br>
-            1. Click <strong>any colored word</strong> in the output box on the left.<br>
-            2. Click one of the <strong>runner-up bars (#2 or #3)</strong> in the Word Election Leaderboard.<br>
-            3. Press the purple <strong>Force This Word Instead</strong> button to watch the AI write a brand-new ending!
-          `,
-          buttonLabel: 'Let Me Try It!',
-          autoResume: false
-        });
-      }
+      finishGenerationCleanly();
       isBusy = false;
       return;
     }
@@ -398,9 +409,22 @@ async function stepGeneration() {
     const stepIdx = tokenHistory.length;
     const currentSnapshot = Array.from(currentInputIds.data).map(Number);
 
-    const explanation = isUpset
-      ? `<strong>Surprise Runner-Up Won!</strong> Even though <code>"${pool[0].token.replace(/\s/g, '·')}"</code> was the #1 favorite (${(pool[0].prob * 100).toFixed(0)}%), the weighted dice roll landed on <code>"${selected.token.replace(/\s/g, '·')}"</code>!`
-      : `<strong>Word #${stepIdx + 1} Elected:</strong> The AI scored its dictionary and gave <code>"${selected.token.replace(/\s/g, '·')}"</code> a <strong>${(selected.prob * 100).toFixed(0)}%</strong> chance to come next.`;
+    // Check if this token is a SUBWORD SPLIT (e.g., "ad" + "ore" -> no leading space, alphabetical continuation of previous word)
+    const prevTokenObj = stepIdx > 0 ? tokenHistory[stepIdx - 1] : null;
+    const isSubwordContinuation = prevTokenObj &&
+      !/^\s/.test(selected.token) &&
+      /^[a-zA-Z]{2,}$/.test(selected.token) &&
+      /[a-zA-Z]$/.test(prevTokenObj.tokenStr);
+
+    let explanation = '';
+    if (isSubwordContinuation) {
+      const cleanPrev = prevTokenObj.tokenStr.trim();
+      explanation = `<strong>Subword Puzzle Piece!</strong> Notice how <code>"${cleanPrev}"</code> and <code>"${selected.token}"</code> glued together to form <strong>"${cleanPrev}${selected.token}"</strong>! AI chops less-common words into smaller reusable pieces called <em>tokens</em>.`;
+    } else if (isUpset) {
+      explanation = `<strong>Surprise Runner-Up Won!</strong> Even though <code>"${pool[0].token.replace(/\s/g, '·')}"</code> was the #1 favorite (${(pool[0].prob * 100).toFixed(0)}%), the weighted dice roll landed on <code>"${selected.token.replace(/\s/g, '·')}"</code>!`;
+    } else {
+      explanation = `<strong>Piece #${stepIdx + 1} Elected:</strong> The AI scored its dictionary and gave <code>"${selected.token.replace(/\s/g, '·')}"</code> a <strong>${(selected.prob * 100).toFixed(0)}%</strong> chance to come next.`;
+    }
 
     tokenHistory.push({
       tokenStr: selected.token,
@@ -428,14 +452,22 @@ async function stepGeneration() {
 
     renderTokenMatrix(Array.from(nextIds).map(Number));
 
-    // LEARNING MOMENT #2: Pause on Word #1 to explain the Speedometer & Leaderboard
+    // Check if the AI just completed its first sentence naturally (after at least 6 pieces)
+    const endsSentence = /[.!?]\s*$/.test(selected.token);
+    if (stepIdx >= 5 && endsSentence) {
+      finishGenerationCleanly();
+      isBusy = false;
+      return;
+    }
+
+    // LEARNING MOMENT #1: Pause on Word #1 to explain the Speedometer & Leaderboard
     if (stepIdx === 0) {
       const topWord = pool[0].token.replace(/\s/g, '·');
       const topPct = (pool[0].prob * 100).toFixed(0);
       const paused = triggerWalkthrough({
         id: 'wt_first_word',
-        tag: 'LEARNING MOMENT #1 • THE FIRST WORD CONTEST',
-        title: `How the AI Just Picked Word #1: "${selected.token.trim() || topWord}"`,
+        tag: 'LEARNING MOMENT • THE WORD CONTEST',
+        title: `How the AI Just Picked Piece #1: "${selected.token.trim() || topWord}"`,
         svgHtml: `
           <svg width="320" height="86" viewBox="0 0 320 86" fill="none">
             <rect x="12" y="12" width="190" height="16" rx="3" fill="#10b981"/>
@@ -447,12 +479,43 @@ async function stepGeneration() {
           </svg>
         `,
         bodyHtml: `
-          The AI just read your question and scored every word in its dictionary (called <strong>Logits</strong>).<br><br>
+          The AI just read your question and scored every piece in its dictionary (called <strong>Logits</strong>).<br><br>
           • Look at the <strong>Word Election Leaderboard</strong> on the right: <code>"${topWord}"</code> got the highest score at <strong>${topPct}%</strong>.<br>
-          • Look at the <strong>Certainty Meter</strong> dial: it swings higher when the #1 word is an obvious slam-dunk, and drops when the AI is torn between options.<br><br>
-          Now it glues this word onto your sentence and repeats the whole contest for Word #2!
+          • Look at the <strong>Certainty Meter</strong> dial: it swings higher when the #1 choice is an obvious slam-dunk, and drops when the AI is torn between options.<br><br>
+          Now it glues this piece onto your sentence and repeats the contest!
         `,
         buttonLabel: 'Makes Sense — Keep Watching',
+        autoResume: true
+      });
+      if (paused) { isBusy = false; return; }
+    }
+
+    // LEARNING MOMENT #2: Pause the first time a Word is Split into Subword Tokens (e.g., ad + ore)
+    if (isSubwordContinuation) {
+      const part1 = prevTokenObj.tokenStr.trim();
+      const part2 = selected.token;
+      const combined = `${part1}${part2}`;
+
+      const paused = triggerWalkthrough({
+        id: 'wt_subword_split',
+        tag: 'LEARNING MOMENT • SUBWORD PUZZLE PIECES',
+        title: `Wait—Why Did "${combined}" Arrive in Two Pieces?`,
+        svgHtml: `
+          <svg width="320" height="76" viewBox="0 0 320 76" fill="none">
+            <rect x="25" y="18" width="95" height="38" rx="6" fill="#18181b" stroke="#38bdf8" stroke-width="2"/>
+            <text x="72" y="41" fill="#38bdf8" font-family="JetBrains Mono" font-size="13" font-weight="bold" text-anchor="middle">"${part1}"</text>
+            <text x="138" y="42" fill="#fafafa" font-family="JetBrains Mono" font-size="16" font-weight="bold" text-anchor="middle">+</text>
+            <rect x="155" y="18" width="95" height="38" rx="6" fill="#18181b" stroke="#10b981" stroke-width="2"/>
+            <text x="202" y="41" fill="#10b981" font-family="JetBrains Mono" font-size="13" font-weight="bold" text-anchor="middle">"${part2}"</text>
+            <text x="275" y="41" fill="#a1a1aa" font-family="JetBrains Mono" font-size="11" text-anchor="middle">= ${combined}</text>
+          </svg>
+        `,
+        bodyHtml: `
+          You just caught one of the biggest secrets of AI!<br><br>
+          AI doesn't actually read or write whole English words—it uses numbered puzzle pieces called <strong>Tokens</strong>.<br><br>
+          Common words like <code>"blue"</code> get their own single token, but longer or less-common words like <strong>"${combined}"</strong> get built on the fly by gluing smaller pieces (<code>"${part1}"</code> + <code>"${part2}"</code>) together!
+        `,
+        buttonLabel: 'Aha! Keep Watching',
         autoResume: true
       });
       if (paused) { isBusy = false; return; }
@@ -468,7 +531,7 @@ async function stepGeneration() {
       const paused = triggerWalkthrough({
         id: 'wt_upset',
         tag: 'LEARNING MOMENT • SURPRISE DICE ROLL!',
-        title: `Plot Twist! A Runner-Up Word Just Beat #1`,
+        title: `Plot Twist! A Runner-Up Piece Just Beat #1`,
         svgHtml: `
           <svg width="320" height="75" viewBox="0 0 320 75" fill="none">
             <rect x="15" y="25" width="180" height="22" rx="4" fill="#10b981" opacity="0.35"/>
@@ -480,7 +543,7 @@ async function stepGeneration() {
           </svg>
         `,
         bodyHtml: `
-          Notice how that word turned <strong>purple</strong> in the output box!<br><br>
+          Notice how that piece turned <strong>purple</strong> in the output box!<br><br>
           Even though <code>"${favWord}"</code> was the #1 favorite (${favPct}%), the AI didn't pick it. Because your <strong>Creativity Dial (Temperature)</strong> is turned above 0, the AI rolls a weighted die.<br><br>
           This time, the roll landed on underdog <code>"${winWord}"</code> (${winPct}%)! That's why ChatGPT gives slightly different answers every time you ask the same question.
         `,
@@ -514,11 +577,11 @@ function inspectStep(idx) {
   updateSpeedometer(livePool[0].prob);
   renderLeaderboard(livePool, item.tokenId);
 
-  stepCounter.textContent = `Word ${idx + 1} / ${tokenHistory.length}`;
+  stepCounter.textContent = `Piece ${idx + 1} / ${tokenHistory.length}`;
   btnPrev.disabled = idx <= 0;
   btnNext.disabled = idx >= tokenHistory.length - 1;
 
-  explainerBadge.textContent = item.isUpset ? 'RUNNER-UP UPSET' : `WORD #${idx + 1}`;
+  explainerBadge.textContent = item.isUpset ? 'RUNNER-UP UPSET' : `PIECE #${idx + 1}`;
   rollReadout.textContent = `Dice Roll: ${(item.roll * 100).toFixed(0)}%`;
   explainerBody.innerHTML = item.explanation;
 
@@ -570,9 +633,14 @@ async function startStreamingLoop() {
   btnStream.innerHTML = `<i data-lucide="pause" class="icon-xs"></i><span>Pause</span>`;
   refreshIcons();
 
-  for (let i = 0; i < 60; i++) {
+  // Capped at 28 tokens max (and stops earlier at first period!)
+  for (let i = 0; i < 28; i++) {
     if (!isPlaying) break;
     await stepGeneration();
+  }
+
+  if (isPlaying) {
+    finishGenerationCleanly();
   }
 }
 
@@ -616,7 +684,7 @@ btnReset.addEventListener('click', () => {
   refreshIcons();
 });
 
-// Quiz Modal Logic
+// Quiz Modal Logic (3 Questions)
 btnOpenQuiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
 btnCloseQuiz.addEventListener('click', () => quizModal.classList.add('hidden'));
 
@@ -630,8 +698,8 @@ document.querySelectorAll('.quiz-opt').forEach(opt => {
 
 btnSubmitQuiz.addEventListener('click', () => {
   const selected = document.querySelectorAll('.quiz-opt.selected');
-  if (selected.length < 2) {
-    alert('Please select an answer for both questions.');
+  if (selected.length < 3) {
+    alert('Please select an answer for all 3 questions.');
     return;
   }
 
@@ -639,16 +707,16 @@ btnSubmitQuiz.addEventListener('click', () => {
   selected.forEach(s => { if (s.dataset.correct === 'true') correct++; });
 
   quizFeedback.classList.remove('hidden');
-  if (correct === 2) {
+  if (correct === 3) {
     completeActivity('mod-01', 150);
     saveQuizScore('mod-01', 100, 100);
     quizFeedback.style.background = 'var(--emerald-dim)';
     quizFeedback.style.color = 'var(--emerald)';
-    quizFeedback.innerHTML = `<strong>100% Correct! (+250 Total XP)</strong> Redirecting to your updated Dashboard...`;
+    quizFeedback.innerHTML = `<strong>3/3 Correct! (+250 Total XP)</strong> Unlocking Lab 02 and returning to your Dashboard...`;
     setTimeout(() => { window.location.href = '../../index.html'; }, 1400);
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';
     quizFeedback.style.color = '#ef4444';
-    quizFeedback.textContent = 'Not quite! Review both answers and try again.';
+    quizFeedback.textContent = `You got ${correct} out of 3 right. Check your answers and try again!`;
   }
 });

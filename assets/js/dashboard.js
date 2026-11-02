@@ -14,10 +14,10 @@ const MODULES_CATALOG = [
     id: 'mod-02',
     number: 'LAB 02',
     title: 'How AI Cuts Words into Puzzle Pieces',
-    description: 'AI does not actually read whole words—it chops text into numbered chunks. Discover why words like "strawberry" trip up giant models.',
+    description: 'AI does not actually read whole words—it chops text into numbered chunks. Discover why words like "strawberry" or "adore" get split into pieces.',
     conceptTaught: 'Teaches: Tokens & Subword Slicing (Tokenization)',
     xp: 200,
-    url: '#'
+    url: 'modules/02-tokens/index.html'
   },
   {
     id: 'mod-03',
@@ -26,7 +26,7 @@ const MODULES_CATALOG = [
     description: 'See how the AI connects pronouns and topics across a sentence so it remembers what you asked at the beginning.',
     conceptTaught: 'Teaches: Context & Word Connections (Self-Attention)',
     xp: 250,
-    url: '#'
+    url: 'modules/03-attention/index.html'
   },
   {
     id: 'mod-04',
@@ -35,7 +35,7 @@ const MODULES_CATALOG = [
     description: 'Turn the dial from strict robot mode (0.0) to wild brainstorm mode (1.5) and watch how the weighted dice roll changes.',
     conceptTaught: 'Teaches: Temperature & Weighted Dice Rolls (Sampling)',
     xp: 200,
-    url: '#'
+    url: 'modules/04-entropy/index.html'
   },
   {
     id: 'mod-05',
@@ -44,7 +44,7 @@ const MODULES_CATALOG = [
     description: 'Test situations where the AI sounds 99% confident on the speedometer while inventing a completely fake fact.',
     conceptTaught: 'Teaches: Confidence vs. Truth (Hallucinations)',
     xp: 300,
-    url: '#'
+    url: 'modules/05-hallucinations/index.html'
   }
 ];
 
@@ -54,8 +54,32 @@ const navXp = document.getElementById('nav-xp');
 const masteryArc = document.getElementById('mastery-arc');
 const masteryPctBadge = document.getElementById('mastery-pct-badge');
 const gaugeBigNum = document.getElementById('gauge-big-num');
+const heroCta = document.getElementById('hero-cta');
 const heroCtaText = document.getElementById('hero-cta-text');
 const btnReset = document.getElementById('btn-reset-progress');
+
+function updateHeroButton(state) {
+  // Find the first module that isn't fully completed + quizPassed
+  for (const mod of MODULES_CATALOG) {
+    const modState = state.modules[mod.id] || { completed: false, quizPassed: false, unlocked: false };
+
+    if (!modState.completed) {
+      heroCta.href = mod.url;
+      heroCtaText.textContent = `Start ${mod.number}: ${mod.title}`;
+      return;
+    }
+
+    if (modState.completed && !modState.quizPassed) {
+      heroCta.href = `${mod.url}?quiz=1`;
+      heroCtaText.textContent = `Take ${mod.number} Final Assessment: ${mod.title}`;
+      return;
+    }
+  }
+
+  // Everything is completed!
+  heroCta.href = MODULES_CATALOG[0].url;
+  heroCtaText.textContent = 'All Labs Mastered! Replay Lab 01 Anytime';
+}
 
 function renderDashboard() {
   const state = getProgress();
@@ -65,9 +89,9 @@ function renderDashboard() {
   modulesGrid.innerHTML = '';
 
   MODULES_CATALOG.forEach((mod) => {
-    const modState = state.modules[mod.id] || { completed: false, unlocked: false };
+    const modState = state.modules[mod.id] || { completed: false, quizPassed: false, unlocked: false };
     const isDone = modState.completed && modState.quizPassed;
-    const isStarted = modState.completed && !modState.quizPassed;
+    const isQuizReady = modState.completed && !modState.quizPassed;
     if (isDone) completedCount++;
 
     const card = document.createElement('article');
@@ -76,7 +100,7 @@ function renderDashboard() {
     let statusPillHtml = '';
     if (isDone) {
       statusPillHtml = `<span class="mod-status-pill done"><i data-lucide="check" class="icon-xs"></i> Completed</span>`;
-    } else if (isStarted) {
+    } else if (isQuizReady) {
       statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="award" class="icon-xs"></i> Lab Done • Quiz Ready</span>`;
     } else if (modState.unlocked) {
       statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="play" class="icon-xs"></i> Ready to Start</span>`;
@@ -85,18 +109,14 @@ function renderDashboard() {
     }
 
     let actionBtnHtml = '';
-    if (mod.id === 'mod-01') {
+    if (modState.unlocked) {
+      const targetHref = isQuizReady ? `${mod.url}?quiz=1` : mod.url;
+      const btnLabel = isDone ? `Replay ${mod.number}` : (isQuizReady ? 'Take Final Quiz' : `Launch ${mod.number}`);
       actionBtnHtml = `
-        <a href="${mod.url}" class="${isDone ? 'btn-secondary' : 'btn-primary'} btn-xs">
-          <span>${isDone ? 'Replay Lab 01' : (isStarted ? 'Take Final Quiz' : 'Launch Lab')}</span>
+        <a href="${targetHref}" class="${isDone ? 'btn-secondary' : 'btn-primary'} btn-xs">
+          <span>${btnLabel}</span>
           <i data-lucide="arrow-up-right" class="icon-xs"></i>
         </a>
-      `;
-    } else if (modState.unlocked) {
-      actionBtnHtml = `
-        <button class="btn-secondary btn-xs" onclick="alert('Lab 02 unlocks next in our build!')">
-          <span>Unlocked • Coming Next</span>
-        </button>
       `;
     } else {
       actionBtnHtml = `
@@ -143,9 +163,7 @@ function renderDashboard() {
   const offset = arcLength - (pct / 100) * arcLength;
   masteryArc.style.strokeDashoffset = offset;
 
-  if (state.modules['mod-01']?.completed && state.modules['mod-01']?.quizPassed) {
-    heroCtaText.textContent = 'Lab 01 Mastered — Replay Anytime';
-  }
+  updateHeroButton(state);
 
   if (window.lucide) window.lucide.createIcons();
 }

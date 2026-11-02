@@ -91,20 +91,20 @@
 
         <div id="setup-drawer" style="display: flex; flex-direction: column; gap: 0.85rem;">
           <div class="preset-row">
-            <button class="preset-btn" data-prompt="Complete this famous saying in one sentence: Early to bed and early to rise" data-temp="0.2">
+            <button class="preset-btn" data-prompt="Finish this famous saying: Early to bed and early to rise" data-temp="0.2">
               Famous Saying (High Certainty)
             </button>
             <button class="preset-btn" data-prompt="What is your favorite color and why?" data-temp="0.7">
               Favorite Color (Balanced)
             </button>
-            <button class="preset-btn" data-prompt="Describe a strange coffee shop on Mars in one sentence." data-temp="1.3">
+            <button class="preset-btn" data-prompt="Describe a strange coffee shop on Mars." data-temp="1.3">
               Mars Coffee Shop (Wild)
             </button>
           </div>
 
           <textarea id="prompt-input" class="prompt-box" rows="2">What is your favorite color and why?</textarea>
 
-          <!-- Thermal Entropy Dial (Hidden until AI Brain wakes up to avoid clutter) -->
+          <!-- Thermal Entropy Dial -->
           <div class="thermal-card hidden" id="thermal-card">
             <div class="thermal-head">
               <span>Creativity Dial <small style="color:var(--text-muted); font-weight:400;">(Technical term: Temperature)</small></span>
@@ -132,9 +132,9 @@
           </button>
 
           <select id="speed-select" class="select-input hidden">
-            <option value="950" selected>Slow Speed (Best for Learning)</option>
-            <option value="450">Normal Speed</option>
-            <option value="140">Fast Speed</option>
+            <option value="850" selected>Slow Speed (Best for Learning)</option>
+            <option value="400">Normal Speed</option>
+            <option value="120">Fast Speed</option>
           </select>
 
           <button id="btn-reset" class="btn-outline hidden">
@@ -149,22 +149,22 @@
           <div id="fork-old-text" style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;"></div>
         </div>
 
-        <!-- Output Stream Box (Revealed once AI Brain is awake) -->
+        <!-- Output Stream Box -->
         <div id="output-wrapper" class="hidden">
           <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.35rem;">
-            <span>LIVE WORD-BY-WORD OUTPUT (Click any colored word to inspect it)</span>
+            <span>LIVE WORD-BY-WORD OUTPUT (Click any colored piece to inspect it)</span>
           </div>
           <div id="live-text" class="output-stream" data-placeholder="Click the glowing 'Step 2: Watch It Think' button above to start the word-guessing game..."></div>
         </div>
       </section>
 
-      <!-- RIGHT PANEL: Telemetry Instruments (Hidden initially so user isn't overwhelmed!) -->
+      <!-- RIGHT PANEL: Telemetry Instruments -->
       <section class="panel hidden" id="instruments-panel">
         <div class="panel-head">
           <h2><i data-lucide="gauge" class="icon-sm text-emerald"></i> 2. Inside the AI's Head</h2>
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <button id="btn-prev" class="btn-outline btn-xs" disabled><i data-lucide="chevron-left" class="icon-xs"></i></button>
-            <span id="step-counter" class="mono-tag">Word 0 / 0</span>
+            <span id="step-counter" class="mono-tag">Piece 0 / 0</span>
             <button id="btn-next" class="btn-outline btn-xs" disabled><i data-lucide="chevron-right" class="icon-xs"></i></button>
           </div>
         </div>
@@ -203,7 +203,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
             <div>
               <strong style="font-size:0.82rem;">The Word Election Leaderboard</strong>
-              <span style="font-size:0.72rem; color:var(--text-muted); display:block;">Top 5 competing words (Logit probabilities). Click any row to force that word!</span>
+              <span style="font-size:0.72rem; color:var(--text-muted); display:block;">Top 5 competing pieces (Logit probabilities). Click any row to force that choice!</span>
             </div>
             <button id="btn-fork" class="btn-primary btn-xs hidden" style="background:var(--violet); color:#09090b;">
               <i data-lucide="git-branch" class="icon-xs"></i>
@@ -237,7 +237,7 @@
     <div class="walkthrough-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="mission-label" id="wt-tag">LEARNING MOMENT</span>
-        <span class="mono-tag" id="wt-step-indicator"> Auto-Paused</span>
+        <span class="mono-tag" id="wt-step-indicator">Auto-Paused</span>
       </div>
       <h3 class="wt-title" id="wt-title">How AI Picks a Word</h3>
       <div class="wt-visual-stage" id="wt-visual"></div>
@@ -251,15 +251,15 @@
     </div>
   </div>
 
-  <!-- Interactive Assessment Modal -->
+  <!-- Interactive 3-Question Assessment Modal -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mission-label">LAB 01 ASSESSMENT</span>
+        <span class="mission-label">LAB 01 ASSESSMENT (3 QUESTIONS)</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
-      <h3>Quick Knowledge Check</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer both questions to earn your Lab 01 Mastery Badge and unlock Lab 02 on the dashboard.</p>
+      <h3>Lab 01 Final Knowledge Check</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions correctly to claim your 250 XP and unlock Lab 02 on the main dashboard.</p>
 
       <div class="quiz-q" data-q="1">
         <h4>1. When you ask an AI a question, how does it build its answer?</h4>
@@ -273,10 +273,16 @@
         <button class="quiz-opt" data-correct="false">Because the computer made a math error while adding numbers.</button>
       </div>
 
+      <div class="quiz-q" data-q="3">
+        <h4>3. Why do some words (like "adore" or "strawberry") arrive in two separate pieces like "ad" + "ore"?</h4>
+        <button class="quiz-opt" data-correct="true">AI reads and writes using numbered puzzle pieces called "tokens"—longer or rarer words are built by gluing smaller subword pieces together.</button>
+        <button class="quiz-opt" data-correct="false">Because the AI forgot how to spell the word halfway through typing it.</button>
+      </div>
+
       <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.65rem; border-radius:var(--radius-sm);"></div>
 
       <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
-        <button id="btn-submit-quiz" class="btn-primary">Verify Answers & Claim XP</button>
+        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim XP</button>
       </div>
     </div>
   </div>
