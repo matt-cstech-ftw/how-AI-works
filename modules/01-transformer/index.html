@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/base.css" />
   <link rel="stylesheet" href="../../assets/css/sandbox.css" />
-  <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -18,7 +18,9 @@
     <div class="topbar-inner">
       <a href="../../index.html" class="brand">
         <div class="brand-icon">
-          <i data-lucide="arrow-left" class="icon-sm"></i>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
         </div>
         <div class="brand-text">
           <span class="brand-title">BACK TO DASHBOARD</span>
@@ -29,10 +31,10 @@
       <div class="topbar-stats">
         <div class="stat-chip" id="engine-status-pill">
           <i data-lucide="power" class="icon-xs text-amber" id="status-icon"></i>
-          <span id="status-text">AI Brain: Off</span>
+          <span id="status-text">AI Brain: Sleeping</span>
         </div>
-        <button id="btn-open-quiz" class="btn-primary btn-xs">
-          <i data-lucide="award" class="icon-xs"></i>
+        <button id="btn-open-quiz" class="btn-outline btn-xs">
+          <i data-lucide="award" class="icon-xs text-amber"></i>
           <span>Take Lab 01 Quiz</span>
         </button>
       </div>
@@ -43,12 +45,12 @@
     <!-- Guided Activity Checklist -->
     <section class="mission-bar">
       <div class="mission-title-group">
-        <span class="mission-label">LAB GOALS</span>
-        <strong style="font-size: 0.85rem;">Complete all 3 steps to master Lab 01:</strong>
+        <span class="mission-label">LAB 01 GOALS</span>
+        <strong style="font-size: 0.85rem;">Follow the glowing steps:</strong>
       </div>
       <div class="mission-steps">
-        <div class="mission-step" id="goal-wake">
-          <i data-lucide="circle" class="icon-xs"></i>
+        <div class="mission-step active-goal" id="goal-wake">
+          <i data-lucide="zap" class="icon-xs text-emerald"></i>
           <span>1. Turn on AI Brain</span>
         </div>
         <div class="mission-step" id="goal-stream">
@@ -65,7 +67,7 @@
     <!-- Download Progress Bar -->
     <div id="dl-banner" class="dl-banner hidden">
       <div class="dl-info">
-        <span id="dl-status">Downloading miniature AI model to browser cache...</span>
+        <span id="dl-status">Loading miniature AI brain into your browser...</span>
         <span id="dl-pct">0%</span>
       </div>
       <div class="dl-track">
@@ -73,13 +75,18 @@
       </div>
     </div>
 
-    <!-- Main Cockpit -->
-    <div class="cockpit-grid">
+    <!-- Main Cockpit (Starts in stage-initial centered single-card view!) -->
+    <div class="cockpit-grid stage-initial" id="cockpit-grid">
       <!-- LEFT PANEL: Input & Live Output -->
-      <section class="panel">
+      <section class="panel" id="left-panel">
         <div class="panel-head">
           <h2><i data-lucide="message-square" class="icon-sm text-cyan"></i> 1. Ask the AI & Watch It Write</h2>
           <span class="mono-tag">SmolLM2-135M</span>
+        </div>
+
+        <div id="initial-guide-hint" class="step-callout-hint">
+          <i data-lucide="sparkles" class="icon-sm text-emerald"></i>
+          <span><strong>Welcome to Lab 01!</strong> Pick a question below, then press the pulsing green <strong>Step 1: Turn On AI Brain</strong> button to wake up the model.</span>
         </div>
 
         <div id="setup-drawer" style="display: flex; flex-direction: column; gap: 0.85rem;">
@@ -97,8 +104,8 @@
 
           <textarea id="prompt-input" class="prompt-box" rows="2">What is your favorite color and why?</textarea>
 
-          <!-- Thermal Entropy Dial -->
-          <div class="thermal-card">
+          <!-- Thermal Entropy Dial (Hidden until AI Brain wakes up to avoid clutter) -->
+          <div class="thermal-card hidden" id="thermal-card">
             <div class="thermal-head">
               <span>Creativity Dial <small style="color:var(--text-muted); font-weight:400;">(Technical term: Temperature)</small></span>
               <span id="temp-badge" class="mono-tag">0.7 — Balanced</span>
@@ -114,23 +121,23 @@
 
         <!-- Action Controls -->
         <div class="controls-bar">
-          <button id="btn-init" class="btn-primary">
+          <button id="btn-init" class="btn-primary btn-pulse-emerald">
             <i data-lucide="zap" class="icon-xs"></i>
             <span>Step 1: Turn On AI Brain</span>
           </button>
 
-          <button id="btn-stream" class="btn-secondary" disabled>
+          <button id="btn-stream" class="btn-secondary hidden" disabled>
             <i data-lucide="play" class="icon-xs"></i>
             <span>Step 2: Watch It Think</span>
           </button>
 
-          <select id="speed-select" class="select-input">
-            <option value="850" selected>Slow Speed</option>
-            <option value="400">Normal Speed</option>
-            <option value="120">Fast Speed</option>
+          <select id="speed-select" class="select-input hidden">
+            <option value="950" selected>Slow Speed (Best for Learning)</option>
+            <option value="450">Normal Speed</option>
+            <option value="140">Fast Speed</option>
           </select>
 
-          <button id="btn-reset" class="btn-outline">
+          <button id="btn-reset" class="btn-outline hidden">
             <i data-lucide="rotate-ccw" class="icon-xs"></i>
             <span>Reset</span>
           </button>
@@ -138,21 +145,21 @@
 
         <!-- Fork Comparison Banner -->
         <div id="fork-banner" class="dl-banner hidden" style="border-color: var(--violet);">
-          <div style="font-size: 0.76rem; color: var(--violet); font-weight: 600;">Alternate Reality Triggered! Previous sentence before you stepped in:</div>
+          <div style="font-size: 0.76rem; color: var(--violet); font-weight: 600;">Alternate Reality Triggered! Original sentence before you stepped in:</div>
           <div id="fork-old-text" style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;"></div>
         </div>
 
-        <!-- Output Stream Box -->
-        <div>
+        <!-- Output Stream Box (Revealed once AI Brain is awake) -->
+        <div id="output-wrapper" class="hidden">
           <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.35rem;">
             <span>LIVE WORD-BY-WORD OUTPUT (Click any colored word to inspect it)</span>
           </div>
-          <div id="live-text" class="output-stream" data-placeholder="Click 'Step 1: Turn On AI Brain', then 'Step 2: Watch It Think'..."></div>
+          <div id="live-text" class="output-stream" data-placeholder="Click the glowing 'Step 2: Watch It Think' button above to start the word-guessing game..."></div>
         </div>
       </section>
 
-      <!-- RIGHT PANEL: Telemetry Instruments -->
-      <section class="panel" id="instruments-panel">
+      <!-- RIGHT PANEL: Telemetry Instruments (Hidden initially so user isn't overwhelmed!) -->
+      <section class="panel hidden" id="instruments-panel">
         <div class="panel-head">
           <h2><i data-lucide="gauge" class="icon-sm text-emerald"></i> 2. Inside the AI's Head</h2>
           <div style="display:flex; align-items:center; gap:0.4rem;">
@@ -181,11 +188,11 @@
           <div class="explainer-box">
             <div>
               <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-                <span id="explainer-badge" class="mono-tag">READY TO START</span>
+                <span id="explainer-badge" class="mono-tag">AI BRAIN AWAKE</span>
                 <span id="roll-readout" class="mono-tag">Dice Roll: --</span>
               </div>
               <div id="explainer-body" class="explainer-body">
-                Turn on the AI brain to see how it scores thousands of words in its dictionary and holds an election for every single word slot.
+                Press <strong>Step 2: Watch It Think</strong> on the left! We will pause automatically whenever something important happens so you can see how the math works.
               </div>
             </div>
           </div>
@@ -206,7 +213,7 @@
 
           <div id="leaderboard" class="leaderboard-box">
             <div style="text-align:center; color:var(--text-muted); font-size:0.78rem; padding:1.2rem 0;">
-              Competing candidate words and their segmented power meters will appear here.
+              Competing candidate words and their segmented power meters will appear here as soon as generation starts.
             </div>
           </div>
         </div>
@@ -224,6 +231,25 @@
       </section>
     </div>
   </main>
+
+  <!-- Interactive Walkthrough / Learning Moment Popup Modal -->
+  <div id="walkthrough-modal" class="modal-backdrop hidden">
+    <div class="walkthrough-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mission-label" id="wt-tag">LEARNING MOMENT</span>
+        <span class="mono-tag" id="wt-step-indicator"> Auto-Paused</span>
+      </div>
+      <h3 class="wt-title" id="wt-title">How AI Picks a Word</h3>
+      <div class="wt-visual-stage" id="wt-visual"></div>
+      <div class="wt-body" id="wt-body"></div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="btn-wt-continue" class="btn-primary">
+          <span id="btn-wt-text">Got It — Continue Watching</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Interactive Assessment Modal -->
   <div id="quiz-modal" class="modal-backdrop hidden">
