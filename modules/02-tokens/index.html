@@ -3,164 +3,447 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab 02: How AI Cuts Words into Puzzle Pieces — How AI Works</title>
+  <title>Lab 02: The Token Puzzle Workshop — How AI Works</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/base.css" />
-  <link rel="stylesheet" href="../../assets/css/sandbox.css" />
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    /* Lab 02 Custom Workbench Styles */
-    .slicer-stage {
-      min-height: 155px;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 1rem;
+    .workshop-shell {
+      position: relative;
+      z-index: 10;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
       display: flex;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      gap: 0.5rem;
-    }
-
-    .token-block {
-      display: inline-flex;
       flex-direction: column;
-      border-radius: 6px;
-      padding: 0.35rem 0.6rem;
-      font-family: var(--font-mono);
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
-      user-select: none;
-      animation: blockPop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      gap: 1.5rem;
     }
 
-    @keyframes blockPop {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .token-block:hover {
-      transform: translateY(-2px);
-      border-color: var(--text-primary);
-    }
-
-    .token-block.active-token {
-      outline: 2px solid var(--text-primary);
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
-      transform: translateY(-2px);
-    }
-
-    .tb-text {
-      font-size: 0.92rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      white-space: pre;
-    }
-
-    .tb-id {
-      font-size: 0.62rem;
-      opacity: 0.75;
-      margin-top: 0.15rem;
-    }
-
-    /* Color Palette for Interlocking Puzzle Pieces */
-    .t-color-0 { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; border-color: rgba(56, 189, 248, 0.35); }
-    .t-color-1 { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); }
-    .t-color-2 { background: rgba(192, 132, 252, 0.15); color: #d8b4fe; border-color: rgba(192, 132, 252, 0.35); }
-    .t-color-3 { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border-color: rgba(245, 158, 11, 0.35); }
-    .t-color-4 { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.35); }
-
-    .metrics-strip {
+    /* Stage Progress Stepper */
+    .stage-stepper {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.65rem;
+      gap: 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.75rem;
     }
 
-    .metric-card {
+    .stage-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: var(--radius-md);
       background: var(--bg-canvas);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 0.65rem 0.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .stage-tab.active {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    .stage-tab.completed {
+      border-color: rgba(16, 185, 129, 0.45);
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .stage-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .stage-tab.active .stage-num {
+      background: var(--cyan);
+      color: #09090b;
+      border-color: var(--cyan);
+    }
+
+    .stage-tab.completed .stage-num {
+      background: var(--emerald);
+      color: #052e16;
+      border-color: var(--emerald);
+    }
+
+    /* Interactive Game Arena Card */
+    .arena-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.25rem, 3vw, 2.25rem);
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
+      gap: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    .metric-card small {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
+    .arena-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
     }
 
-    .metric-card strong {
+    .arena-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 0.25rem;
+    }
+
+    .arena-sub {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      max-width: 65ch;
+      margin-top: 0.25rem;
+    }
+
+    /* Target Word Prompt Banner */
+    .target-banner {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .target-word-display {
       font-family: var(--font-mono);
-      font-size: 1.2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
       color: var(--text-primary);
+      letter-spacing: 0.02em;
     }
 
-    .xray-card {
+    /* Magnetic Puzzle Assembly Track */
+    .assembly-zone {
+      background: #0d0d11;
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      min-height: 145px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .assembly-zone.solved {
+      border-style: solid;
+      border-color: var(--emerald);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .assembly-placeholder {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    /* True Interlocking Jigsaw Piece Styling */
+    .jigsaw-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+
+    .jigsaw-tray {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.1rem;
+      min-height: 115px;
+    }
+
+    .puzzle-piece {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 118px;
+      height: 74px;
+      padding: 0 1.35rem;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, opacity 0.2s ease;
+      border: 2px solid transparent;
+    }
+
+    /* Interlocking Right Jigsaw Tab */
+    .puzzle-piece.has-right-tab::after {
+      content: '';
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 24px;
+      border-radius: 50%;
+      background: inherit;
+      border-right: 2px solid inherit;
+      z-index: 3;
+      box-shadow: 2px 0 0 rgba(255,255,255,0.2);
+    }
+
+    /* Snapped Together in Assembly Track */
+    .assembly-zone .puzzle-piece {
+      margin-right: -4px;
+      animation: snapIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes snapIn {
+      0% { transform: scale(0.8) translateY(12px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .puzzle-piece:hover {
+      transform: translateY(-4px) scale(1.03);
+    }
+
+    .pp-chunk {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .pp-id {
+      font-size: 0.68rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* Jigsaw Color Themes */
+    .piece-cyan {
+      background: #0c2d48;
+      border-color: #38bdf8;
+      color: #e0f2fe;
+      box-shadow: 0 6px 18px rgba(56, 189, 248, 0.2);
+    }
+    .piece-emerald {
+      background: #063928;
+      border-color: #10b981;
+      color: #d1fae5;
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2);
+    }
+    .piece-violet {
+      background: #2e1045;
+      border-color: #c084fc;
+      color: #f3e8ff;
+      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.2);
+    }
+    .piece-amber {
+      background: #3d2206;
+      border-color: #f59e0b;
+      color: #fef3c7;
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2);
+    }
+
+    /* Blindfold Mode (Shows what AI actually sees: ONLY ID numbers!) */
+    .puzzle-piece.blindfolded {
+      background: #18181b !important;
+      border-color: #52525b !important;
+      color: #fafafa !important;
+    }
+    .puzzle-piece.blindfolded .pp-chunk {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+    .puzzle-piece.blindfolded .pp-id {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--cyan);
+      opacity: 1;
+    }
+
+    /* STAGE 2: Interactive Laser Slicer Game */
+    .laser-table {
+      background: #0b0b0e;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .laser-word-row {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-surface);
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      user-select: none;
+    }
+
+    .laser-char {
+      font-family: var(--font-mono);
+      font-size: clamp(1.6rem, 4vw, 2.35rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 0 2px;
+    }
+
+    .cut-slot {
+      width: 18px;
+      height: 54px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      margin: 0 1px;
+    }
+
+    .cut-slot::before {
+      content: '';
+      width: 3px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      transition: all 0.15s ease;
+    }
+
+    .cut-slot:hover::before {
+      background: var(--amber);
+      height: 48px;
+      box-shadow: 0 0 10px var(--amber);
+    }
+
+    .cut-slot.active-cut::before {
+      width: 4px;
+      height: 54px;
+      background: #ef4444;
+      box-shadow: 0 0 14px #ef4444;
+    }
+
+    .cut-slot.active-cut::after {
+      content: '✂';
+      position: absolute;
+      top: -18px;
+      font-size: 0.75rem;
+      color: #ef4444;
+    }
+
+    /* Callout Insight Banner */
+    .insight-banner {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .walkthrough-modal, .quiz-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--cyan);
+      border-radius: var(--radius-lg);
+      max-width: 560px;
+      width: 100%;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    }
+
+    .wt-visual-stage {
       background: var(--bg-canvas);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 1rem;
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      justify-content: center;
     }
 
-    .xray-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.6rem;
-    }
-
-    .xray-item {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 0.55rem 0.7rem;
-    }
-
-    .xray-item span {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 0.64rem;
-      color: var(--text-muted);
-    }
-
-    .xray-item strong {
-      font-family: var(--font-mono);
-      font-size: 0.88rem;
-      color: var(--cyan);
-    }
-
-    .comparison-bar-group {
+    .quiz-q {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 0.85rem;
     }
 
-    .comp-row {
-      display: grid;
-      grid-template-columns: 110px 1fr 56px;
-      align-items: center;
-      gap: 0.6rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
+    .quiz-opt {
+      text-align: left;
+      justify-content: flex-start;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 0.65rem 0.85rem;
+      font-weight: 500;
+    }
+
+    .quiz-opt.selected {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: var(--cyan-dim);
+    }
+
+    @media (max-width: 720px) {
+      .stage-stepper { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="bg-grid"></div>
 
+  <!-- Top Navigation -->
   <header class="topbar">
     <div class="topbar-inner">
       <a href="../../index.html" class="brand">
@@ -171,14 +454,14 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">BACK TO DASHBOARD</span>
-          <span class="brand-badge">LAB 02 // SUBWORD SLICER</span>
+          <span class="brand-badge">LAB 02 // THE TOKEN PUZZLE WORKSHOP</span>
         </div>
       </a>
 
       <div class="topbar-stats">
-        <div class="stat-chip" id="engine-status-pill">
-          <i data-lucide="scissors" class="icon-xs text-amber" id="status-icon"></i>
-          <span id="status-text">Word Slicer: Off</span>
+        <div class="stat-chip">
+          <i data-lucide="puzzle" class="icon-xs text-cyan"></i>
+          <span id="progress-readout">Puzzles Solved: <strong>0 / 4</strong></span>
         </div>
         <button id="btn-open-quiz" class="btn-outline btn-xs">
           <i data-lucide="award" class="icon-xs text-amber"></i>
@@ -188,235 +471,213 @@
     </div>
   </header>
 
-  <main class="sandbox-main">
-    <!-- Guided Mission Checklist -->
-    <section class="mission-bar">
-      <div class="mission-title-group">
-        <span class="mission-label">LAB 02 GOALS</span>
-        <strong style="font-size: 0.85rem;">Complete all 3 experiments to master Tokenization:</strong>
+  <main class="workshop-shell">
+    <!-- 3-Stage Interactive Game Stepper -->
+    <nav class="stage-stepper">
+      <button class="stage-tab active" id="tab-stage-1">
+        <span class="stage-num">1</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Snap the Puzzle Pieces</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Build words from AI subword blocks</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-2">
+        <span class="stage-num">2</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">The Laser Slicer Game</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Guess where the AI cuts a word</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-3">
+        <span class="stage-num">3</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Live Jigsaw Forge</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Turn your own sentences into pieces</small>
+        </div>
+      </button>
+    </nav>
+
+    <!-- ==========================================
+         STAGE 1: SNAP THE JIGSAW PIECES TOGETHER
+         ========================================== -->
+    <section class="arena-card" id="stage-1-panel">
+      <div class="arena-header">
+        <div>
+          <span class="mono-tag" id="puzzle-round-tag">PUZZLE 1 OF 2 // SUBWORD ASSEMBLY</span>
+          <h1 class="arena-title" id="puzzle-title">Snap the AI Puzzle Pieces Together!</h1>
+          <p class="arena-sub" id="puzzle-instructions">
+            AI doesn't keep every long English word in its dictionary. Instead, it snaps smaller reusable puzzle pieces (called <strong>Tokens</strong>) together! Click the jigsaw pieces in the tray below in the right order to build the target word.
+          </p>
+        </div>
+        <button id="btn-toggle-blindfold" class="btn-secondary btn-xs hidden">
+          <i data-lucide="eye-off" class="icon-xs"></i>
+          <span>Toggle "AI Vision" (IDs Only)</span>
+        </button>
       </div>
-      <div class="mission-steps">
-        <div class="mission-step active-goal" id="goal-wake">
-          <i data-lucide="zap" class="icon-xs text-emerald"></i>
-          <span>1. Turn on Word Slicer</span>
+
+      <!-- Target Word Bar -->
+      <div class="target-banner">
+        <div>
+          <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block;">TARGET WORD TO BUILD:</span>
+          <span class="target-word-display" id="target-word-text">unbelievable</span>
         </div>
-        <div class="mission-step" id="goal-strawberry">
-          <i data-lucide="circle" class="icon-xs"></i>
-          <span>2. Test the "Strawberry" Mystery</span>
+        <div style="display:flex; gap:0.5rem;">
+          <button id="btn-clear-assembly" class="btn-outline btn-xs">
+            <i data-lucide="rotate-ccw" class="icon-xs"></i>
+            <span>Clear Track</span>
+          </button>
         </div>
-        <div class="mission-step" id="goal-trap">
-          <i data-lucide="circle" class="icon-xs"></i>
-          <span>3. Test the Space & CAPS Trap</span>
+      </div>
+
+      <!-- Magnetic Assembly Track -->
+      <div>
+        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">MAGNETIC ASSEMBLY TRACK (Click a piece inside the track to remove it):</span>
+        <div class="assembly-zone" id="assembly-zone">
+          <span class="assembly-placeholder" id="assembly-placeholder">Click jigsaw pieces from the tray below to snap them together here...</span>
+          <div class="jigsaw-row" id="assembled-row"></div>
         </div>
+      </div>
+
+      <!-- Available Jigsaw Pieces Tray -->
+      <div>
+        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">AVAILABLE TOKEN PUZZLE PIECES (Includes decoys!):</span>
+        <div class="jigsaw-tray" id="jigsaw-tray"></div>
+      </div>
+
+      <!-- Feedback Banner when Solved -->
+      <div class="insight-banner hidden" id="stage1-feedback">
+        <div id="stage1-feedback-text" style="font-size:0.88rem; max-width:65ch;"></div>
+        <button id="btn-stage1-next" class="btn-primary">
+          <span>Next Puzzle</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
       </div>
     </section>
 
-    <!-- Main Cockpit (Starts centered, expands when slicer turns on) -->
-    <div class="cockpit-grid stage-initial" id="cockpit-grid">
-      <!-- LEFT PANEL: Interactive Word Slicer Workbench -->
-      <section class="panel" id="left-panel">
-        <div class="panel-head">
-          <h2><i data-lucide="scissors" class="icon-sm text-cyan"></i> 1. The Interactive Word Slicer</h2>
-          <span class="mono-tag">49,152-Piece Vocabulary</span>
-        </div>
-
-        <div id="initial-guide-hint" class="step-callout-hint">
-          <i data-lucide="sparkles" class="icon-sm text-emerald"></i>
-          <span><strong>Welcome to Lab 02!</strong> AI never sees whole words or letters—it chops your text into numbered puzzle pieces. Click the pulsing green button below to load the real AI Word Slicer!</span>
-        </div>
-
-        <!-- Experiment Presets (Revealed after Step 1) -->
-        <div id="experiments-bar" class="hidden" style="display:flex; flex-direction:column; gap:0.5rem;">
-          <span style="font-size:0.74rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Click a Guided Experiment below (or type anything in the box!):</span>
-          <div class="preset-row">
-            <button id="btn-exp-strawberry" class="preset-btn" data-text="How many letter r's are in strawberry?">
-              Experiment A: The "Strawberry" Mystery
-            </button>
-            <button id="btn-exp-trap" class="preset-btn" data-text="cat cat CAT c-a-t">
-              Experiment B: The Space & CAPS Trap
-            </button>
-            <button id="btn-exp-smash" class="preset-btn" data-text="Unbelievable! Supercalifragilisticexpialidocious">
-              Experiment C: Giant Compound Words
-            </button>
-          </div>
-        </div>
-
+    <!-- ==========================================
+         STAGE 2: THE LASER SLICER GAME
+         ========================================== -->
+    <section class="arena-card hidden" id="stage-2-panel">
+      <div class="arena-header">
         <div>
-          <label for="slicer-input" style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.35rem;">TYPE OR PASTE ANY SENTENCE TO SLICE LIVE:</label>
-          <textarea id="slicer-input" class="prompt-box" rows="2" placeholder="Type any words here to see how the AI slices them...">AI loves eating fresh strawberries every morning.</textarea>
+          <span class="mono-tag" id="laser-round-tag">CHALLENGE 1 OF 2 // PREDICT THE CUT</span>
+          <h2 class="arena-title">Where Will the AI Slice This Word?</h2>
+          <p class="arena-sub">
+            Before the AI reads a word, its tokenizer slices it into pieces that exist in its 49,152-piece dictionary. <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong> to see if you matched the real AI!
+          </p>
         </div>
+      </div>
 
-        <!-- Step 1 Wake Button -->
-        <div class="controls-bar" id="init-bar">
-          <button id="btn-init" class="btn-primary btn-pulse-emerald">
+      <div class="laser-table">
+        <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--amber);" id="laser-hint">
+          Hint: This word gets sliced into 2 puzzle pieces! Click 1 gap between the letters.
+        </span>
+
+        <div class="laser-word-row" id="laser-word-row"></div>
+
+        <div style="display:flex; gap:0.75rem;">
+          <button id="btn-clear-cuts" class="btn-outline">Clear Cuts</button>
+          <button id="btn-fire-laser" class="btn-primary">
             <i data-lucide="zap" class="icon-xs"></i>
-            <span>Step 1: Turn On AI Word Slicer</span>
+            <span>Fire Laser & Check Cut</span>
           </button>
         </div>
+      </div>
 
-        <!-- Live Sliced Puzzle Pieces Stage -->
-        <div id="workbench-wrapper" class="hidden" style="display:flex; flex-direction:column; gap:0.85rem;">
-          <div class="metrics-strip">
-            <div class="metric-card">
-              <small>Total Characters</small>
-              <strong id="stat-chars">0</strong>
-            </div>
-            <div class="metric-card">
-              <small>English Words</small>
-              <strong id="stat-words">0</strong>
-            </div>
-            <div class="metric-card" style="border-color: rgba(56, 189, 248, 0.4);">
-              <small style="color:var(--cyan);">AI Puzzle Pieces (Tokens)</small>
-              <strong id="stat-tokens" style="color:var(--cyan);">0</strong>
-            </div>
-          </div>
+      <!-- Result Comparison Area -->
+      <div class="insight-banner hidden" id="laser-feedback">
+        <div id="laser-feedback-text" style="font-size:0.88rem;"></div>
+        <button id="btn-laser-next" class="btn-primary">
+          <span>Next Challenge</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </section>
 
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-              <span style="font-size:0.74rem; color:var(--text-muted); font-weight:600;">LIVE SLICED TOKENS (Click any puzzle piece to X-Ray it on the right!)</span>
-              <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-secondary);">"·" = Attached Leading Space</span>
-            </div>
-            <div id="slicer-stage" class="slicer-stage"></div>
-          </div>
+    <!-- ==========================================
+         STAGE 3: LIVE JIGSAW FORGE (REAL AI TOKENIZER)
+         ========================================== -->
+    <section class="arena-card hidden" id="stage-3-panel">
+      <div class="arena-header">
+        <div>
+          <span class="mono-tag">STAGE 3 // FREE-PLAY JIGSAW FORGE</span>
+          <h2 class="arena-title">Type Anything & Watch It Forge into Jigsaw Pieces</h2>
+          <p class="arena-sub">
+            Now that you've mastered how puzzle pieces snap together and where the laser slices, type your own name, weird words, or emojis below to see the real SmolLM2 tokenizer turn them into interlocking jigsaw pieces!
+          </p>
         </div>
-      </section>
+        <button id="btn-forge-quiz" class="btn-primary">
+          <i data-lucide="award" class="icon-xs"></i>
+          <span>Take Final Quiz & Claim 200 XP</span>
+        </button>
+      </div>
 
-      <!-- RIGHT PANEL: X-Ray Inspector & Compression Speedometer -->
-      <section class="panel hidden" id="instruments-panel">
-        <div class="panel-head">
-          <h2><i data-lucide="scan-line" class="icon-sm text-emerald"></i> 2. Token X-Ray & Compression Meter</h2>
-          <span class="mono-tag" id="selected-token-badge">Click a Piece</span>
-        </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn-secondary btn-xs forge-preset" data-text="strawberry adores playing">Try: "strawberry adores playing"</button>
+        <button class="btn-secondary btn-xs forge-preset" data-text="cat cat CAT">Try: "cat cat CAT" (Space & CAPS)</button>
+        <button class="btn-secondary btn-xs forge-preset" data-text="Supercalifragilistic">Try: "Supercalifragilistic"</button>
+      </div>
 
-        <!-- Top Row: Compression Speedometer + Narrative -->
-        <div class="instruments-top">
-          <div class="speedometer-box">
-            <span class="speedo-label">PACKING EFFICIENCY</span>
-            <svg viewBox="0 0 150 90" class="speedo-svg">
-              <path d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#27272a" stroke-width="12" stroke-linecap="round" />
-              <path id="eff-arc" d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="94" />
-              <g id="eff-needle" style="transform: rotate(0deg);">
-                <line x1="75" y1="75" x2="75" y2="22" stroke="#fafafa" stroke-width="2.5" stroke-linecap="round" />
-                <circle cx="75" cy="75" r="5" fill="#fafafa" />
-              </g>
-            </svg>
-            <div id="eff-ratio" class="speedo-readout">0.0</div>
-            <div id="eff-zone" class="speedo-zone-tag">CHARS PER TOKEN</div>
-          </div>
+      <input type="text" id="forge-input" value="strawberry adores playing" style="width:100%; background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.85rem 1rem; border-radius:var(--radius-md); font-size:1rem; font-family:var(--font-sans);" />
 
-          <div class="explainer-box">
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-                <span id="xray-badge" class="mono-tag">WHAT THE AI ACTUALLY SEES</span>
-              </div>
-              <div id="xray-narrative" class="explainer-body">
-                Try clicking the glowing <strong>Experiment A: The "Strawberry" Mystery</strong> button on the left to see why AI struggles to count letters inside words!
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Single Token Deep X-Ray Inspector -->
-        <div class="xray-card">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="font-size:0.82rem;">Selected Puzzle Piece X-Ray</strong>
-            <span style="font-size:0.72rem; color:var(--text-muted);">Click any colored block on the left</span>
-          </div>
-          <div class="xray-grid">
-            <div class="xray-item">
-              <span>PIECE TEXT</span>
-              <strong id="xr-text">"--"</strong>
-            </div>
-            <div class="xray-item">
-              <span>SECRET DICTIONARY ID</span>
-              <strong id="xr-id">#--</strong>
-            </div>
-            <div class="xray-item">
-              <span>STARTS WITH SPACE?</span>
-              <strong id="xr-space" style="color:var(--text-primary);">--</strong>
-            </div>
-            <div class="xray-item">
-              <span>LETTERS HIDDEN INSIDE</span>
-              <strong id="xr-letters" style="color:var(--emerald);">--</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- Visual Comparison: Whole Words vs AI Tokens -->
-        <div class="comparison-bar-group">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="font-size:0.8rem;">Human Reading vs. AI Reading</strong>
-            <span class="mono-tag" id="inflation-badge">1.0x Pieces</span>
-          </div>
-          <div class="comp-row">
-            <span>Human Words</span>
-            <div style="background:#1f1f23; height:12px; border-radius:4px; overflow:hidden;">
-              <div id="bar-human" style="width:50%; height:100%; background:var(--emerald); transition:width 0.25s ease;"></div>
-            </div>
-            <span id="lbl-human" style="text-align:right;">0</span>
-          </div>
-          <div class="comp-row">
-            <span>AI Tokens</span>
-            <div style="background:#1f1f23; height:12px; border-radius:4px; overflow:hidden;">
-              <div id="bar-ai" style="width:75%; height:100%; background:var(--cyan); transition:width 0.25s ease;"></div>
-            </div>
-            <span id="lbl-ai" style="text-align:right;">0</span>
-          </div>
-        </div>
-      </section>
-    </div>
+      <div class="assembly-zone" style="justify-content:flex-start; gap:0.65rem; padding:1.5rem;" id="forge-stage">
+        <span style="color:var(--text-muted); font-size:0.85rem;">Loading live AI tokenizer...</span>
+      </div>
+    </section>
   </main>
 
-  <!-- Interactive Walkthrough / Learning Moment Popup Modal -->
+  <!-- Interactive Learning Moment Popup -->
   <div id="walkthrough-modal" class="modal-backdrop hidden">
     <div class="walkthrough-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mission-label" id="wt-tag">LEARNING MOMENT</span>
-        <span class="mono-tag">Visual Guide</span>
+        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);" id="wt-tag">LEARNING MOMENT</span>
+        <span class="mono-tag">Discovery Unlocked</span>
       </div>
-      <h3 class="wt-title" id="wt-title">How AI Cuts Words into Pieces</h3>
+      <h3 style="font-size:1.2rem; font-weight:700;" id="wt-title">Why AI Can't Count Letters</h3>
       <div class="wt-visual-stage" id="wt-visual"></div>
-      <div class="wt-body" id="wt-body"></div>
+      <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
       <div style="display:flex; justify-content:flex-end;">
-        <button id="btn-wt-continue" class="btn-primary">
-          <span id="btn-wt-text">Got It — Let Me Try!</span>
+        <button id="btn-wt-close" class="btn-primary">
+          <span id="btn-wt-label">Awesome — Continue</span>
           <i data-lucide="arrow-right" class="icon-xs"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Interactive 3-Question Assessment Modal -->
+  <!-- 3-Question Assessment Modal -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mission-label">LAB 02 ASSESSMENT (3 QUESTIONS)</span>
+        <span class="mono-tag" style="color:var(--emerald);">LAB 02 ASSESSMENT</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
       <h3>Lab 02 Final Knowledge Check</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions to earn 200 XP and unlock Lab 03 on your main dashboard.</p>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions to claim your 200 XP and unlock Lab 03 on your dashboard.</p>
 
       <div class="quiz-q" data-q="1">
-        <h4>1. Why did famous AI models historically struggle to count how many "r"s are in the word "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="true">Because the AI never sees individual letters—it only receives numbered subword chunks like #20412 ("straw") and #11951 ("berry").</button>
-        <button class="quiz-opt" data-correct="false">Because the letter "r" is missing from the AI's keyboard font.</button>
+        <h4>1. How does an AI build long words like "unbelievable" or "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="true">It snaps together smaller, reusable subword puzzle pieces (called Tokens) from its dictionary.</button>
+        <button class="quiz-opt" data-correct="false">It spells every word out one single letter at a time like a human typist.</button>
       </div>
 
       <div class="quiz-q" data-q="2">
-        <h4>2. In the AI's vocabulary, why does " cat" (with a space in front) have a completely different ID number than "cat" (no space)?</h4>
-        <button class="quiz-opt" data-correct="false">It is a bug in the browser cache.</button>
-        <button class="quiz-opt" data-correct="true">To save time and space, the AI glues the leading space directly onto the front of common words as a single puzzle piece.</button>
+        <h4>2. Why did AI models famously struggle to count how many "r"s are inside the word "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="true">Because the AI only sees the closed ID numbers (#20412 and #11951) for the puzzle pieces, not the individual letters locked inside them.</button>
+        <button class="quiz-opt" data-correct="false">Because the AI was trained without the letter R.</button>
       </div>
 
       <div class="quiz-q" data-q="3">
-        <h4>3. What happens when you type a super rare or made-up word that isn't in the AI's dictionary?</h4>
-        <button class="quiz-opt" data-correct="true">The Word Slicer breaks it down into smaller and smaller subword pieces (or single letters) that ARE in its dictionary.</button>
-        <button class="quiz-opt" data-correct="false">The AI crashes and deletes the word from your sentence.</button>
+        <h4>3. Where does the AI usually slice a word like "adores" or "playing"?</h4>
+        <button class="quiz-opt" data-correct="true">Between the root word and common prefixes or suffixes (like "adore" + "s" or "play" + "ing") so it can reuse the pieces across thousands of words.</button>
+        <button class="quiz-opt" data-correct="false">Randomly in a different spot every time you type the word.</button>
       </div>
 
       <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.65rem; border-radius:var(--radius-sm);"></div>
 
-      <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
+      <div style="display:flex; justify-content:flex-end;">
         <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim XP</button>
       </div>
     </div>
