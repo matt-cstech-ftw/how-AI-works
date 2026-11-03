@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 03: How Words Look for Clues — How AI Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .attention-shell {
+      position: relative;
+      z-index: 10;
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* 3-Stage Navigation Stepper */
+    .stage-stepper {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.75rem;
+    }
+
+    .stage-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .stage-tab.active {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    .stage-tab.completed {
+      border-color: rgba(16, 185, 129, 0.45);
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .stage-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .stage-tab.active .stage-num {
+      background: var(--cyan);
+      color: #09090b;
+      border-color: var(--cyan);
+    }
+
+    .stage-tab.completed .stage-num {
+      background: var(--emerald);
+      color: #052e16;
+      border-color: var(--emerald);
+    }
+
+    /* Main Interactive Card */
+    .arena-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.25rem, 3vw, 2.25rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .arena-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
+    }
+
+    .arena-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 0.25rem;
+    }
+
+    .arena-sub {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      max-width: 68ch;
+      margin-top: 0.25rem;
+    }
+
+    .context-scale-note {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--violet);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .context-scale-note strong {
+      color: var(--text-primary);
+    }
+
+    /* ==========================================
+       SWITCHBOARD STAGE (SVG ARC OVERLAY + WORDS)
+       ========================================== */
+    .switchboard-box {
+      position: relative;
+      background: #0b0b0f;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 5.5rem 1.5rem 2.25rem;
+      overflow: hidden;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .switchboard-box.solved {
+      border-color: var(--emerald);
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .switchboard-box.error-shake {
+      border-color: var(--red);
+      background: rgba(239, 68, 68, 0.05);
+      animation: boardShake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes boardShake {
+      10%, 90% { transform: translateX(-4px); }
+      20%, 80% { transform: translateX(6px); }
+      30%, 50%, 70% { transform: translateX(-7px); }
+      40%, 60% { transform: translateX(7px); }
+    }
+
+    .arc-svg-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .word-nodes-row {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+    }
+
+    .word-node {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.16s ease;
+    }
+
+    .word-node:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    /* The Spotlight Mystery Word (e.g., "it" or "she") */
+    .word-node.spotlight-word {
+      background: rgba(192, 132, 252, 0.18);
+      border-color: var(--violet);
+      color: #f3e8ff;
+      box-shadow: 0 0 18px rgba(192, 132, 252, 0.35);
+      cursor: default;
+    }
+
+    .word-node.spotlight-word::after {
+      content: 'MYSTERY WORD';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.56rem;
+      color: var(--violet);
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+
+    /* Highlighted Clue Word (e.g. "big" or "small") */
+    .word-node.clue-beacon {
+      border-color: var(--amber);
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .word-node.clue-beacon::after {
+      content: 'KEY CLUE';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.56rem;
+      color: var(--amber);
+      white-space: nowrap;
+    }
+
+    .word-node.target-correct {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-color: var(--emerald) !important;
+      color: #d1fae5 !important;
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
+    }
+
+    .word-node.target-wrong {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: var(--red) !important;
+      color: #fecaca !important;
+    }
+
+    .weight-pill {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Animated SVG Arc Path */
+    .laser-arc-path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: drawArc 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes drawArc {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* ==========================================
+       STAGE 2: CHAMELEON WORD MEANING TUG-OF-WAR
+       ========================================== */
+    .tug-of-war-card {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .tug-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .tug-track {
+      height: 18px;
+      background: #18181b;
+      border-radius: 99px;
+      border: 1px solid var(--border-strong);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .tug-fill-left {
+      height: 100%;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .tug-fill-right {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .word-node.clue-activated {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.16);
+      color: #e0f2fe;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Live Diagnostic Bar */
+    .diagnostic-bar {
+      padding: 0.9rem 1.15rem;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-canvas);
+      line-height: 1.5;
+    }
+
+    .diagnostic-bar.status-neutral { border-color: var(--border-subtle); color: var(--text-secondary); }
+    .diagnostic-bar.status-good { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.08); color: #e0f2fe; }
+    .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
+    .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
+
+    /* Modal Backdrop & Quiz Grading */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .walkthrough-modal, .quiz-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--cyan);
+      border-radius: var(--radius-lg);
+      max-width: 640px;
+      width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+    }
+
+    .wt-visual-stage {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .quiz-q {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .quiz-q h4 {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      margin-bottom: 0.15rem;
+    }
+
+    .quiz-opt {
+      text-align: left;
+      justify-content: flex-start;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 0.65rem 0.85rem;
+      font-weight: 500;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      transition: all 0.18s ease;
+    }
+
+    .quiz-opt.selected {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: var(--cyan-dim);
+    }
+
+    .quiz-opt.ans-correct {
+      border-color: var(--emerald) !important;
+      background: rgba(16, 185, 129, 0.14) !important;
+      color: #d1fae5 !important;
+    }
+
+    .quiz-opt.ans-wrong {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, 0.14) !important;
+      color: #fecaca !important;
+      animation: boardShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    .quiz-status-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    .quiz-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
+    .quiz-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
+
+    .q-inline-hint {
+      font-size: 0.78rem;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 3px solid var(--red);
+      padding: 0.45rem 0.65rem;
+      border-radius: 0 4px 4px 0;
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 720px) {
+      .stage-stepper { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- Top Navigation -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">BACK TO DASHBOARD</span>
+          <span class="brand-badge">LAB 03 // CLUE CONNECTOR SWITCHBOARD</span>
+        </div>
+      </a>
+
+      <div class="topbar-stats">
+        <div class="stat-chip">
+          <i data-lucide="network" class="icon-xs text-cyan"></i>
+          <span id="progress-readout">Cases Solved: <strong>0 / 5</strong></span>
+        </div>
+        <button id="btn-open-quiz" class="btn-outline btn-xs">
+          <i data-lucide="award" class="icon-xs text-amber"></i>
+          <span>Take Lab 03 Quiz</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="attention-shell">
+    <!-- 3-Stage Stepper -->
+    <nav class="stage-stepper">
+      <button class="stage-tab active" id="tab-stage-1">
+        <span class="stage-num">1</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">The Pronoun Detective</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Wire mystery words back to their owner</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-2">
+        <span class="stage-num">2</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">The Chameleon Word Tuner</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Light up clues to flip a word's meaning</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-3">
+        <span class="stage-num">3</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Live Attention Radar</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Explore real multi-word attention webs</small>
+        </div>
+      </button>
+    </nav>
+
+    <!-- ==========================================
+         STAGE 1: THE PRONOUN DETECTIVE SWITCHBOARD
+         ========================================== -->
+    <section class="arena-card" id="stage-1-panel">
+      <div class="arena-header">
+        <div>
+          <span class="mono-tag" id="detective-round-tag">CASE 1 OF 3 // PRONOUN RESOLUTION</span>
+          <h1 class="arena-title" id="detective-title">Who Does the Mystery Word Refer To?</h1>
+          <p class="arena-sub" id="detective-sub">
+            When an AI reads the word <strong>"it"</strong>, how does it know which noun you're talking about? It uses a mechanism called <strong>Self-Attention</strong> to fire laser connections back to earlier words! Click the exact noun that the purple <strong>MYSTERY WORD</strong> refers to.
+          </p>
+        </div>
+      </div>
+
+      <div class="context-scale-note">
+        <strong>How far back can an AI look for clues?</strong> The number of tokens an AI can connect at once is called its <strong>Context Window</strong>. Small local models look back across <strong>2,000 to 8,000</strong> pieces, while giant cloud models like <strong>ChatGPT (GPT-4o)</strong> and <strong>Claude</strong> connect clues across <strong>128,000 to 200,000</strong> pieces, and <strong>Google Gemini</strong> can scan up to <strong>2,000,000</strong> pieces (whole books!) at once.
+      </div>
+
+      <!-- Interactive Switchboard with SVG Laser Overlay -->
+      <div class="switchboard-box" id="s1-board">
+        <svg class="arc-svg-layer" id="s1-svg"></svg>
+        <div class="word-nodes-row" id="s1-words-row"></div>
+      </div>
+
+      <!-- Instant Diagnostic Bar -->
+      <div class="diagnostic-bar status-neutral" id="s1-diagnostic">
+        <div id="s1-diag-text">
+          <strong>Your Mission:</strong> Look at the yellow <strong>KEY CLUE</strong> word, then click the earlier noun in the sentence that the purple <strong>MYSTERY WORD</strong> actually refers to!
+        </div>
+        <button id="btn-s1-next" class="btn-primary hidden">
+          <span>Next Case</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         STAGE 2: THE CHAMELEON WORD TUNER
+         ========================================== -->
+    <section class="arena-card hidden" id="stage-2-panel">
+      <div class="arena-header">
+        <div>
+          <span class="mono-tag" id="chameleon-round-tag">EXPERIMENT 1 OF 2 // CONTEXT SHIFTS MEANING</span>
+          <h2 class="arena-title" id="chameleon-title">Flip the Meaning of "bank" Using Context Clues!</h2>
+          <p class="arena-sub" id="chameleon-sub">
+            In isolation, the token <strong>"bank"</strong> (#3912) is 50/50 undecided between a <em>river edge</em> and a <em>financial vault</em>. <strong>Click the 2 context clue words</strong> in the sentence below to wire their attention beams into "bank" and lock in its true meaning!
+          </p>
+        </div>
+      </div>
+
+      <!-- Meaning Tug-of-War Meter -->
+      <div class="tug-of-war-card">
+        <div class="tug-labels">
+          <span style="color:var(--cyan);" id="tug-label-left">RIVER / NATURE: 50%</span>
+          <span class="mono-tag" id="tug-status-badge">UNDECIDED (50 / 50)</span>
+          <span style="color:var(--emerald);" id="tug-label-right">MONEY / FINANCE: 50%</span>
+        </div>
+        <div class="tug-track">
+          <div class="tug-fill-left" id="tug-bar-left" style="width: 50%;"></div>
+          <div class="tug-fill-right" id="tug-bar-right" style="width: 50%;"></div>
+        </div>
+      </div>
+
+      <!-- Chameleon Switchboard -->
+      <div class="switchboard-box" id="s2-board">
+        <svg class="arc-svg-layer" id="s2-svg"></svg>
+        <div class="word-nodes-row" id="s2-words-row"></div>
+      </div>
+
+      <!-- Stage 2 Diagnostic -->
+      <div class="diagnostic-bar status-neutral" id="s2-diagnostic">
+        <div id="s2-diag-text">
+          <strong>Click the 2 clue words</strong> in the sentence above that tell the AI what kind of <code>"bank"</code> this is!
+        </div>
+        <button id="btn-s2-next" class="btn-primary hidden">
+          <span>Next Experiment</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         STAGE 3: LIVE ATTENTION RADAR (FREE PLAY)
+         ========================================== -->
+    <section class="arena-card hidden" id="stage-3-panel">
+      <div class="arena-header">
+        <div>
+          <span class="mono-tag">STAGE 3 // INTERACTIVE SELF-ATTENTION RADAR</span>
+          <h2 class="arena-title">Click Any Word to See Its Attention Web</h2>
+          <p class="arena-sub">
+            Every word in a Transformer simultaneously looks at related words to gather context. <strong>Click or hover any word below</strong> to see the exact percentage attention beams it fires across the sentence!
+          </p>
+        </div>
+        <button id="btn-radar-quiz" class="btn-primary">
+          <i data-lucide="award" class="icon-xs"></i>
+          <span>Take Final Quiz & Claim 250 XP</span>
+        </button>
+      </div>
+
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn-secondary btn-xs radar-preset" data-idx="0">Sentence A: The Tired Pilot</button>
+        <button class="btn-secondary btn-xs radar-preset" data-idx="1">Sentence B: The Barking Dog & The Tree</button>
+      </div>
+
+      <div class="switchboard-box" id="s3-board">
+        <svg class="arc-svg-layer" id="s3-svg"></svg>
+        <div class="word-nodes-row" id="s3-words-row"></div>
+      </div>
+
+      <div class="diagnostic-bar status-good" id="s3-diagnostic">
+        <div id="s3-diag-text">
+          Click any word in the box above to inspect its top attention connections!
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Learning Moment Popup -->
+  <div id="walkthrough-modal" class="modal-backdrop hidden">
+    <div class="walkthrough-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);" id="wt-tag">LEARNING MOMENT</span>
+        <span class="mono-tag">Discovery Unlocked</span>
+      </div>
+      <h3 style="font-size:1.2rem; font-weight:700;" id="wt-title">How Self-Attention Works</h3>
+      <div class="wt-visual-stage" id="wt-visual"></div>
+      <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="btn-wt-close" class="btn-primary">
+          <span>Got It — Continue</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-Question Assessment Modal (Uniform 4-Choice Style, Zero Parentheses Tells) -->
+  <div id="quiz-modal" class="modal-backdrop hidden">
+    <div class="quiz-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mono-tag" style="color:var(--emerald);">LAB 03 ASSESSMENT // 3 QUESTIONS</span>
+        <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
+      </div>
+      <h3>Lab 03 Final Mastery Assessment</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Self-Attention and unlock Lab 04.</p>
+
+      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 with the trophy and the suitcase: how did changing the last word from 'big' to 'small' change what 'it' meant?">
+        <h4>1. How does an AI figure out who or what a pronoun like "it" or "she" refers to in a sentence?</h4>
+        <button class="quiz-opt" data-correct="false">It always connects a pronoun to whichever noun appeared most recently right before it.</button>
+        <button class="quiz-opt" data-correct="true">It uses self-attention to connect the pronoun with descriptive clue words across the sentence.</button>
+        <button class="quiz-opt" data-correct="false">It pauses to look up the sentence in a grammar rulebook stored outside the neural network.</button>
+        <button class="quiz-opt" data-correct="false">It assigns every pronoun to the very first noun that appeared at the beginning of the prompt.</button>
+      </div>
+
+      <div class="quiz-q" data-q="2" data-hint="Remember Stage 2 when the word 'bank' started at 50/50 until you wired in surrounding words like 'river' or 'vault'.">
+        <h4>2. How does an AI tell the difference between a river "bank" and a money "bank" when both use the exact same token ID?</h4>
+        <button class="quiz-opt" data-correct="false">It assigns a brand-new token ID number to the word as soon as the sentence finishes loading.</button>
+        <button class="quiz-opt" data-correct="false">It guesses randomly between the two meanings whenever a word has more than one definition.</button>
+        <button class="quiz-opt" data-correct="true">Attention layers blend information from surrounding clue words into the word to shift its meaning.</button>
+        <button class="quiz-opt" data-correct="false">The word slicer deletes ambiguous words and replaces them with more specific synonyms first.</button>
+      </div>
+
+      <div class="quiz-q" data-q="3" data-hint="Check the purple note at the top of Stage 1 about how many pieces an AI can connect at the same time.">
+        <h4>3. What does an AI model's "Context Window" measure?</h4>
+        <button class="quiz-opt" data-correct="false">The total number of unique subword pieces stored inside the model's permanent dictionary.</button>
+        <button class="quiz-opt" data-correct="false">The maximum speed at which the model can generate new words on your computer screen.</button>
+        <button class="quiz-opt" data-correct="true">The maximum number of token pieces the model can hold in memory and connect clues across at once.</button>
+        <button class="quiz-opt" data-correct="false">The number of competing candidate words displayed on the leaderboard during each word election.</button>
+      </div>
+
+      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim 250 XP</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
