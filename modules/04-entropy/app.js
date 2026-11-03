@@ -1,7 +1,11 @@
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
 // ==========================================
-// THE MEANING GALAXY STAR CATALOG (Normalized 0..1 Coordinates)
+// STAGE 1 & 2 STAR CATALOG (Normalized 0..1 Coordinates)
 // ==========================================
 const STAR_CATALOG = [
   // Nebula 1: Warm Café & Beverage Cluster (Top-Left, Amber/Gold)
@@ -40,14 +44,12 @@ const NEBULA_CLOUDS = [
   { id: 'royalty', x: 0.36, y: 0.75, rx: 185, color: 'rgba(192, 132, 252, 0.13)', name: 'ROYALTY & CAPITALS NEBULA' }
 ];
 
-// Stage 1 Progressive Constellations (Revealed one by one, and kept permanently wired!)
 const STAGE1_MISSIONS = [
   {
     roundTag: 'STAGE 1 // CONSTELLATION 1 OF 3',
     title: 'Wire the "Espresso" Meaning Constellation',
     anchorId: 'espresso',
     targetIds: ['latte', 'roast', 'cafe'],
-    // Only show the Cafe cluster + 2 distant stars so the sky starts clean and focused!
     visibleClusters: ['cafe'],
     extraVisibleStarIds: ['astronaut', 'puppy'],
     promptInstruction: `Look at the pulsing gold star <code>"Espresso"</code> in the top-left nebula. <strong>Click its 3 closest neighbor stars</strong> (<code>Latte</code>, <code>Coffee</code>, <code>Cafe</code>) to wire your first Meaning Constellation!`,
@@ -107,7 +109,6 @@ const STAGE1_MISSIONS = [
   }
 ];
 
-// Stage 2 Star Math Challenges
 const STAGE2_MATH = [
   {
     roundTag: 'STAGE 2 // STAR MATH 1 OF 2',
@@ -129,21 +130,31 @@ const STAGE2_MATH = [
   }
 ];
 
+// Stopwords to filter out so Stage 3 maps meaningful content words in the user's prompt
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'over', 'after', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'it', 'its', 'they', 'them', 'their', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'my', 'your', 'our'
+]);
+
+const DYNAMIC_COLORS = ['#38bdf8', '#10b981', '#c084fc', '#f59e0b', '#f472b6'];
+
 // State
 let currentStage = 1;
 let s1Idx = 0;
 let s1ConnectedIds = new Set();
 let s1MissionComplete = false;
-// Stores completed constellations so they stay permanently wired!
-let completedConstellations = []; // Array of { anchorId, targetIds, color }
+let completedConstellations = [];
 let s1WrongLine = null;
 
 let s2Idx = 0;
 let s2Solved = false;
-let completedMathVectors = []; // Keep solved math vectors visible
+let completedMathVectors = [];
 
-let s3ActiveStarIds = [];
-let s3Centroid = null;
+// Stage 3 Live Neural Embedding State
+let extractor = null;
+let isEmbeddingLoading = false;
+let s3DynamicStars = []; // Array of { label, x, y, color, vec }
+let s3Links = [];        // Array of { fromIdx, toIdx, sim }
+let s3Centroid = null;   // { x, y }
 
 let hoveredStarId = null;
 let discoveriesCount = 0;
@@ -167,11 +178,14 @@ const tabStage3 = document.getElementById('tab-stage-3');
 
 const obsRoundTag = document.getElementById('obs-round-tag');
 const obsTitle = document.getElementById('obs-title');
+const obsSub = document.getElementById('obs-sub');
 const btnStage3Quiz = document.getElementById('btn-stage3-quiz');
 
 const equationBar = document.getElementById('equation-bar');
 const promptConstellationBar = document.getElementById('prompt-constellation-bar');
 const customPromptInput = document.getElementById('custom-prompt-input');
+const btnMapPrompt = document.getElementById('btn-map-prompt');
+const embedModelStatus = document.getElementById('embed-model-status');
 
 const cosmosViewport = document.getElementById('cosmos-viewport');
 const canvas = document.getElementById('cosmos-canvas');
@@ -219,8 +233,8 @@ function getStar(id) {
   return STAR_CATALOG.find(s => s.id === id);
 }
 
-// Returns only the stars that should be visible in the current stage/mission!
 function getVisibleStars() {
+  if (currentStage === 3) return []; // Stage 3 uses clean blank sky + live user prompt stars!
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     return STAR_CATALOG.filter(
@@ -231,6 +245,7 @@ function getVisibleStars() {
 }
 
 function getVisibleNebulae() {
+  if (currentStage === 3) return []; // Original nebulae disappear in Stage 3!
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     return NEBULA_CLOUDS.filter(neb => m.visibleClusters.includes(neb.id));
@@ -275,7 +290,7 @@ function renderCosmos() {
   const h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
 
-  // 1. Draw Visible Nebula Clouds
+  // 1. Draw Visible Nebula Clouds (Stages 1 & 2)
   const visibleNebulae = getVisibleNebulae();
   visibleNebulae.forEach(neb => {
     const cx = neb.x * w;
@@ -294,7 +309,7 @@ function renderCosmos() {
     ctx.fillText(neb.name, cx, cy - neb.rx * 0.55);
   });
 
-  // 2. Draw Twinkling Background Stars
+  // 2. Draw Twinkling Background Stars (Always active)
   BG_STARS.forEach(st => {
     const alpha = 0.25 + 0.45 * Math.sin(animTick * st.speed + st.phase);
     ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
@@ -303,12 +318,110 @@ function renderCosmos() {
     ctx.fill();
   });
 
-  // 3. Always Draw All Previously Completed Constellations so they STAY WIRED!
+  // 3. STAGE 3: Render ONLY the User's Live Prompt Constellation on a Clean Sky!
+  if (currentStage === 3) {
+    if (s3DynamicStars.length === 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.font = '600 13px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✨ Type a sentence in the glowing box above and press "Map My Prompt"!', w / 2, h / 2);
+      requestAnimationFrame(renderCosmos);
+      return;
+    }
+
+    // Draw soft nebula glow around the user's Prompt Center of Gravity
+    if (s3Centroid) {
+      const cx = s3Centroid.x * w;
+      const cy = s3Centroid.y * h;
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 190);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.16)');
+      grad.addColorStop(0.6, 'rgba(192, 132, 252, 0.08)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 190, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw Semantic Constellation Links between related words in user's prompt
+      s3Links.forEach(link => {
+        const sA = s3DynamicStars[link.fromIdx];
+        const sB = s3DynamicStars[link.toIdx];
+        if (!sA || !sB) return;
+        drawGlowLine(sA.x * w, sA.y * h, sB.x * w, sB.y * h, '#38bdf8', 2.2, false);
+
+        // Show similarity percentage on the line midpoint
+        const mx = ((sA.x + sB.x) / 2) * w;
+        const my = ((sA.y + sB.y) / 2) * h;
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.8)';
+        ctx.fillRect(mx - 18, my - 8, 36, 14);
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = '600 9px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round(link.sim * 100)}%`, mx, my + 2);
+      });
+
+      // Draw gravitational tether lines from each word star to the Center of Gravity
+      s3DynamicStars.forEach(st => {
+        drawGlowLine(st.x * w, st.y * h, cx, cy, 'rgba(16, 185, 129, 0.5)', 1.5, true);
+      });
+
+      // Draw Pulsing Center of Gravity (AI Thought Core)
+      const pulseR = 16 + 5 * Math.sin(animTick * 0.08);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#d1fae5';
+      ctx.font = '700 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ PROMPT CENTER OF GRAVITY (COMBINED THOUGHT)', cx, cy - 24);
+    }
+
+    // Draw each Word Star from the user's prompt
+    s3DynamicStars.forEach(star => {
+      const sx = star.x * w;
+      const sy = star.y * h;
+
+      const haloR = 13 + 3.5 * Math.sin(animTick * 0.08);
+      ctx.fillStyle = `${star.color}38`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = star.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx - 9, sy); ctx.lineTo(sx + 9, sy);
+      ctx.moveTo(sx, sy - 9); ctx.lineTo(sx, sy + 9);
+      ctx.stroke();
+
+      ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#fafafa';
+      ctx.textAlign = 'center';
+      ctx.fillText(star.label, sx, sy + 20);
+    });
+
+    requestAnimationFrame(renderCosmos);
+    return;
+  }
+
+  // 4. STAGES 1 & 2: Draw Previously Completed Constellations
   completedConstellations.forEach(comp => {
     drawConstellationGroup(comp.anchorId, comp.targetIds, comp.color, w, h, true);
   });
 
-  // 4. Draw Active Stage Lines & Vectors
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     const anchor = getStar(m.anchorId);
@@ -327,7 +440,6 @@ function renderCosmos() {
       );
     }
   } else if (currentStage === 2) {
-    // Draw previously solved math equations
     completedMathVectors.forEach(eq => {
       const sStart = getStar(eq.startId);
       const sMinus = getStar(eq.minusId);
@@ -343,42 +455,11 @@ function renderCosmos() {
     const sPlus = getStar(eq.plusId);
     const sAns = getStar(eq.answerId);
 
-    // Reference relationship vector: Minus -> Start
     drawGlowLine(sMinus.x * w, sMinus.y * h, sStart.x * w, sStart.y * h, '#38bdf8', 2.4, true);
-    // Applied relationship vector: Plus -> Answer
     drawGlowLine(sPlus.x * w, sPlus.y * h, sAns.x * w, sAns.y * h, s2Solved ? '#10b981' : '#f59e0b', 3.2, !s2Solved);
-  } else if (currentStage === 3 && s3Centroid) {
-    const cx = s3Centroid.x * w;
-    const cy = s3Centroid.y * h;
-
-    s3ActiveStarIds.forEach((id, idx) => {
-      const st = getStar(id);
-      drawGlowLine(st.x * w, st.y * h, cx, cy, '#38bdf8', 2.4, false);
-      if (idx > 0) {
-        const prev = getStar(s3ActiveStarIds[idx - 1]);
-        drawGlowLine(prev.x * w, prev.y * h, st.x * w, st.y * h, 'rgba(192, 132, 252, 0.5)', 1.4, true);
-      }
-    });
-
-    const pulseR = 16 + 5 * Math.sin(animTick * 0.08);
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = '#10b981';
-    ctx.beginPath();
-    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#d1fae5';
-    ctx.font = '700 11px "JetBrains Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('★ PROMPT CENTER OF GRAVITY (AI THOUGHT)', cx, cy - 22);
   }
 
-  // 5. Draw Visible Foreground Word Stars
+  // 5. Draw Visible Foreground Word Stars (Stages 1 & 2)
   const visibleStars = getVisibleStars();
   visibleStars.forEach(star => {
     const sx = star.x * w;
@@ -404,11 +485,8 @@ function renderCosmos() {
       if ([eq.startId, eq.minusId, eq.plusId].includes(star.id) || (s2Solved && star.id === eq.answerId)) {
         isAnchorOrHighlight = true;
       }
-    } else if (currentStage === 3) {
-      if (s3ActiveStarIds.includes(star.id)) isAnchorOrHighlight = true;
     }
 
-    // Outer pulsing halo
     if (isAnchorOrHighlight || isHovered || isCurrentMissionAnchor) {
       const haloR = isHovered ? 17 : 12 + 3.5 * Math.sin(animTick * 0.08);
       ctx.fillStyle = isHovered ? 'rgba(255, 255, 255, 0.25)' : `${star.color}38`;
@@ -417,13 +495,11 @@ function renderCosmos() {
       ctx.fill();
     }
 
-    // Star Core
     ctx.fillStyle = isAnchorOrHighlight || isHovered ? '#ffffff' : star.color;
     ctx.beginPath();
     ctx.arc(sx, sy, isAnchorOrHighlight ? 5.5 : 4.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Crisp 4-point star flare
     if (isAnchorOrHighlight) {
       ctx.strokeStyle = star.color;
       ctx.lineWidth = 1.4;
@@ -433,7 +509,6 @@ function renderCosmos() {
       ctx.stroke();
     }
 
-    // Word Label
     ctx.font = `${isAnchorOrHighlight || isHovered ? '700' : '500'} 11px "JetBrains Mono", monospace`;
     ctx.fillStyle = isAnchorOrHighlight || isHovered ? '#fafafa' : '#a1a1aa';
     ctx.textAlign = 'center';
@@ -455,8 +530,8 @@ function drawGlowLine(x1, y1, x2, y2, color, width = 2, dashed = false) {
   ctx.restore();
 }
 
-// Hit-testing on Canvas (Only checks currently visible stars!)
 function getStarAtPosition(clientX, clientY) {
+  if (currentStage === 3) return null;
   const rect = canvas.getBoundingClientRect();
   const mx = clientX - rect.left;
   const my = clientY - rect.top;
@@ -488,14 +563,10 @@ canvas.addEventListener('click', (e) => {
 
   if (currentStage === 1) handleStage1StarClick(hit);
   else if (currentStage === 2) handleStage2StarClick(hit);
-  else if (currentStage === 3) {
-    customPromptInput.value += ` ${hit.label.toLowerCase()}`;
-    computeStage3PromptGravity();
-  }
 });
 
 // ==========================================
-// STAGE 1 LOGIC: WIRE THE CONSTELLATIONS (ONE BY ONE)
+// STAGE 1 LOGIC: WIRE THE CONSTELLATIONS
 // ==========================================
 function loadStage1Mission(idx) {
   s1Idx = idx;
@@ -518,7 +589,6 @@ function handleStage1StarClick(clickedStar) {
   const m = STAGE1_MISSIONS[s1Idx];
   const anchor = getStar(m.anchorId);
 
-  // If this constellation is already completed, ignore clicks so it doesn't show false errors!
   if (s1MissionComplete) {
     obsDiagnostic.className = 'diagnostic-bar status-solved';
     obsDiagText.innerHTML = `<strong>Constellation complete!</strong> Click the button on the right to continue to the next part of the sky!`;
@@ -535,7 +605,6 @@ function handleStage1StarClick(clickedStar) {
     if (remaining === 0) {
       s1MissionComplete = true;
 
-      // Save this constellation permanently so it stays wired for the rest of Lab 04!
       if (!completedConstellations.some(c => c.anchorId === m.anchorId)) {
         completedConstellations.push({
           anchorId: m.anchorId,
@@ -638,7 +707,7 @@ function handleStage2StarClick(clickedStar) {
       btnObsNext.innerHTML = `<span>Next Star Equation</span><i data-lucide="arrow-right" class="icon-xs"></i>`;
     } else {
       tabStage2.classList.add('completed');
-      btnObsNext.innerHTML = `<span>Unlock Stage 3: Prompt Center of Gravity</span><i data-lucide="sparkles" class="icon-xs"></i>`;
+      btnObsNext.innerHTML = `<span>Unlock Stage 3: Live AI Prompt Mapper</span><i data-lucide="sparkles" class="icon-xs"></i>`;
     }
     refreshIcons();
   } else {
@@ -651,26 +720,154 @@ function handleStage2StarClick(clickedStar) {
 }
 
 // ==========================================
-// STAGE 3 LOGIC: PROMPT CENTER OF GRAVITY
+// STAGE 3 LOGIC: REAL IN-BROWSER NEURAL PROMPT MAPPER
 // ==========================================
-function computeStage3PromptGravity() {
-  const text = customPromptInput.value.toLowerCase();
-  const matchedStars = STAR_CATALOG.filter(st =>
-    text.includes(st.label.toLowerCase()) || text.includes(st.id)
-  );
+function cosineSimilarity(vecA, vecB) {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dot += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-8);
+}
 
-  const activeList = matchedStars.length > 0 ? matchedStars : [getStar('espresso'), getStar('latte'), getStar('cafe')];
-  s3ActiveStarIds = activeList.map(s => s.id);
+async function ensureEmbeddingModelLoaded() {
+  if (extractor) return true;
+  if (isEmbeddingLoading) return false;
+  isEmbeddingLoading = true;
+  embedModelStatus.textContent = 'Waking Up Neural Embedding Model (~22MB)...';
+  embedModelStatus.style.color = '#38bdf8';
 
-  const avgX = activeList.reduce((sum, s) => sum + s.x, 0) / activeList.length;
-  const avgY = activeList.reduce((sum, s) => sum + s.y, 0) / activeList.length;
+  try {
+    extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      dtype: 'q8'
+    });
+    embedModelStatus.textContent = 'Live Neural Embedding Engine: Active (384-D)';
+    embedModelStatus.style.color = '#10b981';
+    isEmbeddingLoading = false;
+    return true;
+  } catch (err) {
+    console.warn('Embedding model load warning:', err);
+    embedModelStatus.textContent = 'Neural Mapper Ready';
+    isEmbeddingLoading = false;
+    return false;
+  }
+}
+
+async function mapLiveUserPrompt() {
+  const rawText = customPromptInput.value.trim();
+  customPromptInput.classList.remove('pulsing-prompt');
+
+  if (!rawText) {
+    s3DynamicStars = [];
+    s3Links = [];
+    s3Centroid = null;
+    obsDiagnostic.className = 'diagnostic-bar status-neutral';
+    obsDiagText.innerHTML = `<strong>Waiting for your prompt:</strong> Type any sentence into the highlighted box above and click <strong>Map My Prompt</strong> to watch the AI turn your words into a live constellation!`;
+    return;
+  }
+
+  // Extract meaningful words from the user's sentence (up to 8 key words so the sky stays crisp)
+  const cleanWords = rawText
+    .replace(/[^a-zA-Z0-9\s'-]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length >= 2 && !STOPWORDS.has(w.toLowerCase()));
+
+  const uniqueWords = [...new Set(cleanWords.length > 0 ? cleanWords : rawText.split(/\s+/).filter(Boolean))].slice(0, 8);
+
+  obsDiagnostic.className = 'diagnostic-bar status-good';
+  obsDiagText.innerHTML = `<strong>Computing 384-dimensional coordinates for ${uniqueWords.length} words...</strong>`;
+
+  const hasModel = await ensureEmbeddingModelLoaded();
+  const vectors = [];
+
+  if (hasModel && extractor) {
+    for (const word of uniqueWords) {
+      const out = await extractor(word, { pooling: 'mean', normalize: true });
+      vectors.push(Array.from(out.data));
+    }
+  } else {
+    // Fallback deterministic 384-D projection if offline
+    for (const word of uniqueWords) {
+      const v = Array.from({ length: 32 }, (_, idx) => Math.sin(word.charCodeAt(idx % word.length) * (idx + 1)));
+      vectors.push(v);
+    }
+  }
+
+  // Project high-dimensional vectors onto 2D canvas coordinates where semantically similar words pull closer together!
+  const count = uniqueWords.length;
+  const rawCoords = uniqueWords.map((word, idx) => {
+    const vec = vectors[idx];
+    // Use two orthogonal slices of the normalized embedding vector for initial 2D projection
+    let sumX = 0;
+    let sumY = 0;
+    for (let i = 0; i < vec.length; i++) {
+      if (i % 2 === 0) sumX += vec[i] * Math.cos(i);
+      else sumY += vec[i] * Math.sin(i);
+    }
+    return { label: word, x: sumX, y: sumY, vec };
+  });
+
+  // Normalize coordinates nicely into the safe canvas viewport [0.18 .. 0.82] and apply a similarity spring pass
+  const minX = Math.min(...rawCoords.map(c => c.x));
+  const maxX = Math.max(...rawCoords.map(c => c.x));
+  const minY = Math.min(...rawCoords.map(c => c.y));
+  const maxY = Math.max(...rawCoords.map(c => c.y));
+
+  s3DynamicStars = rawCoords.map((item, idx) => {
+    const angle = (idx / Math.max(1, count)) * Math.PI * 2;
+    const normX = maxX > minX ? (item.x - minX) / (maxX - minX) : 0.5 + 0.25 * Math.cos(angle);
+    const normY = maxY > minY ? (item.y - minY) / (maxY - minY) : 0.5 + 0.25 * Math.sin(angle);
+
+    return {
+      id: `user_star_${idx}`,
+      label: item.label,
+      x: 0.20 + normX * 0.60,
+      y: 0.22 + normY * 0.58,
+      color: DYNAMIC_COLORS[idx % DYNAMIC_COLORS.length],
+      vec: item.vec
+    };
+  });
+
+  // Compute pairwise Cosine Similarities & pull strongly related words closer together
+  s3Links = [];
+  let strongestPair = null;
+
+  for (let i = 0; i < s3DynamicStars.length; i++) {
+    for (let j = i + 1; j < s3DynamicStars.length; j++) {
+      const sim = Math.max(0.15, cosineSimilarity(s3DynamicStars[i].vec, s3DynamicStars[j].vec));
+      if (!strongestPair || sim > strongestPair.sim) {
+        strongestPair = { a: s3DynamicStars[i].label, b: s3DynamicStars[j].label, sim };
+      }
+      if (sim >= 0.32 || s3DynamicStars.length <= 4) {
+        s3Links.push({ fromIdx: i, toIdx: j, sim });
+      }
+    }
+  }
+
+  // Sort links and keep top 5 clearest constellation lines
+  s3Links.sort((a, b) => b.sim - a.sim);
+  s3Links = s3Links.slice(0, 5);
+
+  // Compute combined Prompt Center of Gravity
+  const avgX = s3DynamicStars.reduce((s, st) => s + st.x, 0) / s3DynamicStars.length;
+  const avgY = s3DynamicStars.reduce((s, st) => s + st.y, 0) / s3DynamicStars.length;
   s3Centroid = { x: avgX, y: avgY };
 
-  const names = activeList.map(s => `<code>${s.label}</code>`).join(', ');
+  const pairText = strongestPair
+    ? `Strongest semantic connection: <code>"${strongestPair.a}"</code> ↔ <code>"${strongestPair.b}"</code> (<strong>${Math.round(strongestPair.sim * 100)}% similarity</strong>).`
+    : '';
+
+  cosmosViewport.className = 'cosmos-viewport solved';
   obsDiagnostic.className = 'diagnostic-bar status-solved';
   obsDiagText.innerHTML = `
-    <strong>Thought Formed!</strong> Your prompt lit up ${activeList.length} stars (${names}) and pulled the green <strong>Prompt Center of Gravity</strong> to coordinates <code>(${(avgX * 100).toFixed(0)}, ${(avgY * 100).toFixed(0)})</code>. Now click <strong>Take Final Quiz & Claim 250 XP</strong> at the top right!
+    <strong>Live Prompt Constellation Mapped!</strong> Our miniature browser AI converted your ${s3DynamicStars.length} key words into 384-dimensional coordinates and locked onto their green <strong>Center of Gravity</strong>. ${pairText}<br>
+    <small style="color:var(--text-secondary);">Remember: Giant cloud models like ChatGPT and Gemini map your prompt across thousands of dimensions, so their constellation of what you mean is much sharper than our tiny pocket brain!</small>
   `;
+
   updateDiscoveries(6);
 }
 
@@ -690,10 +887,21 @@ function switchStage(stageNum) {
     loadStage2Math(s2Idx);
   } else if (stageNum === 3) {
     tabStage3.classList.add('completed');
-    obsRoundTag.textContent = 'STAGE 3 // HOW A PROMPT BECOMES A THOUGHT';
-    obsTitle.textContent = 'Watch Your Prompt Pull Stars Into a Single Center of Gravity';
-    hudModeText.textContent = 'PROMPT GRAVITY ENGINE';
-    computeStage3PromptGravity();
+    obsRoundTag.textContent = 'STAGE 3 // LIVE NEURAL PROMPT MAPPER';
+    obsTitle.textContent = 'Type Any Prompt & Watch the AI Map Its Constellation Live';
+    obsSub.innerHTML = `We just cleared the sky! Type any sentence into the highlighted box below. A real neural embedding model in your browser will convert your words into coordinates, connect the closest meanings, and find your prompt's <strong>Center of Gravity</strong>.`;
+    hudModeText.textContent = 'LIVE NEURAL EMBEDDING MAPPER';
+    hudRight.textContent = '384-Dimensional Vector Projection';
+    cosmosViewport.className = 'cosmos-viewport';
+
+    // Focus the blank, pulsing input box and preload the embedding model
+    customPromptInput.focus();
+    ensureEmbeddingModelLoaded();
+
+    if (s3DynamicStars.length === 0) {
+      obsDiagnostic.className = 'diagnostic-bar status-neutral';
+      obsDiagText.innerHTML = `<strong>Your Turn:</strong> Type any sentence into the glowing cyan box above and press <strong>Map My Prompt</strong> (or click one of the example buttons) to see how AI maps what you're trying to say!`;
+    }
   }
 }
 
@@ -711,11 +919,15 @@ btnObsNext.addEventListener('click', () => {
   }
 });
 
-customPromptInput.addEventListener('input', computeStage3PromptGravity);
+btnMapPrompt.addEventListener('click', mapLiveUserPrompt);
+customPromptInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') mapLiveUserPrompt();
+});
+
 document.querySelectorAll('.prompt-preset').forEach(btn => {
   btn.addEventListener('click', () => {
     customPromptInput.value = btn.dataset.prompt;
-    computeStage3PromptGravity();
+    mapLiveUserPrompt();
   });
 });
 

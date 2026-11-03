@@ -117,10 +117,10 @@
       border: 1px solid var(--border-subtle);
       border-left: 3px solid var(--cyan);
       border-radius: var(--radius-sm);
-      padding: 0.6rem 0.9rem;
-      font-size: 0.79rem;
+      padding: 0.65rem 0.95rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     .dimension-scale-note strong { color: var(--text-primary); }
@@ -232,16 +232,57 @@
       font-weight: 700;
     }
 
-    /* Stage 3 Prompt Selector Pills */
+    /* Stage 3 Live Neural Prompt Mapper */
     .prompt-constellation-bar {
       display: flex;
       flex-direction: column;
+      gap: 0.75rem;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.15rem;
+    }
+
+    .prompt-input-wrapper {
+      display: flex;
       gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .live-prompt-input {
+      flex: 1;
+      min-width: 240px;
+      background: #0d0d12;
+      border: 2px solid var(--cyan);
+      color: var(--text-primary);
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.98rem;
+      font-family: var(--font-sans);
+      transition: all 0.2s ease;
+    }
+
+    .live-prompt-input:focus {
+      outline: none;
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+    }
+
+    .live-prompt-input.pulsing-prompt {
+      animation: inputPulseGlow 1.8s infinite;
+    }
+
+    @keyframes inputPulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+      70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
     }
 
     .prompt-pills-row {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 0.45rem;
     }
 
@@ -375,7 +416,7 @@
       <div class="topbar-stats">
         <div class="stat-chip">
           <i data-lucide="compass" class="icon-xs text-cyan"></i>
-          <span id="progress-readout">Discoveries: <strong>0 / 5</strong></span>
+          <span id="progress-readout">Discoveries: <strong>0 / 6</strong></span>
         </div>
         <button id="btn-open-quiz" class="btn-outline btn-xs">
           <i data-lucide="award" class="icon-xs text-amber"></i>
@@ -407,8 +448,8 @@
       <button class="stage-tab" id="tab-stage-3">
         <span class="stage-num">3</span>
         <div>
-          <strong style="display:block; font-size:0.84rem;">Prompt Center of Gravity</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Watch a prompt form a single thought</small>
+          <strong style="display:block; font-size:0.84rem;">Live AI Prompt Mapper</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Type any prompt & map it live</small>
         </div>
       </button>
     </nav>
@@ -417,7 +458,7 @@
     <section class="observatory-card">
       <div class="obs-header">
         <div>
-          <span class="mono-tag" id="obs-round-tag">STAGE 1 // CONSTELLATION 1 OF 2</span>
+          <span class="mono-tag" id="obs-round-tag">STAGE 1 // CONSTELLATION 1 OF 3</span>
           <h1 class="obs-title" id="obs-title">How Does AI Know What a Word Means?</h1>
           <p class="obs-sub" id="obs-sub">
             AI does not have a human dictionary with definitions. Instead, it places every word as a <strong>glowing star in a giant galaxy of meaning</strong> (called <strong>Vector Space</strong>). Words that mean similar things live right next door to each other!
@@ -429,27 +470,49 @@
         </button>
       </div>
 
-      <div class="dimension-scale-note">
-        <strong>How many dimensions is the AI's Star Map?</strong> On your screen, we flattened the star map into <strong>2 dimensions (X and Y)</strong> so you can see it. Inside our pocket AI brain, every star actually has <strong>576 coordinates</strong>, and giant cloud models map every word across <strong>4,096 to 12,000+ dimensions</strong> of meaning!
+      <div class="dimension-scale-note" id="scale-note-box">
+        <strong>Pocket AI vs. Big Cloud AI:</strong> On your screen, we flattened the star map into <strong>2 dimensions (X and Y)</strong> so you can see it. Inside our tiny browser AI, every word has <strong>384 to 576 coordinates</strong>—while giant cloud models like <strong>ChatGPT, Claude, and Gemini</strong> map your words across <strong>thousands of dimensions</strong>, allowing them to understand subtle nuance and complex prompts way better than our pocket brain!
       </div>
 
       <!-- Stage 2 Only: Star Math Equation Display -->
       <div id="equation-bar" class="equation-bar hidden"></div>
 
-      <!-- Stage 3 Only: Prompt Constellation Selector -->
+      <!-- Stage 3 Only: Live AI Neural Prompt Mapper -->
       <div id="prompt-constellation-bar" class="prompt-constellation-bar hidden">
-        <div class="prompt-pills-row">
-          <button class="btn-secondary btn-xs prompt-preset" data-prompt="Brew a hot espresso latte at the cozy cafe">
-            Prompt A: "Brew a hot espresso latte at the cozy cafe"
-          </button>
-          <button class="btn-secondary btn-xs prompt-preset" data-prompt="Launch the astronauts into orbit around Saturn">
-            Prompt B: "Launch the astronauts into orbit around Saturn"
-          </button>
-          <button class="btn-secondary btn-xs prompt-preset" data-prompt="A royal queen and a loyal puppy">
-            Prompt C: "A royal queen and a loyal puppy" (Mixed Clusters!)
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <label for="custom-prompt-input" style="font-size:0.8rem; font-weight:700; color:var(--cyan);">
+            <i data-lucide="sparkles" class="icon-xs"></i>
+            TYPE ANY PROMPT BELOW TO MAP ITS CONSTELLATION LIVE:
+          </label>
+          <span class="mono-tag" id="embed-model-status">Real Neural Mapper: Ready</span>
+        </div>
+
+        <div class="prompt-input-wrapper">
+          <input
+            type="text"
+            id="custom-prompt-input"
+            class="live-prompt-input pulsing-prompt"
+            value=""
+            placeholder="Type a sentence here (e.g., My dog loves chasing tennis balls in the park)..."
+          />
+          <button id="btn-map-prompt" class="btn-primary">
+            <i data-lucide="compass" class="icon-xs"></i>
+            <span>Map My Prompt</span>
           </button>
         </div>
-        <input type="text" id="custom-prompt-input" value="Brew a hot espresso latte at the cozy cafe" placeholder="Or type words like: espresso, latte, astronaut, orbit, queen, puppy, guitar..." style="width:100%; background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.75rem 1rem; border-radius:var(--radius-md); font-size:0.92rem; font-family:var(--font-sans);" />
+
+        <div class="prompt-pills-row">
+          <span style="font-size:0.72rem; color:var(--text-muted); font-family:var(--font-mono);">Or try an example:</span>
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="My dog loves chasing tennis balls at the sunny park">
+            "My dog loves chasing tennis balls at the sunny park"
+          </button>
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="The astronaut flew a rocket ship past the moon and stars">
+            "The astronaut flew a rocket ship past the moon and stars"
+          </button>
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="Baking warm chocolate chip cookies in the kitchen oven">
+            "Baking warm chocolate chip cookies in the kitchen oven"
+          </button>
+        </div>
       </div>
 
       <!-- Interactive Deep-Space Canvas -->
@@ -506,7 +569,7 @@
       <h3>Lab 04 Final Mastery Assessment</h3>
       <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Meaning Maps and unlock the Lab 05 Capstone.</p>
 
-      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 when you wired the Coffee and Space constellations together on the star map.">
+      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 when you wired the Coffee, Space, and Creature constellations together on the star map.">
         <h4>1. How does an AI model represent the meaning of words so that it can understand what they have in common?</h4>
         <button class="quiz-opt" data-correct="false">It stores an alphabetical English dictionary definition next to every word in its memory.</button>
         <button class="quiz-opt" data-correct="true">It places every word at a coordinate in a giant mathematical space where related words cluster close together.</button>
@@ -522,9 +585,9 @@
         <button class="quiz-opt" data-correct="false">Because the model runs a web search in the background whenever it sees two proper nouns in a prompt.</button>
       </div>
 
-      <div class="quiz-q" data-q="3" data-hint="Think about the glowing Center of Gravity beacon in Stage 3 when all the words in your prompt lit up together.">
-        <h4>3. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you want?</h4>
-        <button class="quiz-opt" data-correct="true">It lights up the constellation of words in your prompt and calculates their combined center of gravity in meaning space.</button>
+      <div class="quiz-q" data-q="3" data-hint="Think about the glowing Center of Gravity beacon in Stage 3 when your prompt words were mapped into a constellation.">
+        <h4>3. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you are trying to say?</h4>
+        <button class="quiz-opt" data-correct="true">It maps the words from your prompt into space and calculates their combined center of gravity to lock onto your intent.</button>
         <button class="quiz-opt" data-correct="false">It ignores all the words in your sentence except for the very last noun right before the question mark.</button>
         <button class="quiz-opt" data-correct="false">It picks a random neighborhood on the star map first and checks afterward if it matches your prompt.</button>
         <button class="quiz-opt" data-correct="false">It averages the alphabetical ID numbers of your tokens to pick a single dictionary word in the middle.</button>
