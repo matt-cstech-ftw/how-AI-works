@@ -247,7 +247,7 @@ function computeSoftmax(topRawLogits, topK, temperature) {
   }));
 }
 
-// Helper: Finish generation cleanly after 1 concise sentence
+// Finish generation cleanly after 1 concise sentence
 function finishGenerationCleanly() {
   isPlaying = false;
   btnStream.innerHTML = `<i data-lucide="play" class="icon-xs"></i><span>Watch Again</span>`;
@@ -332,7 +332,7 @@ btnInit.addEventListener('click', async () => {
 
     markGoalDone('wake', goalWakeEl, goalStreamEl);
 
-    // Walkthrough #1: Explain what just loaded
+    // Walkthrough #1: Explain what just loaded + compare 49k vs ChatGPT/Gemini/Claude
     triggerWalkthrough({
       id: 'wt_awake',
       tag: 'STEP 1 COMPLETE • AI BRAIN AWAKE',
@@ -353,8 +353,8 @@ btnInit.addEventListener('click', async () => {
       bodyHtml: `
         We just unlocked the <strong>Inside the AI's Head</strong> panel on the right.<br><br>
         Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an election across its dictionary to pick strictly <em>one word piece at a time</em>.<br><br>
-        <small style="color:var(--text-secondary); display:block; background:var(--bg-canvas); padding:0.5rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle);">
-          <strong>Pocket AI vs. Big Cloud AI:</strong> This miniature browser AI has a dictionary of <strong>49,152 word pieces</strong>. Giant cloud models use even larger dictionaries—<strong>Claude</strong> uses ~100,000 pieces, <strong>ChatGPT (GPT-4o)</strong> uses <strong>200,000 pieces</strong>, and <strong>Google Gemini</strong> uses <strong>256,000 pieces</strong>!
+        <small style="color:var(--text-secondary); display:block; background:var(--bg-canvas); padding:0.55rem 0.7rem; border-radius:6px; border:1px solid var(--border-subtle); line-height:1.45;">
+          <strong>Pocket AI vs. Big Cloud AI:</strong> This miniature browser AI has a dictionary of <strong>49,152 word pieces</strong>. Giant cloud models use much larger dictionaries—<strong>Claude</strong> uses ~<strong>100,000+</strong> pieces, <strong>ChatGPT (GPT-4o)</strong> uses <strong>200,000</strong> pieces, and <strong>Google Gemini</strong> uses <strong>256,000</strong> pieces!
         </small>
       `,
       buttonLabel: 'Got It — Let’s Watch It Think',
@@ -411,7 +411,7 @@ async function stepGeneration() {
     const stepIdx = tokenHistory.length;
     const currentSnapshot = Array.from(currentInputIds.data).map(Number);
 
-    // Check if this token is a SUBWORD SPLIT (e.g., "ad" + "ore" -> no leading space, alphabetical continuation of previous word)
+    // Check if this token is a SUBWORD SPLIT (e.g., "ad" + "ore" -> no leading space, alphabetical continuation)
     const prevTokenObj = stepIdx > 0 ? tokenHistory[stepIdx - 1] : null;
     const isSubwordContinuation = prevTokenObj &&
       !/^\s/.test(selected.token) &&

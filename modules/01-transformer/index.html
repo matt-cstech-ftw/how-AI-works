@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <!-- Main Cockpit (Starts in stage-initial centered single-card view!) -->
+    <!-- Main Cockpit (Starts in stage-initial centered single-card view) -->
     <div class="cockpit-grid stage-initial" id="cockpit-grid">
       <!-- LEFT PANEL: Input & Live Output -->
       <section class="panel" id="left-panel">
@@ -251,38 +251,38 @@
     </div>
   </div>
 
-  <!-- Interactive 3-Question Assessment Modal (Clear Plain-English 4-Choice Format) -->
+  <!-- Interactive 3-Question Assessment Modal (Zero Parentheses / Uniform Style) -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mission-label">LAB 01 ASSESSMENT (3 QUESTIONS)</span>
+        <span class="mission-label">LAB 01 ASSESSMENT // 3 QUESTIONS</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
       <h3>Lab 01 Final Knowledge Check</h3>
       <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions correctly to claim your 250 XP and unlock Lab 02 on the main dashboard.</p>
 
-      <div class="quiz-q" data-q="1" data-hint="Remember the Word Election Leaderboard: the AI never plans ahead—it holds a math contest for strictly one piece at a time!">
-        <h4>1. When you ask an AI a question, how does it actually build its multi-sentence answer?</h4>
-        <button class="quiz-opt" data-correct="false">It plans out the whole paragraph in hidden memory first before typing the words out on screen.</button>
-        <button class="quiz-opt" data-correct="true">It scores its dictionary to pick strictly one word piece at a time, gluing each winner onto the sentence before guessing the next.</button>
-        <button class="quiz-opt" data-correct="false">It searches a database of pre-written human sentences and swaps out a few words to match your topic.</button>
-        <button class="quiz-opt" data-correct="false">It writes five complete drafts at the same time and shows you whichever draft sounds the best.</button>
+      <div class="quiz-q" data-q="1" data-hint="Think about the Word Election Leaderboard on the right side of the screen and how often it ran.">
+        <h4>1. When you ask an AI a question, how does it build its answer?</h4>
+        <button class="quiz-opt" data-correct="false">It plans out the entire paragraph in hidden memory before typing the words on screen.</button>
+        <button class="quiz-opt" data-correct="true">It scores its dictionary to pick strictly one word piece at a time and repeats the contest for the next spot.</button>
+        <button class="quiz-opt" data-correct="false">It searches a database of complete human sentences and swaps out keywords to match your prompt.</button>
+        <button class="quiz-opt" data-correct="false">It writes five complete drafts at the same time and displays whichever draft has the highest score.</button>
       </div>
 
-      <div class="quiz-q" data-q="2" data-hint="Think about what happened when your Creativity Dial (Temperature) was above 0 and a purple word won!">
-        <h4>2. Why does the AI sometimes pick the #2 or #3 runner-up word instead of the #1 favorite?</h4>
+      <div class="quiz-q" data-q="2" data-hint="Think about what changes when you slide the Creativity Dial higher than zero.">
+        <h4>2. Why does the AI sometimes pick a runner-up word instead of the number one favorite?</h4>
         <button class="quiz-opt" data-correct="false">Because the browser occasionally makes tiny rounding errors when adding up the percentage scores.</button>
-        <button class="quiz-opt" data-correct="false">Because a built-in grammar rule forces the AI to skip the #1 word if it was already used earlier.</button>
-        <button class="quiz-opt" data-correct="true">Because when the Creativity Dial (Temperature) is turned above 0, the AI rolls a weighted die so its answers don't sound repetitive.</button>
-        <button class="quiz-opt" data-correct="false">Because the AI intentionally trades off between top words and bottom words to keep sentences short.</button>
+        <button class="quiz-opt" data-correct="false">Because a grammar rule forces the model to skip the top word whenever it was used earlier in the sentence.</button>
+        <button class="quiz-opt" data-correct="true">Because turning the Creativity Dial above zero makes the model roll a weighted die so answers vary naturally.</button>
+        <button class="quiz-opt" data-correct="false">Because the model automatically trades off between top choices and lower choices to keep sentences short.</button>
       </div>
 
-      <div class="quiz-q" data-q="3" data-hint="Think about what happened when you clicked a runner-up bar to force an Alternate Reality!">
+      <div class="quiz-q" data-q="3" data-hint="Look at what happened to the rest of the sentence when you forced an Alternate Reality.">
         <h4>3. What happens when you step in and force the AI to use a runner-up word mid-sentence?</h4>
-        <button class="quiz-opt" data-correct="false">The AI keeps the exact same sentence ending it had planned and just swaps that one single word in place.</button>
-        <button class="quiz-opt" data-correct="true">Every word contest after that point recalculates its odds based on your forced word, steering the rest of the sentence in a brand-new direction.</button>
-        <button class="quiz-opt" data-correct="false">The AI automatically resets its Creativity Dial to 0.0 so it can get back to its original answer.</button>
-        <button class="quiz-opt" data-correct="false">The AI glues your forced word onto the previous word so the total word count stays the same.</button>
+        <button class="quiz-opt" data-correct="false">The model keeps its original sentence ending and simply replaces that single forced word in place.</button>
+        <button class="quiz-opt" data-correct="true">Every word election after that point recalculates its odds based on the new word and writes a different ending.</button>
+        <button class="quiz-opt" data-correct="false">The model resets the Creativity Dial to zero so that it can return to its original topic right away.</button>
+        <button class="quiz-opt" data-correct="false">The model merges the forced word with the previous word so the total length of the sentence stays the same.</button>
       </div>
 
       <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.65rem; border-radius:var(--radius-sm);"></div>
