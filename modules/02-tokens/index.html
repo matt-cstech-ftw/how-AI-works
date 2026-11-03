@@ -93,7 +93,7 @@
       padding: clamp(1.25rem, 3vw, 2.25rem);
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.35rem;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
@@ -121,7 +121,7 @@
       margin-top: 0.25rem;
     }
 
-    /* Target Word Prompt Banner */
+    /* Target Word Prompt Banner with Live Progress Letters */
     .target-banner {
       background: var(--bg-canvas);
       border: 1px solid var(--border-subtle);
@@ -136,11 +136,13 @@
 
     .target-word-display {
       font-family: var(--font-mono);
-      font-size: 1.5rem;
+      font-size: 1.55rem;
       font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
     }
+
+    .char-matched { color: var(--emerald); text-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
+    .char-pending { color: var(--text-primary); }
 
     /* Magnetic Puzzle Assembly Track */
     .assembly-zone {
@@ -154,19 +156,83 @@
       justify-content: center;
       flex-wrap: wrap;
       position: relative;
-      transition: border-color 0.25s ease, background 0.25s ease;
+      transition: border-color 0.2s ease, background 0.2s ease;
     }
 
     .assembly-zone.solved {
       border-style: solid;
       border-color: var(--emerald);
-      background: rgba(16, 185, 129, 0.05);
+      background: rgba(16, 185, 129, 0.06);
+    }
+
+    .assembly-zone.error-shake {
+      border-style: solid;
+      border-color: var(--red);
+      background: rgba(239, 68, 68, 0.07);
+      animation: trackShake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    .assembly-zone.warn-shake {
+      border-style: solid;
+      border-color: var(--amber);
+      background: rgba(245, 158, 11, 0.07);
+      animation: trackShake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes trackShake {
+      10%, 90% { transform: translateX(-4px); }
+      20%, 80% { transform: translateX(6px); }
+      30%, 50%, 70% { transform: translateX(-8px); }
+      40%, 60% { transform: translateX(8px); }
     }
 
     .assembly-placeholder {
       color: var(--text-muted);
       font-size: 0.88rem;
       pointer-events: none;
+    }
+
+    /* Live Diagnostic Bar (Instant Feedback on Every Click!) */
+    .diagnostic-bar {
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-canvas);
+      transition: all 0.2s ease;
+    }
+
+    .diagnostic-bar.status-neutral {
+      border-color: var(--border-subtle);
+      color: var(--text-secondary);
+    }
+
+    .diagnostic-bar.status-good {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.08);
+      color: #e0f2fe;
+    }
+
+    .diagnostic-bar.status-warn {
+      border-color: rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.1);
+      color: #fef3c7;
+    }
+
+    .diagnostic-bar.status-error {
+      border-color: rgba(239, 68, 68, 0.55);
+      background: rgba(239, 68, 68, 0.1);
+      color: #fecaca;
+    }
+
+    .diagnostic-bar.status-solved {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.1);
+      color: #d1fae5;
     }
 
     /* True Interlocking Jigsaw Piece Styling */
@@ -197,9 +263,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-width: 118px;
+      min-width: 114px;
       height: 74px;
-      padding: 0 1.35rem;
+      padding: 0 1.3rem;
       border-radius: 10px;
       font-family: var(--font-mono);
       cursor: pointer;
@@ -208,7 +274,6 @@
       border: 2px solid transparent;
     }
 
-    /* Interlocking Right Jigsaw Tab */
     .puzzle-piece.has-right-tab::after {
       content: '';
       position: absolute;
@@ -224,7 +289,6 @@
       box-shadow: 2px 0 0 rgba(255,255,255,0.2);
     }
 
-    /* Snapped Together in Assembly Track */
     .assembly-zone .puzzle-piece {
       margin-right: -4px;
       animation: snapIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -275,6 +339,11 @@
       border-color: #f59e0b;
       color: #fef3c7;
       box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2);
+    }
+    .piece-wrong {
+      background: #3f1111 !important;
+      border-color: #ef4444 !important;
+      color: #fecaca !important;
     }
 
     /* Blindfold Mode (Shows what AI actually sees: ONLY ID numbers!) */
@@ -340,7 +409,7 @@
       content: '';
       width: 3px;
       height: 36px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.14);
       border-radius: 99px;
       transition: all 0.15s ease;
     }
@@ -366,19 +435,6 @@
       color: #ef4444;
     }
 
-    /* Callout Insight Banner */
-    .insight-banner {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      border-radius: var(--radius-md);
-      padding: 1rem 1.25rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
     /* Modal Backdrop */
     .modal-backdrop {
       position: fixed;
@@ -395,8 +451,10 @@
       background: var(--bg-surface);
       border: 1px solid var(--cyan);
       border-radius: var(--radius-lg);
-      max-width: 560px;
+      max-width: 640px;
       width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
       padding: 1.75rem;
       display: flex;
       flex-direction: column;
@@ -419,6 +477,12 @@
       gap: 0.45rem;
     }
 
+    .quiz-q h4 {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      margin-bottom: 0.15rem;
+    }
+
     .quiz-opt {
       text-align: left;
       justify-content: flex-start;
@@ -427,6 +491,8 @@
       color: var(--text-secondary);
       padding: 0.65rem 0.85rem;
       font-weight: 500;
+      font-size: 0.82rem;
+      line-height: 1.45;
     }
 
     .quiz-opt.selected {
@@ -478,7 +544,7 @@
         <span class="stage-num">1</span>
         <div>
           <strong style="display:block; font-size:0.84rem;">Snap the Puzzle Pieces</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Build words from AI subword blocks</small>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Build words using real AI tokens</small>
         </div>
       </button>
 
@@ -486,7 +552,7 @@
         <span class="stage-num">2</span>
         <div>
           <strong style="display:block; font-size:0.84rem;">The Laser Slicer Game</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Guess where the AI cuts a word</small>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Cut words where the real AI cuts</small>
         </div>
       </button>
 
@@ -508,7 +574,7 @@
           <span class="mono-tag" id="puzzle-round-tag">PUZZLE 1 OF 2 // SUBWORD ASSEMBLY</span>
           <h1 class="arena-title" id="puzzle-title">Snap the AI Puzzle Pieces Together!</h1>
           <p class="arena-sub" id="puzzle-instructions">
-            AI doesn't keep every long English word in its dictionary. Instead, it snaps smaller reusable puzzle pieces (called <strong>Tokens</strong>) together! Click the jigsaw pieces in the tray below in the right order to build the target word.
+            Loading live SmolLM2 tokenizer dictionary...
           </p>
         </div>
         <button id="btn-toggle-blindfold" class="btn-secondary btn-xs hidden">
@@ -520,8 +586,8 @@
       <!-- Target Word Bar -->
       <div class="target-banner">
         <div>
-          <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block;">TARGET WORD TO BUILD:</span>
-          <span class="target-word-display" id="target-word-text">unbelievable</span>
+          <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block;">TARGET WORD TO BUILD (Lights up green as you match):</span>
+          <div class="target-word-display" id="target-word-text">unbelievable</div>
         </div>
         <div style="display:flex; gap:0.5rem;">
           <button id="btn-clear-assembly" class="btn-outline btn-xs">
@@ -533,26 +599,28 @@
 
       <!-- Magnetic Assembly Track -->
       <div>
-        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">MAGNETIC ASSEMBLY TRACK (Click a piece inside the track to remove it):</span>
+        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">MAGNETIC ASSEMBLY TRACK (Click any piece inside the track to remove it):</span>
         <div class="assembly-zone" id="assembly-zone">
-          <span class="assembly-placeholder" id="assembly-placeholder">Click jigsaw pieces from the tray below to snap them together here...</span>
+          <span class="assembly-placeholder" id="assembly-placeholder">Click jigsaw pieces from the tray below in left-to-right order...</span>
           <div class="jigsaw-row" id="assembled-row"></div>
         </div>
       </div>
 
-      <!-- Available Jigsaw Pieces Tray -->
-      <div>
-        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">AVAILABLE TOKEN PUZZLE PIECES (Includes decoys!):</span>
-        <div class="jigsaw-tray" id="jigsaw-tray"></div>
-      </div>
-
-      <!-- Feedback Banner when Solved -->
-      <div class="insight-banner hidden" id="stage1-feedback">
-        <div id="stage1-feedback-text" style="font-size:0.88rem; max-width:65ch;"></div>
-        <button id="btn-stage1-next" class="btn-primary">
+      <!-- Live Diagnostic Status Bar (Reacts to every single click!) -->
+      <div class="diagnostic-bar status-neutral" id="stage1-diagnostic">
+        <div id="stage1-diag-text">
+          <strong>Waiting for your first piece:</strong> Click the puzzle piece below that matches the beginning of the target word!
+        </div>
+        <button id="btn-stage1-next" class="btn-primary hidden">
           <span>Next Puzzle</span>
           <i data-lucide="arrow-right" class="icon-xs"></i>
         </button>
+      </div>
+
+      <!-- Available Jigsaw Pieces Tray -->
+      <div>
+        <span style="font-size:0.72rem; font-family:var(--font-mono); color:var(--text-muted); display:block; margin-bottom:0.4rem;">AVAILABLE TOKEN PUZZLE PIECES (Watch out for fake decoy splits!):</span>
+        <div class="jigsaw-tray" id="jigsaw-tray"></div>
       </div>
     </section>
 
@@ -563,17 +631,15 @@
       <div class="arena-header">
         <div>
           <span class="mono-tag" id="laser-round-tag">CHALLENGE 1 OF 2 // PREDICT THE CUT</span>
-          <h2 class="arena-title">Where Will the AI Slice This Word?</h2>
+          <h2 class="arena-title">Where Does the AI Slice This Word?</h2>
           <p class="arena-sub">
-            Before the AI reads a word, its tokenizer slices it into pieces that exist in its 49,152-piece dictionary. <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong> to see if you matched the real AI!
+            Before the AI reads a word, its tokenizer slices it into pieces from its 49,152-piece dictionary. <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong> to test if your cut matches the real SmolLM2 tokenizer!
           </p>
         </div>
       </div>
 
       <div class="laser-table">
-        <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--amber);" id="laser-hint">
-          Hint: This word gets sliced into 2 puzzle pieces! Click 1 gap between the letters.
-        </span>
+        <span style="font-family:var(--font-mono); font-size:0.78rem; color:var(--amber);" id="laser-hint"></span>
 
         <div class="laser-word-row" id="laser-word-row"></div>
 
@@ -586,10 +652,10 @@
         </div>
       </div>
 
-      <!-- Result Comparison Area -->
-      <div class="insight-banner hidden" id="laser-feedback">
-        <div id="laser-feedback-text" style="font-size:0.88rem;"></div>
-        <button id="btn-laser-next" class="btn-primary">
+      <!-- Live Laser Diagnostic Feedback -->
+      <div class="diagnostic-bar status-neutral" id="laser-diagnostic">
+        <div id="laser-diag-text">Click between the letters above to place your laser cut, then press <strong>Fire Laser</strong>.</div>
+        <button id="btn-laser-next" class="btn-primary hidden">
           <span>Next Challenge</span>
           <i data-lucide="arrow-right" class="icon-xs"></i>
         </button>
@@ -605,7 +671,7 @@
           <span class="mono-tag">STAGE 3 // FREE-PLAY JIGSAW FORGE</span>
           <h2 class="arena-title">Type Anything & Watch It Forge into Jigsaw Pieces</h2>
           <p class="arena-sub">
-            Now that you've mastered how puzzle pieces snap together and where the laser slices, type your own name, weird words, or emojis below to see the real SmolLM2 tokenizer turn them into interlocking jigsaw pieces!
+            Notice how <strong>strawberry</strong> slices into the exact same 3 pieces (<code>st</code> + <code>raw</code> + <code>berry</code>) and <strong>adores</strong> slices into <code>·ad</code> + <code>ores</code>—because all 3 stages run on the exact same live SmolLM2 tokenizer!
           </p>
         </div>
         <button id="btn-forge-quiz" class="btn-primary">
@@ -615,16 +681,14 @@
       </div>
 
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn-secondary btn-xs forge-preset" data-text="strawberry adores playing">Try: "strawberry adores playing"</button>
+        <button class="btn-secondary btn-xs forge-preset" data-text="strawberry adores unbelievable">Try: "strawberry adores unbelievable"</button>
         <button class="btn-secondary btn-xs forge-preset" data-text="cat cat CAT">Try: "cat cat CAT" (Space & CAPS)</button>
-        <button class="btn-secondary btn-xs forge-preset" data-text="Supercalifragilistic">Try: "Supercalifragilistic"</button>
+        <button class="btn-secondary btn-xs forge-preset" data-text="smartphones playing">Try: "smartphones playing"</button>
       </div>
 
-      <input type="text" id="forge-input" value="strawberry adores playing" style="width:100%; background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.85rem 1rem; border-radius:var(--radius-md); font-size:1rem; font-family:var(--font-sans);" />
+      <input type="text" id="forge-input" value="strawberry adores unbelievable" style="width:100%; background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.85rem 1rem; border-radius:var(--radius-md); font-size:1rem; font-family:var(--font-sans);" />
 
-      <div class="assembly-zone" style="justify-content:flex-start; gap:0.65rem; padding:1.5rem;" id="forge-stage">
-        <span style="color:var(--text-muted); font-size:0.85rem;">Loading live AI tokenizer...</span>
-      </div>
+      <div class="assembly-zone" style="justify-content:flex-start; gap:0.65rem; padding:1.5rem;" id="forge-stage"></div>
     </section>
   </main>
 
@@ -647,38 +711,44 @@
     </div>
   </div>
 
-  <!-- 3-Question Assessment Modal -->
+  <!-- 3-Question Rigorous Assessment Modal (4 Matched Options per Question) -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mono-tag" style="color:var(--emerald);">LAB 02 ASSESSMENT</span>
+        <span class="mono-tag" style="color:var(--emerald);">LAB 02 ASSESSMENT // 3 QUESTIONS</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
-      <h3>Lab 02 Final Knowledge Check</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions to claim your 200 XP and unlock Lab 03 on your dashboard.</p>
+      <h3>Lab 02 Final Mastery Assessment</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Select the best answer for all 3 questions to verify your mastery of Subword Tokenization and unlock Lab 03.</p>
 
       <div class="quiz-q" data-q="1">
-        <h4>1. How does an AI build long words like "unbelievable" or "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="true">It snaps together smaller, reusable subword puzzle pieces (called Tokens) from its dictionary.</button>
-        <button class="quiz-opt" data-correct="false">It spells every word out one single letter at a time like a human typist.</button>
+        <h4>1. How does a language model process unfamiliar or compound words like "unbelievable" and "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="false">It converts every individual alphabetical character into its own standalone ASCII token ID before processing.</button>
+        <button class="quiz-opt" data-correct="true">It segments the word into the longest matching subword tokens available in its fixed vocabulary table.</button>
+        <button class="quiz-opt" data-correct="false">It queries an external spell-check database to replace the compound word with a simpler single-token synonym.</button>
+        <button class="quiz-opt" data-correct="false">It dynamically expands its vocabulary table during generation to assign a permanent new ID to the full word.</button>
       </div>
 
       <div class="quiz-q" data-q="2">
-        <h4>2. Why did AI models famously struggle to count how many "r"s are inside the word "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="true">Because the AI only sees the closed ID numbers (#20412 and #11951) for the puzzle pieces, not the individual letters locked inside them.</button>
-        <button class="quiz-opt" data-correct="false">Because the AI was trained without the letter R.</button>
+        <h4>2. Why do token-based AI models frequently struggle with character-level tasks like counting the "r"s in "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="false">Because attention layers automatically filter out repeated consonant letters to compress memory usage.</button>
+        <button class="quiz-opt" data-correct="false">Because the tokenizer strips out silent letters and duplicate characters before creating token embeddings.</button>
+        <button class="quiz-opt" data-correct="true">Because the neural network receives single integer IDs (#302, #1709, #9500) for subword chunks rather than individual letters.</button>
+        <button class="quiz-opt" data-correct="false">Because subword tokenization randomizes the order of character chunks whenever a word exceeds two syllables.</button>
       </div>
 
       <div class="quiz-q" data-q="3">
-        <h4>3. Where does the AI usually slice a word like "adores" or "playing"?</h4>
-        <button class="quiz-opt" data-correct="true">Between the root word and common prefixes or suffixes (like "adore" + "s" or "play" + "ing") so it can reuse the pieces across thousands of words.</button>
-        <button class="quiz-opt" data-correct="false">Randomly in a different spot every time you type the word.</button>
+        <h4>3. Why does the word "cat" at the start of a sentence produce a different token ID than " cat" in the middle of a sentence?</h4>
+        <button class="quiz-opt" data-correct="false">Because the model assigns different token IDs based on whether a word acts as a subject noun or an object noun.</button>
+        <button class="quiz-opt" data-correct="true">Because subword tokenizers attach the leading whitespace character directly onto the token string as part of its vocabulary entry.</button>
+        <button class="quiz-opt" data-correct="false">Because the positional encoding layer increments a word's token ID number for each step further into the sentence.</button>
+        <button class="quiz-opt" data-correct="false">Because the tokenizer inserts a hidden punctuation separator token whenever two nouns appear in the same clause.</button>
       </div>
 
-      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.65rem; border-radius:var(--radius-sm);"></div>
+      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
 
       <div style="display:flex; justify-content:flex-end;">
-        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim XP</button>
+        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim 200 XP</button>
       </div>
     </div>
   </div>
