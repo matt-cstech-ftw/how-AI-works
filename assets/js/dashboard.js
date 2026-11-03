@@ -31,10 +31,10 @@ const MODULES_CATALOG = [
   {
     id: 'mod-04',
     number: 'LAB 04',
-    title: 'The AI Creativity Dial',
-    description: 'Turn the dial from strict robot mode (0.0) to wild brainstorm mode (1.5) and watch how the weighted dice roll changes.',
-    conceptTaught: 'Teaches: Temperature & Weighted Dice Rolls (Sampling)',
-    xp: 200,
+    title: 'How AI Understands What You Mean',
+    description: 'Explore a deep-space star map where words live as glowing stars. Connect constellations and do Star Math to see how AI forms a thought from your prompt.',
+    conceptTaught: 'Teaches: Meaning Maps & Word Coordinates (Embeddings)',
+    xp: 250,
     url: 'modules/04-entropy/index.html'
   },
   {
@@ -59,7 +59,6 @@ const heroCtaText = document.getElementById('hero-cta-text');
 const btnReset = document.getElementById('btn-reset-progress');
 
 function updateHeroButton(state) {
-  // Find the first module that isn't fully completed + quizPassed
   for (const mod of MODULES_CATALOG) {
     const modState = state.modules[mod.id] || { completed: false, quizPassed: false, unlocked: false };
 
@@ -76,7 +75,6 @@ function updateHeroButton(state) {
     }
   }
 
-  // Everything is completed!
   heroCta.href = MODULES_CATALOG[0].url;
   heroCtaText.textContent = 'All Labs Mastered! Replay Lab 01 Anytime';
 }
@@ -151,7 +149,6 @@ function renderDashboard() {
     modulesGrid.appendChild(card);
   });
 
-  // Update Topbar & Radial Mastery Gauge
   navCompleted.textContent = `${completedCount}/${totalCount}`;
   navXp.textContent = state.xp;
   gaugeBigNum.textContent = `${completedCount}/${totalCount}`;

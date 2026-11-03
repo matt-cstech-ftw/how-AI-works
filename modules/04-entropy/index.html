@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 04: How AI Understands What You Mean — How AI Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .starmap-shell {
+      position: relative;
+      z-index: 10;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    /* 3-Stage Stepper */
+    .stage-stepper {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.75rem;
+    }
+
+    .stage-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .stage-tab.active {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    .stage-tab.completed {
+      border-color: rgba(16, 185, 129, 0.45);
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .stage-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .stage-tab.active .stage-num { background: var(--cyan); color: #09090b; border-color: var(--cyan); }
+    .stage-tab.completed .stage-num { background: var(--emerald); color: #052e16; border-color: var(--emerald); }
+
+    /* Observatory Card */
+    .observatory-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.25rem, 2.5vw, 1.85rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .obs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.9rem;
+    }
+
+    .obs-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 0.2rem;
+    }
+
+    .obs-sub {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      max-width: 70ch;
+      margin-top: 0.2rem;
+    }
+
+    .dimension-scale-note {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.9rem;
+      font-size: 0.79rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .dimension-scale-note strong { color: var(--text-primary); }
+
+    /* ==========================================
+       DEEP-SPACE CONSTELLATION VIEWPORT
+       ========================================== */
+    .cosmos-viewport {
+      position: relative;
+      width: 100%;
+      height: 430px;
+      background: radial-gradient(ellipse at 25% 30%, #150d2a 0%, #070913 55%, #04050a 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: crosshair;
+      user-select: none;
+      transition: border-color 0.25s ease;
+    }
+
+    .cosmos-viewport.solved {
+      border-color: var(--emerald);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.18);
+    }
+
+    .cosmos-viewport.error-shake {
+      border-color: var(--red);
+      animation: cosmosShake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes cosmosShake {
+      10%, 90% { transform: translateX(-4px); }
+      20%, 80% { transform: translateX(6px); }
+      30%, 50%, 70% { transform: translateX(-7px); }
+      40%, 60% { transform: translateX(7px); }
+    }
+
+    #cosmos-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* HUD Overlays Inside the Star Map */
+    .cosmos-hud-top {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-pill {
+      background: rgba(9, 9, 11, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 0.3rem 0.65rem;
+      border-radius: 99px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Star Math Equation Bar (Stage 2) */
+    .equation-bar {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      font-family: var(--font-mono);
+    }
+
+    .eq-chip {
+      padding: 0.38rem 0.75rem;
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .eq-op {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    .eq-target {
+      padding: 0.38rem 0.85rem;
+      border-radius: 6px;
+      border: 1.5px dashed var(--amber);
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--amber);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    /* Stage 3 Prompt Selector Pills */
+    .prompt-constellation-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .prompt-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    /* Live Diagnostic Bar */
+    .diagnostic-bar {
+      padding: 0.9rem 1.15rem;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-canvas);
+      line-height: 1.5;
+    }
+
+    .diagnostic-bar.status-neutral { border-color: var(--border-subtle); color: var(--text-secondary); }
+    .diagnostic-bar.status-good { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.08); color: #e0f2fe; }
+    .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
+    .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
+
+    /* Modal Backdrop & Quiz Grading */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .walkthrough-modal, .quiz-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--cyan);
+      border-radius: var(--radius-lg);
+      max-width: 640px;
+      width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+    }
+
+    .wt-visual-stage {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .quiz-q { display: flex; flex-direction: column; gap: 0.45rem; }
+    .quiz-q h4 { font-size: 0.92rem; color: var(--text-primary); margin-bottom: 0.15rem; }
+
+    .quiz-opt {
+      text-align: left;
+      justify-content: flex-start;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 0.65rem 0.85rem;
+      font-weight: 500;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      transition: all 0.18s ease;
+    }
+
+    .quiz-opt.selected { border-color: var(--cyan); color: var(--text-primary); background: var(--cyan-dim); }
+    .quiz-opt.ans-correct { border-color: var(--emerald) !important; background: rgba(16, 185, 129, 0.14) !important; color: #d1fae5 !important; }
+    .quiz-opt.ans-wrong {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, 0.14) !important;
+      color: #fecaca !important;
+      animation: cosmosShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    .quiz-status-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    .quiz-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
+    .quiz-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
+
+    .q-inline-hint {
+      font-size: 0.78rem;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 3px solid var(--red);
+      padding: 0.45rem 0.65rem;
+      border-radius: 0 4px 4px 0;
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 720px) {
+      .stage-stepper { grid-template-columns: 1fr; }
+      .cosmos-viewport { height: 370px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- Top Navigation -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">BACK TO DASHBOARD</span>
+          <span class="brand-badge">LAB 04 // THE MEANING STAR MAP</span>
+        </div>
+      </a>
+
+      <div class="topbar-stats">
+        <div class="stat-chip">
+          <i data-lucide="compass" class="icon-xs text-cyan"></i>
+          <span id="progress-readout">Discoveries: <strong>0 / 5</strong></span>
+        </div>
+        <button id="btn-open-quiz" class="btn-outline btn-xs">
+          <i data-lucide="award" class="icon-xs text-amber"></i>
+          <span>Take Lab 04 Quiz</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="starmap-shell">
+    <!-- 3-Stage Stepper -->
+    <nav class="stage-stepper">
+      <button class="stage-tab active" id="tab-stage-1">
+        <span class="stage-num">1</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Wire the Constellations</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Connect stars that share meaning</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-2">
+        <span class="stage-num">2</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Star Math Navigation</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Add & subtract ideas in space</small>
+        </div>
+      </button>
+
+      <button class="stage-tab" id="tab-stage-3">
+        <span class="stage-num">3</span>
+        <div>
+          <strong style="display:block; font-size:0.84rem;">Prompt Center of Gravity</strong>
+          <small style="font-size:0.72rem; color:var(--text-muted);">Watch a prompt form a single thought</small>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Main Observatory Arena -->
+    <section class="observatory-card">
+      <div class="obs-header">
+        <div>
+          <span class="mono-tag" id="obs-round-tag">STAGE 1 // CONSTELLATION 1 OF 2</span>
+          <h1 class="obs-title" id="obs-title">How Does AI Know What a Word Means?</h1>
+          <p class="obs-sub" id="obs-sub">
+            AI does not have a human dictionary with definitions. Instead, it places every word as a <strong>glowing star in a giant galaxy of meaning</strong> (called <strong>Vector Space</strong>). Words that mean similar things live right next door to each other!
+          </p>
+        </div>
+        <button id="btn-stage3-quiz" class="btn-primary hidden">
+          <i data-lucide="award" class="icon-xs"></i>
+          <span>Take Final Quiz & Claim 250 XP</span>
+        </button>
+      </div>
+
+      <div class="dimension-scale-note">
+        <strong>How many dimensions is the AI's Star Map?</strong> On your screen, we flattened the star map into <strong>2 dimensions (X and Y)</strong> so you can see it. Inside our pocket AI brain, every star actually has <strong>576 coordinates</strong>, and giant cloud models map every word across <strong>4,096 to 12,000+ dimensions</strong> of meaning!
+      </div>
+
+      <!-- Stage 2 Only: Star Math Equation Display -->
+      <div id="equation-bar" class="equation-bar hidden"></div>
+
+      <!-- Stage 3 Only: Prompt Constellation Selector -->
+      <div id="prompt-constellation-bar" class="prompt-constellation-bar hidden">
+        <div class="prompt-pills-row">
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="Brew a hot espresso latte at the cozy cafe">
+            Prompt A: "Brew a hot espresso latte at the cozy cafe"
+          </button>
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="Launch the astronauts into orbit around Saturn">
+            Prompt B: "Launch the astronauts into orbit around Saturn"
+          </button>
+          <button class="btn-secondary btn-xs prompt-preset" data-prompt="A royal queen and a loyal puppy">
+            Prompt C: "A royal queen and a loyal puppy" (Mixed Clusters!)
+          </button>
+        </div>
+        <input type="text" id="custom-prompt-input" value="Brew a hot espresso latte at the cozy cafe" placeholder="Or type words like: espresso, latte, astronaut, orbit, queen, puppy, guitar..." style="width:100%; background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.75rem 1rem; border-radius:var(--radius-md); font-size:0.92rem; font-family:var(--font-sans);" />
+      </div>
+
+      <!-- Interactive Deep-Space Canvas -->
+      <div class="cosmos-viewport" id="cosmos-viewport">
+        <canvas id="cosmos-canvas"></canvas>
+        <div class="cosmos-hud-top">
+          <span class="hud-pill" id="hud-left">
+            <span style="width:8px; height:8px; border-radius:50%; background:var(--cyan); display:inline-block;"></span>
+            <span id="hud-mode-text">OBSERVATORY: ACTIVE</span>
+          </span>
+          <span class="hud-pill" id="hud-right">Click a star node to connect</span>
+        </div>
+      </div>
+
+      <!-- Live Diagnostic Bar -->
+      <div class="diagnostic-bar status-neutral" id="obs-diagnostic">
+        <div id="obs-diag-text">
+          <strong>Mission 1:</strong> Look for the pulsing gold anchor star <code>"Espresso"</code>. Click the <strong>3 closest neighbor stars</strong> in that same nebula to wire the Coffee Constellation!
+        </div>
+        <button id="btn-obs-next" class="btn-primary hidden">
+          <span>Next Mission</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Learning Moment Popup -->
+  <div id="walkthrough-modal" class="modal-backdrop hidden">
+    <div class="walkthrough-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);" id="wt-tag">LEARNING MOMENT</span>
+        <span class="mono-tag">Discovery Unlocked</span>
+      </div>
+      <h3 style="font-size:1.2rem; font-weight:700;" id="wt-title">How AI Forms a Thought</h3>
+      <div class="wt-visual-stage" id="wt-visual"></div>
+      <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="btn-wt-close" class="btn-primary">
+          <span>Awesome — Continue</span>
+          <i data-lucide="arrow-right" class="icon-xs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-Question Assessment Modal (Uniform 4-Choice Style, Zero Parentheses Tells) -->
+  <div id="quiz-modal" class="modal-backdrop hidden">
+    <div class="quiz-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="mono-tag" style="color:var(--emerald);">LAB 04 ASSESSMENT // 3 QUESTIONS</span>
+        <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
+      </div>
+      <h3>Lab 04 Final Mastery Assessment</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Meaning Maps and unlock the Lab 05 Capstone.</p>
+
+      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 when you wired the Coffee and Space constellations together on the star map.">
+        <h4>1. How does an AI model represent the meaning of words so that it can understand what they have in common?</h4>
+        <button class="quiz-opt" data-correct="false">It stores an alphabetical English dictionary definition next to every word in its memory.</button>
+        <button class="quiz-opt" data-correct="true">It places every word at a coordinate in a giant mathematical space where related words cluster close together.</button>
+        <button class="quiz-opt" data-correct="false">It groups words strictly by how many letters they have and what letter of the alphabet they start with.</button>
+        <button class="quiz-opt" data-correct="false">It translates every word into a computer image file so it can see what the object looks like.</button>
+      </div>
+
+      <div class="quiz-q" data-q="2" data-hint="Remember Stage 2 when you subtracted 'Man' from 'King' and added 'Woman' to land on 'Queen'.">
+        <h4>2. Why is an AI able to solve analogy puzzles like subtracting "France" from "Paris" and adding "Japan" to land on "Tokyo"?</h4>
+        <button class="quiz-opt" data-correct="false">Because the model memorizes a list of every capital city quiz question on the internet.</button>
+        <button class="quiz-opt" data-correct="false">Because the word slicer merges country names and city names into the same token ID number.</button>
+        <button class="quiz-opt" data-correct="true">Because relationships between concepts are stored as consistent directions and distances across the star map.</button>
+        <button class="quiz-opt" data-correct="false">Because the model runs a web search in the background whenever it sees two proper nouns in a prompt.</button>
+      </div>
+
+      <div class="quiz-q" data-q="3" data-hint="Think about the glowing Center of Gravity beacon in Stage 3 when all the words in your prompt lit up together.">
+        <h4>3. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you want?</h4>
+        <button class="quiz-opt" data-correct="true">It lights up the constellation of words in your prompt and calculates their combined center of gravity in meaning space.</button>
+        <button class="quiz-opt" data-correct="false">It ignores all the words in your sentence except for the very last noun right before the question mark.</button>
+        <button class="quiz-opt" data-correct="false">It picks a random neighborhood on the star map first and checks afterward if it matches your prompt.</button>
+        <button class="quiz-opt" data-correct="false">It averages the alphabetical ID numbers of your tokens to pick a single dictionary word in the middle.</button>
+      </div>
+
+      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim 250 XP</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
