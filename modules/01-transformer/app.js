@@ -344,7 +344,7 @@ btnInit.addEventListener('click', async () => {
           <path d="M105 40 H135" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="140" y="12" width="80" height="56" rx="8" fill="#052e16" stroke="#10b981" stroke-width="2"/>
           <text x="180" y="37" fill="#10b981" font-family="JetBrains Mono" font-size="11" font-weight="bold" text-anchor="middle">AI Brain</text>
-          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49,000 Pieces</text>
+          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49k–256k Pieces</text>
           <path d="M225 40 H255" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="260" y="18" width="50" height="44" rx="6" fill="#18181b" stroke="#c084fc" stroke-width="1.5"/>
           <text x="285" y="44" fill="#d8b4fe" font-family="JetBrains Mono" font-size="11" text-anchor="middle">1 Piece</text>
@@ -352,8 +352,10 @@ btnInit.addEventListener('click', async () => {
       `,
       bodyHtml: `
         We just unlocked the <strong>Inside the AI's Head</strong> panel on the right.<br><br>
-        Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an <strong>election across 49,000 word pieces</strong> to pick strictly <em>one piece at a time</em>.<br><br>
-        Click the glowing blue <strong>Step 2: Watch It Think</strong> button next!
+        Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an election across its dictionary to pick strictly <em>one word piece at a time</em>.<br><br>
+        <small style="color:var(--text-secondary); display:block; background:var(--bg-canvas); padding:0.5rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle);">
+          <strong>Pocket AI vs. Big Cloud AI:</strong> This miniature browser AI has a dictionary of <strong>49,152 word pieces</strong>. Giant cloud models use even larger dictionaries—<strong>Claude</strong> uses ~100,000 pieces, <strong>ChatGPT (GPT-4o)</strong> uses <strong>200,000 pieces</strong>, and <strong>Google Gemini</strong> uses <strong>256,000 pieces</strong>!
+        </small>
       `,
       buttonLabel: 'Got It — Let’s Watch It Think',
       autoResume: false
@@ -684,27 +686,63 @@ btnReset.addEventListener('click', () => {
   refreshIcons();
 });
 
-// Quiz Modal Logic (3 Questions)
+// Quiz Modal Logic with Visual Per-Option Grading
 btnOpenQuiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
 btnCloseQuiz.addEventListener('click', () => quizModal.classList.add('hidden'));
 
 document.querySelectorAll('.quiz-opt').forEach(opt => {
   opt.addEventListener('click', () => {
     const parent = opt.closest('.quiz-q');
-    parent.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('selected'));
+    parent.querySelectorAll('.quiz-opt').forEach(o => {
+      o.classList.remove('selected', 'ans-correct', 'ans-wrong');
+      const oldTag = o.querySelector('.quiz-status-tag');
+      if (oldTag) oldTag.remove();
+    });
+    const oldHint = parent.querySelector('.q-inline-hint');
+    if (oldHint) oldHint.remove();
+
     opt.classList.add('selected');
   });
 });
 
 btnSubmitQuiz.addEventListener('click', () => {
+  const questions = document.querySelectorAll('.quiz-q');
   const selected = document.querySelectorAll('.quiz-opt.selected');
-  if (selected.length < 3) {
+  if (selected.length < questions.length) {
     alert('Please select an answer for all 3 questions.');
     return;
   }
 
   let correct = 0;
-  selected.forEach(s => { if (s.dataset.correct === 'true') correct++; });
+  questions.forEach(q => {
+    const chosen = q.querySelector('.quiz-opt.selected');
+    const oldTag = chosen.querySelector('.quiz-status-tag');
+    if (oldTag) oldTag.remove();
+    const oldHint = q.querySelector('.q-inline-hint');
+    if (oldHint) oldHint.remove();
+
+    const isRight = chosen.dataset.correct === 'true';
+    const tag = document.createElement('span');
+    tag.className = 'quiz-status-tag';
+
+    if (isRight) {
+      correct++;
+      chosen.classList.add('ans-correct');
+      tag.textContent = '✔ CORRECT';
+      chosen.appendChild(tag);
+    } else {
+      chosen.classList.add('ans-wrong');
+      tag.textContent = '✖ NOT QUITE';
+      chosen.appendChild(tag);
+
+      if (q.dataset.hint) {
+        const hintEl = document.createElement('div');
+        hintEl.className = 'q-inline-hint';
+        hintEl.innerHTML = `<strong>Hint:</strong> ${q.dataset.hint}`;
+        q.appendChild(hintEl);
+      }
+    }
+  });
 
   quizFeedback.classList.remove('hidden');
   if (correct === 3) {
@@ -716,7 +754,7 @@ btnSubmitQuiz.addEventListener('click', () => {
     setTimeout(() => { window.location.href = '../../index.html'; }, 1400);
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';
-    quizFeedback.style.color = '#ef4444';
-    quizFeedback.textContent = `You got ${correct} out of 3 right. Check your answers and try again!`;
+    quizFeedback.style.color = '#fca5a5';
+    quizFeedback.innerHTML = `<strong>You got ${correct} out of 3 right.</strong> The red answer(s) above need another look—check the inline hint and click a new choice!`;
   }
 });

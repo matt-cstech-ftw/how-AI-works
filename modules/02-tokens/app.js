@@ -590,7 +590,7 @@ document.querySelectorAll('.forge-preset').forEach(btn => {
 });
 
 // ==========================================
-// QUIZ MODAL LOGIC (4 Rigorous Options per Question)
+// QUIZ MODAL LOGIC (Visual Per-Question Highlighting & Hints)
 // ==========================================
 btnOpenQuiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
 btnForgeQuiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
@@ -599,20 +599,56 @@ btnCloseQuiz.addEventListener('click', () => quizModal.classList.add('hidden'));
 document.querySelectorAll('.quiz-opt').forEach(opt => {
   opt.addEventListener('click', () => {
     const parent = opt.closest('.quiz-q');
-    parent.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('selected'));
+    parent.querySelectorAll('.quiz-opt').forEach(o => {
+      o.classList.remove('selected', 'ans-correct', 'ans-wrong');
+      const oldTag = o.querySelector('.quiz-status-tag');
+      if (oldTag) oldTag.remove();
+    });
+    const oldHint = parent.querySelector('.q-inline-hint');
+    if (oldHint) oldHint.remove();
+
     opt.classList.add('selected');
   });
 });
 
 btnSubmitQuiz.addEventListener('click', () => {
+  const questions = document.querySelectorAll('.quiz-q');
   const selected = document.querySelectorAll('.quiz-opt.selected');
-  if (selected.length < 3) {
+  if (selected.length < questions.length) {
     alert('Please select an answer for all 3 questions.');
     return;
   }
 
   let correct = 0;
-  selected.forEach(s => { if (s.dataset.correct === 'true') correct++; });
+  questions.forEach(q => {
+    const chosen = q.querySelector('.quiz-opt.selected');
+    const oldTag = chosen.querySelector('.quiz-status-tag');
+    if (oldTag) oldTag.remove();
+    const oldHint = q.querySelector('.q-inline-hint');
+    if (oldHint) oldHint.remove();
+
+    const isRight = chosen.dataset.correct === 'true';
+    const tag = document.createElement('span');
+    tag.className = 'quiz-status-tag';
+
+    if (isRight) {
+      correct++;
+      chosen.classList.add('ans-correct');
+      tag.textContent = '✔ CORRECT';
+      chosen.appendChild(tag);
+    } else {
+      chosen.classList.add('ans-wrong');
+      tag.textContent = '✖ NOT QUITE';
+      chosen.appendChild(tag);
+
+      if (q.dataset.hint) {
+        const hintEl = document.createElement('div');
+        hintEl.className = 'q-inline-hint';
+        hintEl.innerHTML = `<strong>Hint:</strong> ${q.dataset.hint}`;
+        q.appendChild(hintEl);
+      }
+    }
+  });
 
   quizFeedback.classList.remove('hidden');
   if (correct === 3) {
@@ -625,7 +661,7 @@ btnSubmitQuiz.addEventListener('click', () => {
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';
     quizFeedback.style.color = '#fca5a5';
-    quizFeedback.innerHTML = `<strong>You scored ${correct} out of 3.</strong> Review the highlighted concepts: remember that AI uses a fixed subword vocabulary table, receives integer IDs instead of individual letters, and attaches leading whitespace directly to token entries.`;
+    quizFeedback.innerHTML = `<strong>You scored ${correct} out of 3.</strong> Look for the red <strong>✖ NOT QUITE</strong> button(s) and hint above, pick a new answer, and click Verify again!`;
   }
 });
 

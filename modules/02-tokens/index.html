@@ -121,6 +121,22 @@
       margin-top: 0.25rem;
     }
 
+    /* Scale Comparison Note (Pocket AI vs ChatGPT/Gemini/Claude) */
+    .vocab-scale-note {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .vocab-scale-note strong {
+      color: var(--text-primary);
+    }
+
     /* Target Word Prompt Banner with Live Progress Letters */
     .target-banner {
       background: var(--bg-canvas);
@@ -192,7 +208,7 @@
       pointer-events: none;
     }
 
-    /* Live Diagnostic Bar (Instant Feedback on Every Click!) */
+    /* Live Diagnostic Bar */
     .diagnostic-bar {
       padding: 0.85rem 1.1rem;
       border-radius: var(--radius-md);
@@ -206,34 +222,11 @@
       transition: all 0.2s ease;
     }
 
-    .diagnostic-bar.status-neutral {
-      border-color: var(--border-subtle);
-      color: var(--text-secondary);
-    }
-
-    .diagnostic-bar.status-good {
-      border-color: rgba(56, 189, 248, 0.45);
-      background: rgba(56, 189, 248, 0.08);
-      color: #e0f2fe;
-    }
-
-    .diagnostic-bar.status-warn {
-      border-color: rgba(245, 158, 11, 0.5);
-      background: rgba(245, 158, 11, 0.1);
-      color: #fef3c7;
-    }
-
-    .diagnostic-bar.status-error {
-      border-color: rgba(239, 68, 68, 0.55);
-      background: rgba(239, 68, 68, 0.1);
-      color: #fecaca;
-    }
-
-    .diagnostic-bar.status-solved {
-      border-color: rgba(16, 185, 129, 0.55);
-      background: rgba(16, 185, 129, 0.1);
-      color: #d1fae5;
-    }
+    .diagnostic-bar.status-neutral { border-color: var(--border-subtle); color: var(--text-secondary); }
+    .diagnostic-bar.status-good { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.08); color: #e0f2fe; }
+    .diagnostic-bar.status-warn { border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.1); color: #fef3c7; }
+    .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
+    .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
 
     /* True Interlocking Jigsaw Piece Styling */
     .jigsaw-row {
@@ -299,54 +292,16 @@
       100% { transform: scale(1) translateY(0); opacity: 1; }
     }
 
-    .puzzle-piece:hover {
-      transform: translateY(-4px) scale(1.03);
-    }
+    .puzzle-piece:hover { transform: translateY(-4px) scale(1.03); }
+    .pp-chunk { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+    .pp-id { font-size: 0.68rem; opacity: 0.8; margin-top: 2px; }
 
-    .pp-chunk {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
+    .piece-cyan { background: #0c2d48; border-color: #38bdf8; color: #e0f2fe; box-shadow: 0 6px 18px rgba(56, 189, 248, 0.2); }
+    .piece-emerald { background: #063928; border-color: #10b981; color: #d1fae5; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2); }
+    .piece-violet { background: #2e1045; border-color: #c084fc; color: #f3e8ff; box-shadow: 0 6px 18px rgba(192, 132, 252, 0.2); }
+    .piece-amber { background: #3d2206; border-color: #f59e0b; color: #fef3c7; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2); }
+    .piece-wrong { background: #3f1111 !important; border-color: #ef4444 !important; color: #fecaca !important; }
 
-    .pp-id {
-      font-size: 0.68rem;
-      opacity: 0.8;
-      margin-top: 2px;
-    }
-
-    /* Jigsaw Color Themes */
-    .piece-cyan {
-      background: #0c2d48;
-      border-color: #38bdf8;
-      color: #e0f2fe;
-      box-shadow: 0 6px 18px rgba(56, 189, 248, 0.2);
-    }
-    .piece-emerald {
-      background: #063928;
-      border-color: #10b981;
-      color: #d1fae5;
-      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.2);
-    }
-    .piece-violet {
-      background: #2e1045;
-      border-color: #c084fc;
-      color: #f3e8ff;
-      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.2);
-    }
-    .piece-amber {
-      background: #3d2206;
-      border-color: #f59e0b;
-      color: #fef3c7;
-      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2);
-    }
-    .piece-wrong {
-      background: #3f1111 !important;
-      border-color: #ef4444 !important;
-      color: #fecaca !important;
-    }
-
-    /* Blindfold Mode (Shows what AI actually sees: ONLY ID numbers!) */
     .puzzle-piece.blindfolded {
       background: #18181b !important;
       border-color: #52525b !important;
@@ -414,26 +369,9 @@
       transition: all 0.15s ease;
     }
 
-    .cut-slot:hover::before {
-      background: var(--amber);
-      height: 48px;
-      box-shadow: 0 0 10px var(--amber);
-    }
-
-    .cut-slot.active-cut::before {
-      width: 4px;
-      height: 54px;
-      background: #ef4444;
-      box-shadow: 0 0 14px #ef4444;
-    }
-
-    .cut-slot.active-cut::after {
-      content: '✂';
-      position: absolute;
-      top: -18px;
-      font-size: 0.75rem;
-      color: #ef4444;
-    }
+    .cut-slot:hover::before { background: var(--amber); height: 48px; box-shadow: 0 0 10px var(--amber); }
+    .cut-slot.active-cut::before { width: 4px; height: 54px; background: #ef4444; box-shadow: 0 0 14px #ef4444; }
+    .cut-slot.active-cut::after { content: '✂'; position: absolute; top: -18px; font-size: 0.75rem; color: #ef4444; }
 
     /* Modal Backdrop */
     .modal-backdrop {
@@ -493,12 +431,50 @@
       font-weight: 500;
       font-size: 0.82rem;
       line-height: 1.45;
+      transition: all 0.18s ease;
     }
 
     .quiz-opt.selected {
       border-color: var(--cyan);
       color: var(--text-primary);
       background: var(--cyan-dim);
+    }
+
+    /* Visual Grading States */
+    .quiz-opt.ans-correct {
+      border-color: var(--emerald) !important;
+      background: rgba(16, 185, 129, 0.14) !important;
+      color: #d1fae5 !important;
+    }
+
+    .quiz-opt.ans-wrong {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, 0.14) !important;
+      color: #fecaca !important;
+      animation: trackShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    .quiz-status-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    .quiz-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
+    .quiz-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
+
+    .q-inline-hint {
+      font-size: 0.78rem;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 3px solid var(--red);
+      padding: 0.45rem 0.65rem;
+      border-radius: 0 4px 4px 0;
+      margin-top: 0.25rem;
     }
 
     @media (max-width: 720px) {
@@ -583,6 +559,11 @@
         </button>
       </div>
 
+      <!-- Real-World Dictionary Scale Callout -->
+      <div class="vocab-scale-note">
+        <strong>How big is an AI's puzzle dictionary?</strong> This miniature browser AI has <strong>49,152 puzzle pieces</strong> (tokens) in its dictionary. Giant cloud models store way more pieces so they don't have to chop words as often: <strong>Claude</strong> uses ~<strong>100,000+</strong> pieces, <strong>ChatGPT (GPT-4o)</strong> uses <strong>200,000</strong> pieces, and <strong>Google Gemini</strong> uses <strong>256,000</strong> pieces!
+      </div>
+
       <!-- Target Word Bar -->
       <div class="target-banner">
         <div>
@@ -606,7 +587,7 @@
         </div>
       </div>
 
-      <!-- Live Diagnostic Status Bar (Reacts to every single click!) -->
+      <!-- Live Diagnostic Status Bar -->
       <div class="diagnostic-bar status-neutral" id="stage1-diagnostic">
         <div id="stage1-diag-text">
           <strong>Waiting for your first piece:</strong> Click the puzzle piece below that matches the beginning of the target word!
@@ -633,7 +614,7 @@
           <span class="mono-tag" id="laser-round-tag">CHALLENGE 1 OF 2 // PREDICT THE CUT</span>
           <h2 class="arena-title">Where Does the AI Slice This Word?</h2>
           <p class="arena-sub">
-            Before the AI reads a word, its tokenizer slices it into pieces from its 49,152-piece dictionary. <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong> to test if your cut matches the real SmolLM2 tokenizer!
+            Before the AI reads a word, its tokenizer slices it into pieces that exist in its dictionary (49,152 pieces in this pocket AI, or up to 200,000–256,000 in ChatGPT and Gemini). <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong>!
           </p>
         </div>
       </div>
@@ -711,7 +692,7 @@
     </div>
   </div>
 
-  <!-- 3-Question Rigorous Assessment Modal (4 Matched Options per Question) -->
+  <!-- 3-Question Assessment Modal (Clear Plain-English 4-Choice Format + Visual Per-Question Grading) -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -719,30 +700,30 @@
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
       <h3>Lab 02 Final Mastery Assessment</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Select the best answer for all 3 questions to verify your mastery of Subword Tokenization and unlock Lab 03.</p>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Tokenization and unlock Lab 03.</p>
 
-      <div class="quiz-q" data-q="1">
-        <h4>1. How does a language model process unfamiliar or compound words like "unbelievable" and "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="false">It converts every individual alphabetical character into its own standalone ASCII token ID before processing.</button>
-        <button class="quiz-opt" data-correct="true">It segments the word into the longest matching subword tokens available in its fixed vocabulary table.</button>
-        <button class="quiz-opt" data-correct="false">It queries an external spell-check database to replace the compound word with a simpler single-token synonym.</button>
-        <button class="quiz-opt" data-correct="false">It dynamically expands its vocabulary table during generation to assign a permanent new ID to the full word.</button>
+      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1: how did we build 'unbelievable' and 'strawberry' using the pieces in the tray?">
+        <h4>1. How does an AI handle long or less-common words like "unbelievable" and "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="false">It breaks every word down into single A-to-Z letters and reads them one letter at a time.</button>
+        <button class="quiz-opt" data-correct="true">It snaps together reusable word chunks (called tokens) from its built-in dictionary—like [un] + [believ] + [able].</button>
+        <button class="quiz-opt" data-correct="false">It swaps the long word out for a shorter synonym so it only has to use a single dictionary piece.</button>
+        <button class="quiz-opt" data-correct="false">It pauses to add the brand-new word permanently into its dictionary whenever someone types it.</button>
       </div>
 
-      <div class="quiz-q" data-q="2">
-        <h4>2. Why do token-based AI models frequently struggle with character-level tasks like counting the "r"s in "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="false">Because attention layers automatically filter out repeated consonant letters to compress memory usage.</button>
-        <button class="quiz-opt" data-correct="false">Because the tokenizer strips out silent letters and duplicate characters before creating token embeddings.</button>
-        <button class="quiz-opt" data-correct="true">Because the neural network receives single integer IDs (#302, #1709, #9500) for subword chunks rather than individual letters.</button>
-        <button class="quiz-opt" data-correct="false">Because subword tokenization randomizes the order of character chunks whenever a word exceeds two syllables.</button>
+      <div class="quiz-q" data-q="2" data-hint="Remember 'AI Vision Mode' in the Strawberry puzzle—what did the puzzle pieces turn into?">
+        <h4>2. Why do AI models often struggle with letter-counting questions like "How many R's are in strawberry?"</h4>
+        <button class="quiz-opt" data-correct="false">Because the AI ignores repeated letters inside a word to save computer memory.</button>
+        <button class="quiz-opt" data-correct="false">Because the word slicer deletes silent letters before sending the sentence to the AI brain.</button>
+        <button class="quiz-opt" data-correct="true">Because the AI brain only receives the ID numbers (#302, #1709, #9500) for the puzzle pieces, not the individual letters hidden inside them.</button>
+        <button class="quiz-opt" data-correct="false">Because the puzzle pieces get shuffled into a random order whenever a word has more than two syllables.</button>
       </div>
 
-      <div class="quiz-q" data-q="3">
-        <h4>3. Why does the word "cat" at the start of a sentence produce a different token ID than " cat" in the middle of a sentence?</h4>
-        <button class="quiz-opt" data-correct="false">Because the model assigns different token IDs based on whether a word acts as a subject noun or an object noun.</button>
-        <button class="quiz-opt" data-correct="true">Because subword tokenizers attach the leading whitespace character directly onto the token string as part of its vocabulary entry.</button>
-        <button class="quiz-opt" data-correct="false">Because the positional encoding layer increments a word's token ID number for each step further into the sentence.</button>
-        <button class="quiz-opt" data-correct="false">Because the tokenizer inserts a hidden punctuation separator token whenever two nouns appear in the same clause.</button>
+      <div class="quiz-q" data-q="3" data-hint="Look closely at the little dot (·) in front of pieces like '·cat' or '·ad' in Stage 3!">
+        <h4>3. Why does "cat" at the very start of a sentence have a different token ID number than " cat" in the middle of a sentence?</h4>
+        <button class="quiz-opt" data-correct="false">Because the AI gives a word a different ID number depending on whether it is a noun or a verb.</button>
+        <button class="quiz-opt" data-correct="true">Because the word slicer glues the space in front of a word directly onto the puzzle piece (like "·cat"), making it a separate dictionary entry.</button>
+        <button class="quiz-opt" data-correct="false">Because the AI adds +1 to a word's ID number for every step further into the sentence it appears.</button>
+        <button class="quiz-opt" data-correct="false">Because the AI inserts a hidden punctuation piece whenever the same word appears twice in one sentence.</button>
       </div>
 
       <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
