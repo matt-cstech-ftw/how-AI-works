@@ -6,58 +6,74 @@ import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 const STAR_CATALOG = [
   // Nebula 1: Warm Café & Beverage Cluster (Top-Left, Amber/Gold)
   { id: 'espresso', label: 'Espresso', x: 0.18, y: 0.24, cluster: 'cafe', color: '#f59e0b' },
-  { id: 'latte', label: 'Latte', x: 0.26, y: 0.18, cluster: 'cafe', color: '#f59e0b' },
-  { id: 'roast', label: 'Coffee', x: 0.14, y: 0.36, cluster: 'cafe', color: '#f59e0b' },
-  { id: 'cafe', label: 'Cafe', x: 0.28, y: 0.33, cluster: 'cafe', color: '#f59e0b' },
+  { id: 'latte', label: 'Latte', x: 0.27, y: 0.17, cluster: 'cafe', color: '#f59e0b' },
+  { id: 'roast', label: 'Coffee', x: 0.13, y: 0.37, cluster: 'cafe', color: '#f59e0b' },
+  { id: 'cafe', label: 'Cafe', x: 0.28, y: 0.34, cluster: 'cafe', color: '#f59e0b' },
 
   // Nebula 2: Deep Space & Cosmos Cluster (Top-Right, Cyan)
-  { id: 'astronaut', label: 'Astronaut', x: 0.76, y: 0.22, cluster: 'space', color: '#38bdf8' },
-  { id: 'orbit', label: 'Orbit', x: 0.85, y: 0.17, cluster: 'space', color: '#38bdf8' },
-  { id: 'rocket', label: 'Rocket', x: 0.68, y: 0.31, cluster: 'space', color: '#38bdf8' },
-  { id: 'saturn', label: 'Saturn', x: 0.84, y: 0.34, cluster: 'space', color: '#38bdf8' },
+  { id: 'astronaut', label: 'Astronaut', x: 0.74, y: 0.23, cluster: 'space', color: '#38bdf8' },
+  { id: 'orbit', label: 'Orbit', x: 0.84, y: 0.16, cluster: 'space', color: '#38bdf8' },
+  { id: 'rocket', label: 'Rocket', x: 0.66, y: 0.32, cluster: 'space', color: '#38bdf8' },
+  { id: 'saturn', label: 'Saturn', x: 0.83, y: 0.35, cluster: 'space', color: '#38bdf8' },
 
-  // Nebula 3: Royalty & World Capitals Cluster (Bottom-Left, Violet)
-  { id: 'king', label: 'King', x: 0.18, y: 0.68, cluster: 'royalty', color: '#c084fc' },
-  { id: 'queen', label: 'Queen', x: 0.30, y: 0.68, cluster: 'royalty', color: '#c084fc' },
-  { id: 'man', label: 'Man', x: 0.18, y: 0.84, cluster: 'royalty', color: '#c084fc' },
-  { id: 'woman', label: 'Woman', x: 0.30, y: 0.84, cluster: 'royalty', color: '#c084fc' },
-  { id: 'paris', label: 'Paris', x: 0.44, y: 0.66, cluster: 'geo', color: '#c084fc' },
-  { id: 'france', label: 'France', x: 0.44, y: 0.82, cluster: 'geo', color: '#c084fc' },
+  // Nebula 3: Living Creatures Cluster (Bottom-Right, Emerald)
+  { id: 'puppy', label: 'Puppy', x: 0.72, y: 0.68, cluster: 'nature', color: '#10b981' },
+  { id: 'dog', label: 'Dog', x: 0.85, y: 0.66, cluster: 'nature', color: '#10b981' },
+  { id: 'kitten', label: 'Kitten', x: 0.73, y: 0.84, cluster: 'nature', color: '#10b981' },
+  { id: 'cat', label: 'Cat', x: 0.86, y: 0.82, cluster: 'nature', color: '#10b981' },
+
+  // Nebula 4: Royalty & World Capitals Cluster (Bottom-Left, Violet — Revealed in Stage 2)
+  { id: 'king', label: 'King', x: 0.16, y: 0.66, cluster: 'royalty', color: '#c084fc' },
+  { id: 'queen', label: 'Queen', x: 0.29, y: 0.66, cluster: 'royalty', color: '#c084fc' },
+  { id: 'man', label: 'Man', x: 0.16, y: 0.83, cluster: 'royalty', color: '#c084fc' },
+  { id: 'woman', label: 'Woman', x: 0.29, y: 0.83, cluster: 'royalty', color: '#c084fc' },
+  { id: 'paris', label: 'Paris', x: 0.43, y: 0.66, cluster: 'geo', color: '#c084fc' },
+  { id: 'france', label: 'France', x: 0.43, y: 0.83, cluster: 'geo', color: '#c084fc' },
   { id: 'tokyo', label: 'Tokyo', x: 0.56, y: 0.66, cluster: 'geo', color: '#c084fc' },
-  { id: 'japan', label: 'Japan', x: 0.56, y: 0.82, cluster: 'geo', color: '#c084fc' },
-
-  // Nebula 4: Animals & Music Cluster (Bottom-Right, Emerald)
-  { id: 'puppy', label: 'Puppy', x: 0.74, y: 0.68, cluster: 'nature', color: '#10b981' },
-  { id: 'dog', label: 'Dog', x: 0.86, y: 0.68, cluster: 'nature', color: '#10b981' },
-  { id: 'kitten', label: 'Kitten', x: 0.74, y: 0.84, cluster: 'nature', color: '#10b981' },
-  { id: 'cat', label: 'Cat', x: 0.86, y: 0.84, cluster: 'nature', color: '#10b981' }
+  { id: 'japan', label: 'Japan', x: 0.56, y: 0.83, cluster: 'geo', color: '#c084fc' }
 ];
 
 const NEBULA_CLOUDS = [
-  { x: 0.21, y: 0.27, rx: 140, color: 'rgba(245, 158, 11, 0.13)', name: 'WARMTH / CAFE NEBULA' },
-  { x: 0.78, y: 0.26, rx: 145, color: 'rgba(56, 189, 248, 0.14)', name: 'COSMOS / AEROSPACE NEBULA' },
-  { x: 0.36, y: 0.75, rx: 185, color: 'rgba(192, 132, 252, 0.12)', name: 'SOCIETY & ROYALTY NEBULA' },
-  { x: 0.80, y: 0.76, rx: 135, color: 'rgba(16, 185, 129, 0.13)', name: 'LIVING CREATURES NEBULA' }
+  { id: 'cafe', x: 0.21, y: 0.27, rx: 140, color: 'rgba(245, 158, 11, 0.15)', name: 'WARMTH / CAFE NEBULA' },
+  { id: 'space', x: 0.77, y: 0.26, rx: 145, color: 'rgba(56, 189, 248, 0.15)', name: 'COSMOS / AEROSPACE NEBULA' },
+  { id: 'nature', x: 0.79, y: 0.75, rx: 135, color: 'rgba(16, 185, 129, 0.14)', name: 'LIVING CREATURES NEBULA' },
+  { id: 'royalty', x: 0.36, y: 0.75, rx: 185, color: 'rgba(192, 132, 252, 0.13)', name: 'ROYALTY & CAPITALS NEBULA' }
 ];
 
-// Stage 1 Challenges
+// Stage 1 Progressive Constellations (Revealed one by one, and kept permanently wired!)
 const STAGE1_MISSIONS = [
   {
-    roundTag: 'STAGE 1 // CONSTELLATION 1 OF 2',
+    roundTag: 'STAGE 1 // CONSTELLATION 1 OF 3',
     title: 'Wire the "Espresso" Meaning Constellation',
     anchorId: 'espresso',
     targetIds: ['latte', 'roast', 'cafe'],
-    promptInstruction: `Look at the pulsing gold star <code>"Espresso"</code> in the top-left nebula. <strong>Click the 3 closest neighbor stars</strong> that share its meaning to wire the Coffee Constellation!`,
-    successHtml: `<strong>Coffee Constellation Wired (96% Semantic Similarity)!</strong> Because <code>Espresso</code>, <code>Latte</code>, <code>Coffee</code>, and <code>Cafe</code> appear in similar human sentences during training, the AI parks their stars right next to each other!`,
+    // Only show the Cafe cluster + 2 distant stars so the sky starts clean and focused!
+    visibleClusters: ['cafe'],
+    extraVisibleStarIds: ['astronaut', 'puppy'],
+    promptInstruction: `Look at the pulsing gold star <code>"Espresso"</code> in the top-left nebula. <strong>Click its 3 closest neighbor stars</strong> (<code>Latte</code>, <code>Coffee</code>, <code>Cafe</code>) to wire your first Meaning Constellation!`,
+    successHtml: `<strong>Coffee Constellation Permanently Wired!</strong> Because <code>Espresso</code>, <code>Latte</code>, <code>Coffee</code>, and <code>Cafe</code> appear in similar contexts, the AI parks their stars right next to each other. Click <strong>Illuminate Next Nebula</strong> to reveal the next part of the sky!`,
     walkthrough: null
   },
   {
-    roundTag: 'STAGE 1 // CONSTELLATION 2 OF 2',
+    roundTag: 'STAGE 1 // CONSTELLATION 2 OF 3',
     title: 'Wire the "Astronaut" Meaning Constellation',
     anchorId: 'astronaut',
     targetIds: ['orbit', 'rocket', 'saturn'],
-    promptInstruction: `Now look at the pulsing cyan star <code>"Astronaut"</code> in the top-right nebula. <strong>Click its 3 cosmic neighbor stars</strong> to complete the Space Constellation!`,
-    successHtml: `<strong>Space Constellation Wired!</strong> Notice how <code>Astronaut</code> lives far away from <code>Espresso</code>, but right next to <code>Orbit</code>, <code>Rocket</code>, and <code>Saturn</code>.`,
+    visibleClusters: ['cafe', 'space'],
+    extraVisibleStarIds: ['puppy'],
+    promptInstruction: `Notice how your Coffee Constellation stayed lit on the left! Now look at the pulsing cyan star <code>"Astronaut"</code> in the newly revealed top-right nebula and <strong>click its 3 cosmic neighbor stars</strong>!`,
+    successHtml: `<strong>Space Constellation Permanently Wired!</strong> Now you have two complete meaning clusters glowing in the sky. Click <strong>Illuminate Next Nebula</strong> to reveal one more constellation!`,
+    walkthrough: null
+  },
+  {
+    roundTag: 'STAGE 1 // CONSTELLATION 3 OF 3',
+    title: 'Wire the "Puppy" Meaning Constellation',
+    anchorId: 'puppy',
+    targetIds: ['dog', 'kitten', 'cat'],
+    visibleClusters: ['cafe', 'space', 'nature'],
+    extraVisibleStarIds: [],
+    promptInstruction: `Look at the bottom-right emerald nebula! Click the <strong>3 furry neighbor stars</strong> around <code>"Puppy"</code> (<code>Dog</code>, <code>Kitten</code>, <code>Cat</code>) to complete all 3 constellations!`,
+    successHtml: `<strong>All 3 Meaning Constellations Wired!</strong> Look how cleanly the AI organizes concepts into neighborhoods. Click <strong>Go to Stage 2: Star Math Navigation</strong> to see how the AI navigates across these stars!`,
     walkthrough: {
       tag: 'LEARNING MOMENT • WHAT IS AN EMBEDDING?',
       title: 'Words Are Coordinates in a Meaning Galaxy',
@@ -84,8 +100,9 @@ const STAGE1_MISSIONS = [
       bodyHtml: `
         How does a computer made of numbers "understand" what you mean?<br><br>
         During training, the AI builds this <strong>Meaning Star Map (called Embeddings)</strong>. Every time two words show up in similar conversations, gravity pulls their stars closer together.<br><br>
-        Next, in <strong>Stage 2</strong>, you'll see something wild: you can actually <strong>add and subtract stars</strong> like a compass to navigate through ideas!
-      `
+        Next, in <strong>Stage 2</strong>, we'll illuminate the bottom-left nebula and see how you can <strong>add and subtract stars</strong> like a compass to navigate through ideas!
+      `,
+      autoAdvanceToStage2: true
     }
   }
 ];
@@ -94,16 +111,16 @@ const STAGE1_MISSIONS = [
 const STAGE2_MATH = [
   {
     roundTag: 'STAGE 2 // STAR MATH 1 OF 2',
-    title: 'Solve the Classic AI Vector Equation: King - Man + Woman = ?',
+    title: 'Solve the Classic AI Vector Equation: King − Man + Woman = ?',
     startId: 'king',
     minusId: 'man',
     plusId: 'woman',
     answerId: 'queen',
-    explanation: `<strong>Bullseye!</strong> On the star map, subtracting <code>Man</code> from <code>King</code> gives the pure direction of <em>"Royalty"</em>. Starting at <code>Woman</code> and moving in that exact same direction lands directly on <code>Queen</code>!`
+    explanation: `<strong>Bullseye!</strong> On the star map, subtracting <code>Man</code> from <code>King</code> gives the pure direction of <em>"Royalty"</em>. Starting at <code>Woman</code> and moving in that exact same direction lands directly on <code>Queen</code>! Click <strong>Next Star Equation</strong> to try one more!`
   },
   {
     roundTag: 'STAGE 2 // STAR MATH 2 OF 2',
-    title: 'Navigate Across Countries: Paris - France + Japan = ?',
+    title: 'Navigate Across Countries: Paris − France + Japan = ?',
     startId: 'paris',
     minusId: 'france',
     plusId: 'japan',
@@ -116,19 +133,24 @@ const STAGE2_MATH = [
 let currentStage = 1;
 let s1Idx = 0;
 let s1ConnectedIds = new Set();
-let s1WrongLine = null; // { fromStar, toStar }
+let s1MissionComplete = false;
+// Stores completed constellations so they stay permanently wired!
+let completedConstellations = []; // Array of { anchorId, targetIds, color }
+let s1WrongLine = null;
 
 let s2Idx = 0;
 let s2Solved = false;
+let completedMathVectors = []; // Keep solved math vectors visible
 
 let s3ActiveStarIds = [];
-let s3Centroid = null; // { x, y, label }
+let s3Centroid = null;
 
 let hoveredStarId = null;
 let discoveriesCount = 0;
 let animTick = 0;
+let pendingStageAdvance = null;
 
-// Background Ambient Starfield (220 tiny stars)
+// Background Ambient Starfield
 const BG_STARS = Array.from({ length: 220 }, () => ({
   x: Math.random(),
   y: Math.random(),
@@ -145,7 +167,6 @@ const tabStage3 = document.getElementById('tab-stage-3');
 
 const obsRoundTag = document.getElementById('obs-round-tag');
 const obsTitle = document.getElementById('obs-title');
-const obsSub = document.getElementById('obs-sub');
 const btnStage3Quiz = document.getElementById('btn-stage3-quiz');
 
 const equationBar = document.getElementById('equation-bar');
@@ -187,8 +208,8 @@ if (new URLSearchParams(window.location.search).get('quiz') === '1') {
 
 function updateDiscoveries(val) {
   discoveriesCount = Math.max(discoveriesCount, val);
-  progressReadout.innerHTML = `Discoveries: <strong>${discoveriesCount} / 5</strong>`;
-  if (discoveriesCount >= 5) {
+  progressReadout.innerHTML = `Discoveries: <strong>${discoveriesCount} / 6</strong>`;
+  if (discoveriesCount >= 6) {
     completeActivity('mod-04', 150);
     btnOpenQuiz.classList.add('btn-primary');
   }
@@ -196,6 +217,25 @@ function updateDiscoveries(val) {
 
 function getStar(id) {
   return STAR_CATALOG.find(s => s.id === id);
+}
+
+// Returns only the stars that should be visible in the current stage/mission!
+function getVisibleStars() {
+  if (currentStage === 1) {
+    const m = STAGE1_MISSIONS[s1Idx];
+    return STAR_CATALOG.filter(
+      st => m.visibleClusters.includes(st.cluster) || m.extraVisibleStarIds.includes(st.id)
+    );
+  }
+  return STAR_CATALOG;
+}
+
+function getVisibleNebulae() {
+  if (currentStage === 1) {
+    const m = STAGE1_MISSIONS[s1Idx];
+    return NEBULA_CLOUDS.filter(neb => m.visibleClusters.includes(neb.id));
+  }
+  return NEBULA_CLOUDS;
 }
 
 // ==========================================
@@ -211,14 +251,33 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+function drawConstellationGroup(anchorId, targetIds, color, w, h, isComplete) {
+  const anchor = getStar(anchorId);
+  if (!anchor) return;
+
+  targetIds.forEach(tid => {
+    const target = getStar(tid);
+    if (target) {
+      drawGlowLine(anchor.x * w, anchor.y * h, target.x * w, target.y * h, color, 2.4, false);
+    }
+  });
+
+  if (isComplete && targetIds.length === 3) {
+    const arr = targetIds.map(id => getStar(id));
+    drawGlowLine(arr[0].x * w, arr[0].y * h, arr[1].x * w, arr[1].y * h, color, 1.4, true);
+    drawGlowLine(arr[1].x * w, arr[1].y * h, arr[2].x * w, arr[2].y * h, color, 1.4, true);
+  }
+}
+
 function renderCosmos() {
   animTick += 1;
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
 
-  // 1. Draw Subtle Nebula Clouds
-  NEBULA_CLOUDS.forEach(neb => {
+  // 1. Draw Visible Nebula Clouds
+  const visibleNebulae = getVisibleNebulae();
+  visibleNebulae.forEach(neb => {
     const cx = neb.x * w;
     const cy = neb.y * h;
     const grad = ctx.createRadialGradient(cx, cy, 8, cx, cy, neb.rx);
@@ -229,8 +288,7 @@ function renderCosmos() {
     ctx.arc(cx, cy, neb.rx, 0, Math.PI * 2);
     ctx.fill();
 
-    // Subtle Nebula Region Label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.font = '600 9px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
     ctx.fillText(neb.name, cx, cy - neb.rx * 0.55);
@@ -245,25 +303,18 @@ function renderCosmos() {
     ctx.fill();
   });
 
-  // 3. Draw Stage-Specific Constellation Lines & Vectors
+  // 3. Always Draw All Previously Completed Constellations so they STAY WIRED!
+  completedConstellations.forEach(comp => {
+    drawConstellationGroup(comp.anchorId, comp.targetIds, comp.color, w, h, true);
+  });
+
+  // 4. Draw Active Stage Lines & Vectors
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     const anchor = getStar(m.anchorId);
+    const activeTargets = Array.from(s1ConnectedIds);
+    drawConstellationGroup(m.anchorId, activeTargets, anchor.color, w, h, activeTargets.length === 3);
 
-    // Draw connected constellation lines
-    s1ConnectedIds.forEach(tid => {
-      const target = getStar(tid);
-      drawGlowLine(anchor.x * w, anchor.y * h, target.x * w, target.y * h, anchor.color, 2.5, false);
-    });
-
-    // Close the constellation triangle if all 3 are connected
-    if (s1ConnectedIds.size === 3) {
-      const arr = Array.from(s1ConnectedIds).map(id => getStar(id));
-      drawGlowLine(arr[0].x * w, arr[0].y * h, arr[1].x * w, arr[1].y * h, anchor.color, 1.5, true);
-      drawGlowLine(arr[1].x * w, arr[1].y * h, arr[2].x * w, arr[2].y * h, anchor.color, 1.5, true);
-    }
-
-    // Draw temporary red error line if user clicked a distant star
     if (s1WrongLine) {
       drawGlowLine(
         s1WrongLine.from.x * w,
@@ -276,6 +327,16 @@ function renderCosmos() {
       );
     }
   } else if (currentStage === 2) {
+    // Draw previously solved math equations
+    completedMathVectors.forEach(eq => {
+      const sStart = getStar(eq.startId);
+      const sMinus = getStar(eq.minusId);
+      const sPlus = getStar(eq.plusId);
+      const sAns = getStar(eq.answerId);
+      drawGlowLine(sMinus.x * w, sMinus.y * h, sStart.x * w, sStart.y * h, 'rgba(56, 189, 248, 0.45)', 1.6, true);
+      drawGlowLine(sPlus.x * w, sPlus.y * h, sAns.x * w, sAns.y * h, 'rgba(16, 185, 129, 0.55)', 2, false);
+    });
+
     const eq = STAGE2_MATH[s2Idx];
     const sStart = getStar(eq.startId);
     const sMinus = getStar(eq.minusId);
@@ -283,27 +344,25 @@ function renderCosmos() {
     const sAns = getStar(eq.answerId);
 
     // Reference relationship vector: Minus -> Start
-    drawGlowLine(sMinus.x * w, sMinus.y * h, sStart.x * w, sStart.y * h, '#38bdf8', 2.2, true);
+    drawGlowLine(sMinus.x * w, sMinus.y * h, sStart.x * w, sStart.y * h, '#38bdf8', 2.4, true);
     // Applied relationship vector: Plus -> Answer
-    drawGlowLine(sPlus.x * w, sPlus.y * h, sAns.x * w, sAns.y * h, s2Solved ? '#10b981' : '#f59e0b', 3, !s2Solved);
+    drawGlowLine(sPlus.x * w, sPlus.y * h, sAns.x * w, sAns.y * h, s2Solved ? '#10b981' : '#f59e0b', 3.2, !s2Solved);
   } else if (currentStage === 3 && s3Centroid) {
-    // Draw lines from every active star in the prompt to the Center of Gravity Beacon!
     const cx = s3Centroid.x * w;
     const cy = s3Centroid.y * h;
 
     s3ActiveStarIds.forEach((id, idx) => {
       const st = getStar(id);
-      drawGlowLine(st.x * w, st.y * h, cx, cy, '#38bdf8', 2.2, false);
+      drawGlowLine(st.x * w, st.y * h, cx, cy, '#38bdf8', 2.4, false);
       if (idx > 0) {
         const prev = getStar(s3ActiveStarIds[idx - 1]);
         drawGlowLine(prev.x * w, prev.y * h, st.x * w, st.y * h, 'rgba(192, 132, 252, 0.5)', 1.4, true);
       }
     });
 
-    // Draw Pulsing Center of Gravity (Prompt Thought Beacon)
     const pulseR = 16 + 5 * Math.sin(animTick * 0.08);
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
     ctx.stroke();
@@ -319,27 +378,40 @@ function renderCosmos() {
     ctx.fillText('★ PROMPT CENTER OF GRAVITY (AI THOUGHT)', cx, cy - 22);
   }
 
-  // 4. Draw All Foreground Interactive Word Stars
-  STAR_CATALOG.forEach(star => {
+  // 5. Draw Visible Foreground Word Stars
+  const visibleStars = getVisibleStars();
+  visibleStars.forEach(star => {
     const sx = star.x * w;
     const sy = star.y * h;
     const isHovered = hoveredStarId === star.id;
 
-    let isAnchorOrHighlight = false;
+    const isPermanentlyWired = completedConstellations.some(
+      c => c.anchorId === star.id || c.targetIds.includes(star.id)
+    );
+
+    let isAnchorOrHighlight = isPermanentlyWired;
+    let isCurrentMissionAnchor = false;
+
     if (currentStage === 1) {
       const m = STAGE1_MISSIONS[s1Idx];
-      isAnchorOrHighlight = star.id === m.anchorId || s1ConnectedIds.has(star.id);
+      isCurrentMissionAnchor = star.id === m.anchorId;
+      if (isCurrentMissionAnchor || s1ConnectedIds.has(star.id)) {
+        isAnchorOrHighlight = true;
+      }
     } else if (currentStage === 2) {
       const eq = STAGE2_MATH[s2Idx];
-      isAnchorOrHighlight = [eq.startId, eq.minusId, eq.plusId].includes(star.id) || (s2Solved && star.id === eq.answerId);
+      isCurrentMissionAnchor = star.id === eq.answerId && !s2Solved;
+      if ([eq.startId, eq.minusId, eq.plusId].includes(star.id) || (s2Solved && star.id === eq.answerId)) {
+        isAnchorOrHighlight = true;
+      }
     } else if (currentStage === 3) {
-      isAnchorOrHighlight = s3ActiveStarIds.includes(star.id);
+      if (s3ActiveStarIds.includes(star.id)) isAnchorOrHighlight = true;
     }
 
-    // Outer pulsing halo for active/anchor stars
-    if (isAnchorOrHighlight || isHovered) {
-      const haloR = isHovered ? 16 : 12 + 3 * Math.sin(animTick * 0.07);
-      ctx.fillStyle = isHovered ? 'rgba(255, 255, 255, 0.22)' : `${star.color}33`;
+    // Outer pulsing halo
+    if (isAnchorOrHighlight || isHovered || isCurrentMissionAnchor) {
+      const haloR = isHovered ? 17 : 12 + 3.5 * Math.sin(animTick * 0.08);
+      ctx.fillStyle = isHovered ? 'rgba(255, 255, 255, 0.25)' : `${star.color}38`;
       ctx.beginPath();
       ctx.arc(sx, sy, haloR, 0, Math.PI * 2);
       ctx.fill();
@@ -348,13 +420,13 @@ function renderCosmos() {
     // Star Core
     ctx.fillStyle = isAnchorOrHighlight || isHovered ? '#ffffff' : star.color;
     ctx.beginPath();
-    ctx.arc(sx, sy, isAnchorOrHighlight ? 5.5 : 4, 0, Math.PI * 2);
+    ctx.arc(sx, sy, isAnchorOrHighlight ? 5.5 : 4.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Crisp 4-point star flare on active nodes
+    // Crisp 4-point star flare
     if (isAnchorOrHighlight) {
       ctx.strokeStyle = star.color;
-      ctx.lineWidth = 1.3;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.moveTo(sx - 9, sy); ctx.lineTo(sx + 9, sy);
       ctx.moveTo(sx, sy - 9); ctx.lineTo(sx, sy + 9);
@@ -383,7 +455,7 @@ function drawGlowLine(x1, y1, x2, y2, color, width = 2, dashed = false) {
   ctx.restore();
 }
 
-// Hit-testing on Canvas
+// Hit-testing on Canvas (Only checks currently visible stars!)
 function getStarAtPosition(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const mx = clientX - rect.left;
@@ -391,11 +463,12 @@ function getStarAtPosition(clientX, clientY) {
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
 
-  for (const star of STAR_CATALOG) {
+  const visibleStars = getVisibleStars();
+  for (const star of visibleStars) {
     const sx = star.x * w;
     const sy = star.y * h;
     const dist = Math.hypot(mx - sx, my - sy);
-    if (dist <= 24) return star;
+    if (dist <= 26) return star;
   }
   return null;
 }
@@ -422,12 +495,13 @@ canvas.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// STAGE 1 LOGIC: WIRE THE CONSTELLATIONS
+// STAGE 1 LOGIC: WIRE THE CONSTELLATIONS (ONE BY ONE)
 // ==========================================
 function loadStage1Mission(idx) {
   s1Idx = idx;
   s1ConnectedIds.clear();
   s1WrongLine = null;
+  s1MissionComplete = false;
   const m = STAGE1_MISSIONS[idx];
 
   obsRoundTag.textContent = m.roundTag;
@@ -443,8 +517,15 @@ function loadStage1Mission(idx) {
 function handleStage1StarClick(clickedStar) {
   const m = STAGE1_MISSIONS[s1Idx];
   const anchor = getStar(m.anchorId);
-  if (clickedStar.id === m.anchorId) return;
 
+  // If this constellation is already completed, ignore clicks so it doesn't show false errors!
+  if (s1MissionComplete) {
+    obsDiagnostic.className = 'diagnostic-bar status-solved';
+    obsDiagText.innerHTML = `<strong>Constellation complete!</strong> Click the button on the right to continue to the next part of the sky!`;
+    return;
+  }
+
+  if (clickedStar.id === m.anchorId) return;
   s1WrongLine = null;
 
   if (m.targetIds.includes(clickedStar.id)) {
@@ -452,6 +533,17 @@ function handleStage1StarClick(clickedStar) {
     const remaining = 3 - s1ConnectedIds.size;
 
     if (remaining === 0) {
+      s1MissionComplete = true;
+
+      // Save this constellation permanently so it stays wired for the rest of Lab 04!
+      if (!completedConstellations.some(c => c.anchorId === m.anchorId)) {
+        completedConstellations.push({
+          anchorId: m.anchorId,
+          targetIds: [...m.targetIds],
+          color: anchor.color
+        });
+      }
+
       cosmosViewport.className = 'cosmos-viewport solved';
       obsDiagnostic.className = 'diagnostic-bar status-solved';
       obsDiagText.innerHTML = m.successHtml;
@@ -460,7 +552,7 @@ function handleStage1StarClick(clickedStar) {
       updateDiscoveries(s1Idx + 1);
 
       if (s1Idx < STAGE1_MISSIONS.length - 1) {
-        btnObsNext.innerHTML = `<span>Next Constellation</span><i data-lucide="arrow-right" class="icon-xs"></i>`;
+        btnObsNext.innerHTML = `<span>Illuminate Next Nebula</span><i data-lucide="sparkles" class="icon-xs"></i>`;
       } else {
         tabStage1.classList.add('completed');
         btnObsNext.innerHTML = `<span>Go to Stage 2: Star Math Navigation</span><i data-lucide="compass" class="icon-xs"></i>`;
@@ -471,6 +563,7 @@ function handleStage1StarClick(clickedStar) {
         wtTitle.textContent = m.walkthrough.title;
         wtVisual.innerHTML = m.walkthrough.svgHtml;
         wtBody.innerHTML = m.walkthrough.bodyHtml;
+        pendingStageAdvance = m.walkthrough.autoAdvanceToStage2 ? 2 : null;
         wtModal.classList.remove('hidden');
       }
       refreshIcons();
@@ -486,7 +579,7 @@ function handleStage1StarClick(clickedStar) {
 
     const distScore = Math.round(Math.hypot(anchor.x - clickedStar.x, anchor.y - clickedStar.y) * 100);
     obsDiagnostic.className = 'diagnostic-bar status-error';
-    obsDiagText.innerHTML = `<strong>Too Far Away in Meaning Space (Distance: ${distScore} light-years)!</strong> <code>"${clickedStar.label}"</code> lives in a totally different nebula than <code>"${anchor.label}"</code>. Click the stars right next to <code>"${anchor.label}"</code>!`;
+    obsDiagText.innerHTML = `<strong>Too Far Away in Meaning Space (Distance: ${distScore} light-years)!</strong> <code>"${clickedStar.label}"</code> lives in a different nebula than <code>"${anchor.label}"</code>. Click the stars right next to <code>"${anchor.label}"</code>!`;
   }
 }
 
@@ -515,13 +608,17 @@ function loadStage2Math(idx) {
   `;
 
   obsDiagnostic.className = 'diagnostic-bar status-neutral';
-  obsDiagText.innerHTML = `Follow the glowing gold vector arrow starting from <code>"${getStar(eq.plusId).label}"</code> and <strong>click the destination star</strong> where it lands!`;
+  obsDiagText.innerHTML = `Look at the newly revealed bottom-left purple nebula! Follow the gold dashed vector arrow starting from <code>"${getStar(eq.plusId).label}"</code> and <strong>click the destination star</strong> where it lands!`;
 }
 
 function handleStage2StarClick(clickedStar) {
+  if (s2Solved) return;
   const eq = STAGE2_MATH[s2Idx];
+
   if (clickedStar.id === eq.answerId) {
     s2Solved = true;
+    completedMathVectors.push(eq);
+
     const slot = document.getElementById('eq-answer-slot');
     if (slot) {
       slot.textContent = clickedStar.label;
@@ -535,7 +632,7 @@ function handleStage2StarClick(clickedStar) {
     obsDiagText.innerHTML = eq.explanation;
     btnObsNext.classList.remove('hidden');
 
-    updateDiscoveries(2 + s2Idx + 1);
+    updateDiscoveries(3 + s2Idx + 1);
 
     if (s2Idx < STAGE2_MATH.length - 1) {
       btnObsNext.innerHTML = `<span>Next Star Equation</span><i data-lucide="arrow-right" class="icon-xs"></i>`;
@@ -549,7 +646,7 @@ function handleStage2StarClick(clickedStar) {
     void cosmosViewport.offsetWidth;
     cosmosViewport.classList.add('error-shake');
     obsDiagnostic.className = 'diagnostic-bar status-error';
-    obsDiagText.innerHTML = `Not <code>"${clickedStar.label}"</code>! Look at the bottom-left violet nebula and click the star at the tip of the gold dashed arrow starting from <code>"${getStar(eq.plusId).label}"</code>.`;
+    obsDiagText.innerHTML = `Not <code>"${clickedStar.label}"</code>! Look at the bottom-left purple nebula and click the star at the tip of the gold dashed arrow starting from <code>"${getStar(eq.plusId).label}"</code>.`;
   }
 }
 
@@ -562,7 +659,6 @@ function computeStage3PromptGravity() {
     text.includes(st.label.toLowerCase()) || text.includes(st.id)
   );
 
-  // Fallback if user types words not in the 20-star visual catalog
   const activeList = matchedStars.length > 0 ? matchedStars : [getStar('espresso'), getStar('latte'), getStar('cafe')];
   s3ActiveStarIds = activeList.map(s => s.id);
 
@@ -573,9 +669,9 @@ function computeStage3PromptGravity() {
   const names = activeList.map(s => `<code>${s.label}</code>`).join(', ');
   obsDiagnostic.className = 'diagnostic-bar status-solved';
   obsDiagText.innerHTML = `
-    <strong>Thought Formed!</strong> Your prompt lit up ${activeList.length} stars (${names}) and pulled the green <strong>Prompt Center of Gravity</strong> to coordinates <code>(${(avgX * 100).toFixed(0)}, ${(avgY * 100).toFixed(0)})</code>. That exact point in space is the "thought" the AI uses to start choosing its answer words!
+    <strong>Thought Formed!</strong> Your prompt lit up ${activeList.length} stars (${names}) and pulled the green <strong>Prompt Center of Gravity</strong> to coordinates <code>(${(avgX * 100).toFixed(0)}, ${(avgY * 100).toFixed(0)})</code>. Now click <strong>Take Final Quiz & Claim 250 XP</strong> at the top right!
   `;
-  updateDiscoveries(5);
+  updateDiscoveries(6);
 }
 
 // Stage Switching
@@ -623,7 +719,14 @@ document.querySelectorAll('.prompt-preset').forEach(btn => {
   });
 });
 
-btnWtClose.addEventListener('click', () => wtModal.classList.add('hidden'));
+btnWtClose.addEventListener('click', () => {
+  wtModal.classList.add('hidden');
+  if (pendingStageAdvance) {
+    const nextSt = pendingStageAdvance;
+    pendingStageAdvance = null;
+    switchStage(nextSt);
+  }
+});
 
 // ==========================================
 // QUIZ MODAL LOGIC (Visual Per-Option Grading)
