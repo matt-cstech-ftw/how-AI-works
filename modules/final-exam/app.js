@@ -1,123 +1,217 @@
 import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
-const answeredReadout = document.getElementById('answered-readout');
-const btnSubmitExam = document.getElementById('btn-submit-exam');
-const examScoreReport = document.getElementById('exam-score-report');
+const CERT_STORAGE_KEY = 'ai_course_certificate_v1';
 
-const certificateSection = document.getElementById('certificate-section');
+// DOM Elements
+const examPaperView = document.getElementById('exam-paper-view');
+const certificateScreen = document.getElementById('certificate-screen');
+const answeredReadout = document.getElementById('answered-readout');
+const returningGradBanner = document.getElementById('returning-grad-banner');
+const btnBannerViewCert = document.getElementById('btn-banner-view-cert');
+const btnTopViewCert = document.getElementById('btn-top-view-cert');
+
+const btnSubmitExam = document.getElementById('btn-submit-exam');
+
+// Modals
+const passModal = document.getElementById('pass-modal');
+const passModalScoreText = document.getElementById('pass-modal-score-text');
+const modalNameInput = document.getElementById('modal-name-input');
+const btnConfirmName = document.getElementById('btn-confirm-name');
+
+const failModal = document.getElementById('fail-modal');
+const failModalScoreText = document.getElementById('fail-modal-score-text');
+const btnRetryExam = document.getElementById('btn-retry-exam');
+
+// Certificate Screen DOM
 const certCanvas = document.getElementById('cert-canvas');
-const certNameInput = document.getElementById('cert-name-input');
+const certSerialReadout = document.getElementById('cert-serial-readout');
+const btnEditCertName = document.getElementById('btn-edit-cert-name');
 const btnDownloadCert = document.getElementById('btn-download-cert');
 const btnPrintCert = document.getElementById('btn-print-cert');
+const btnRetakeExam = document.getElementById('btn-retake-exam');
 
 function refreshIcons() {
   if (window.lucide) window.lucide.createIcons();
 }
 refreshIcons();
 
-function updateAnsweredCount() {
-  const count = document.querySelectorAll('.exam-opt.selected').length;
-  answeredReadout.innerHTML = `Answered: <strong>${count} / 10</strong>`;
+function generateRandom10DigitSerial() {
+  let s = String(Math.floor(1 + Math.random() * 9));
+  for (let i = 0; i < 9; i++) {
+    s += String(Math.floor(Math.random() * 10));
+  }
+  return s;
 }
 
+function getSavedCert() {
+  try {
+    const raw = localStorage.getItem(CERT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCertData(data) {
+  localStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(data));
+}
+
+function updateAnsweredCount() {
+  const count = document.querySelectorAll('.exam-opt.selected').length;
+  answeredReadout.textContent = `Completed: ${count} / 10`;
+}
+
+// Check if user already has a saved certificate
+const existingCert = getSavedCert();
+if (existingCert) {
+  returningGradBanner.classList.remove('hidden');
+  btnTopViewCert.classList.remove('hidden');
+  modalNameInput.value = existingCert.name || '';
+}
+
+// If navigated with ?view=cert and a certificate exists, open the certificate screen directly
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('view') === 'cert' && existingCert) {
+  showCertificateScreen(existingCert);
+}
+
+// Option Selection (No right/wrong colors ever shown on options)
 document.querySelectorAll('.exam-opt').forEach(opt => {
   opt.addEventListener('click', () => {
     const parent = opt.closest('.exam-q-card');
-    parent.querySelectorAll('.exam-opt').forEach(o => {
-      o.classList.remove('selected', 'ans-correct', 'ans-wrong');
-      const oldTag = o.querySelector('.quiz-status-tag');
-      if (oldTag) oldTag.remove();
-    });
+    parent.querySelectorAll('.exam-opt').forEach(o => o.classList.remove('selected'));
     opt.classList.add('selected');
     updateAnsweredCount();
   });
 });
 
+// Submit Examination
 btnSubmitExam.addEventListener('click', () => {
   const cards = document.querySelectorAll('.exam-q-card');
   const selected = document.querySelectorAll('.exam-opt.selected');
 
   if (selected.length < cards.length) {
-    alert(`Please select an answer for all 10 questions before grading (you have answered ${selected.length} of 10).`);
+    alert(`Please select an answer for all 10 questions before submitting (${selected.length} of 10 answered).`);
     return;
   }
 
   let correctCount = 0;
-  const wrongList = [];
-
-  cards.forEach((card, idx) => {
+  cards.forEach(card => {
     const chosen = card.querySelector('.exam-opt.selected');
-    const oldTag = chosen.querySelector('.quiz-status-tag');
-    if (oldTag) oldTag.remove();
-
-    const isRight = chosen.dataset.correct === 'true';
-    const tag = document.createElement('span');
-    tag.className = 'quiz-status-tag';
-
-    if (isRight) {
+    if (chosen && chosen.dataset.correct === 'true') {
       correctCount++;
-      chosen.classList.add('ans-correct');
-      tag.textContent = '✔ CORRECT';
-      chosen.appendChild(tag);
-    } else {
-      wrongList.push(`Question #${idx + 1}`);
-      chosen.classList.add('ans-wrong');
-      tag.textContent = '✖ INCORRECT';
-      chosen.appendChild(tag);
     }
   });
 
   const pct = Math.round((correctCount / cards.length) * 100);
 
   if (pct >= 70) {
-    // Mark Capstone & Course 100% Complete
+    // Passed! Mark course complete and prompt for name BEFORE showing certificate
     completeActivity('mod-05', 200);
     saveQuizScore('mod-05', pct, 70);
 
-    const missedSummary = wrongList.length > 0
-      ? `Missed: ${wrongList.join(', ')} (marked in red above).`
-      : `Perfect 10/10 score!`;
-
-    examScoreReport.innerHTML = `
-      <strong style="color:var(--emerald); font-size:1.05rem;">🎉 Exam Passed! Final Score: ${pct}% (${correctCount} / 10)</strong><br>
-      <span style="color:var(--text-primary);">${missedSummary} Your official Certificate of Completion has been generated below!</span>
-    `;
-
-    certificateSection.classList.remove('hidden');
-    renderWhitePaperCertificate();
-    setTimeout(() => {
-      certificateSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 150);
+    passModalScoreText.textContent = `You scored ${pct}% (${correctCount} out of 10) and have officially passed the Final Examination. Please enter your name below as you would like it to appear on your Certificate of Completion.`;
+    passModal.classList.remove('hidden');
+    setTimeout(() => modalNameInput.focus(), 80);
   } else {
-    examScoreReport.innerHTML = `
-      <strong style="color:var(--red); font-size:1.05rem;">Final Score: ${pct}% (${correctCount} / 10) — 70% (7 / 10) Required to Pass</strong><br>
-      <span style="color:#fecaca;">You missed: <strong>${wrongList.join(', ')}</strong> (marked in red above). Review your selections and click <strong>Submit & Grade Final Exam</strong> again.</span>
-    `;
-    certificateSection.classList.add('hidden');
+    // Did not pass: show supportive pop-up without revealing specific answers
+    failModalScoreText.textContent = `You scored ${pct}% (${correctCount} out of 10). A score of 70% (7 out of 10) is required to pass. Take your time—you can try the examination again or review the interactive modules on the dashboard first.`;
+    failModal.classList.remove('hidden');
   }
+});
+
+// Retry after failing
+btnRetryExam.addEventListener('click', () => {
+  failModal.classList.add('hidden');
+  document.querySelectorAll('.exam-opt').forEach(o => o.classList.remove('selected'));
+  updateAnsweredCount();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Confirm Name in Pass Modal -> Generate & Transition to Certificate Screen
+function confirmNameAndOpenCertificate() {
+  const enteredName = modalNameInput.value.trim() || 'Course Graduate';
+  const prev = getSavedCert();
+  const serialNumber = prev && prev.serialNumber ? prev.serialNumber : generateRandom10DigitSerial();
+  const dateStr = prev && prev.dateStr
+    ? prev.dateStr
+    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const certData = {
+    name: enteredName,
+    dateStr,
+    serialNumber
+  };
+
+  saveCertData(certData);
+  passModal.classList.add('hidden');
+  returningGradBanner.classList.remove('hidden');
+  btnTopViewCert.classList.remove('hidden');
+  showCertificateScreen(certData);
+}
+
+btnConfirmName.addEventListener('click', confirmNameAndOpenCertificate);
+modalNameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') confirmNameAndOpenCertificate();
+});
+
+function showCertificateScreen(certData) {
+  examPaperView.classList.add('hidden');
+  answeredReadout.classList.add('hidden');
+  certificateScreen.classList.remove('hidden');
+  certSerialReadout.textContent = `Serial No: ${certData.serialNumber}`;
+  renderWhitePaperCertificate(certData);
+  refreshIcons();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnBannerViewCert.addEventListener('click', () => {
+  const cert = getSavedCert();
+  if (cert) showCertificateScreen(cert);
+});
+
+btnTopViewCert.addEventListener('click', () => {
+  const cert = getSavedCert();
+  if (cert) showCertificateScreen(cert);
+});
+
+btnEditCertName.addEventListener('click', () => {
+  const cert = getSavedCert();
+  if (cert) modalNameInput.value = cert.name;
+  passModal.classList.remove('hidden');
+  setTimeout(() => modalNameInput.focus(), 80);
+});
+
+btnRetakeExam.addEventListener('click', () => {
+  certificateScreen.classList.add('hidden');
+  examPaperView.classList.remove('hidden');
+  answeredReadout.classList.remove('hidden');
+  document.querySelectorAll('.exam-opt').forEach(o => o.classList.remove('selected'));
+  updateAnsweredCount();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 // ==========================================
 // CLASSIC WHITE-PAPER CERTIFICATE RENDERER
-// Matches attached reference: White paper, outer solid black border + inner dotted black border,
-// "How AI Works | Fundamentals" at top, "CERTIFICATE OF COMPLETION", Name Line, Subtext, and Date.
+// White paper, patterned black border, "How AI Works | Fundamentals" at top,
+// "CERTIFICATE OF COMPLETION", Name Line, Subtext, Date, and tiny 10-digit serial in bottom right.
 // ==========================================
-function renderWhitePaperCertificate() {
+function renderWhitePaperCertificate(certData) {
+  const data = certData || getSavedCert() || {
+    name: 'Course Graduate',
+    dateStr: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    serialNumber: generateRandom10DigitSerial()
+  };
+
   const ctx = certCanvas.getContext('2d');
   const w = certCanvas.width;   // 1200
   const h = certCanvas.height;  // 840
-  const recipient = certNameInput.value.trim() || 'Student Name';
-  const dateStr = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 
   // 1. Crisp White Paper Background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
 
-  // 2. Outer Solid Black/Charcoal Border
+  // 2. Outer Solid Black Border
   ctx.strokeStyle = '#222222';
   ctx.lineWidth = 8;
   ctx.strokeRect(28, 28, w - 56, h - 56);
@@ -127,13 +221,12 @@ function renderWhitePaperCertificate() {
   ctx.lineWidth = 1.5;
   ctx.strokeRect(40, 40, w - 80, h - 80);
 
-  // 3. Patterned Beaded/Dotted Black Inner Border (Matches Reference Certificate!)
+  // 3. Patterned Beaded/Dotted Black Inner Border
   ctx.fillStyle = '#222222';
   const dotInset = 54;
   const dotSpacing = 14;
   const dotRadius = 3.2;
 
-  // Top & Bottom Horizontal Dotted Borders
   for (let x = dotInset; x <= w - dotInset; x += dotSpacing) {
     ctx.beginPath();
     ctx.arc(x, dotInset, dotRadius, 0, Math.PI * 2);
@@ -144,7 +237,6 @@ function renderWhitePaperCertificate() {
     ctx.fill();
   }
 
-  // Left & Right Vertical Dotted Borders
   for (let y = dotInset + dotSpacing; y <= h - dotInset - dotSpacing; y += dotSpacing) {
     ctx.beginPath();
     ctx.arc(dotInset, y, dotRadius, 0, Math.PI * 2);
@@ -174,7 +266,7 @@ function renderWhitePaperCertificate() {
   // 7. Recipient Name & Crisp Black Name Line
   ctx.fillStyle = '#111111';
   ctx.font = 'italic 600 58px "Cormorant Garamond", Georgia, "Times New Roman", serif';
-  ctx.fillText(recipient, w / 2, 435);
+  ctx.fillText(data.name, w / 2, 435);
 
   ctx.strokeStyle = '#222222';
   ctx.lineWidth = 1.8;
@@ -197,16 +289,22 @@ function renderWhitePaperCertificate() {
     562
   );
 
-  // 9. Date at Bottom
+  // 9. Date Centered at Bottom
   ctx.fillStyle = '#111111';
   ctx.font = '500 21px "Inter", Georgia, sans-serif';
-  ctx.fillText(`Date: ${dateStr}`, w / 2, 695);
+  ctx.textAlign = 'center';
+  ctx.fillText(`Date: ${data.dateStr}`, w / 2, 695);
+
+  // 10. Tiny Randomized 10-Digit Serial Number in Bottom Right Corner
+  ctx.fillStyle = '#555555';
+  ctx.font = '500 11px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`SN: ${data.serialNumber}`, w - 74, h - 72);
 }
 
-certNameInput.addEventListener('input', renderWhitePaperCertificate);
-
 btnDownloadCert.addEventListener('click', () => {
-  renderWhitePaperCertificate();
+  const cert = getSavedCert();
+  renderWhitePaperCertificate(cert);
   const link = document.createElement('a');
   link.download = 'How-AI-Works-Certificate.png';
   link.href = certCanvas.toDataURL('image/png');
@@ -214,15 +312,16 @@ btnDownloadCert.addEventListener('click', () => {
 });
 
 btnPrintCert.addEventListener('click', () => {
-  renderWhitePaperCertificate();
+  const cert = getSavedCert();
+  renderWhitePaperCertificate(cert);
   window.print();
 });
 
-// Ensure web fonts render crisply onto the canvas once loaded
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => {
-    if (!certificateSection.classList.contains('hidden')) {
-      renderWhitePaperCertificate();
+    const cert = getSavedCert();
+    if (cert && !certificateScreen.classList.contains('hidden')) {
+      renderWhitePaperCertificate(cert);
     }
   });
 }

@@ -240,12 +240,16 @@
 
       <div class="topbar-stats">
         <div class="stat-chip">
-          <i data-lucide="zap" class="icon-xs text-emerald"></i>
-          <span id="progress-readout">Score: <strong>0 PTS</strong></span>
+          <i data-lucide="database" class="icon-xs text-emerald"></i>
+          <span id="progress-readout">Data Score: <strong>0 PTS</strong></span>
         </div>
+        <a href="../final-exam/index.html?view=cert" id="nav-cert-btn" class="btn-secondary btn-xs hidden">
+          <i data-lucide="award" class="icon-xs text-emerald"></i>
+          <span>View Certificate</span>
+        </a>
         <a href="../final-exam/index.html" class="btn-outline btn-xs">
           <i data-lucide="graduation-cap" class="icon-xs text-amber"></i>
-          <span>Go to Final Course Exam</span>
+          <span>Final Examination</span>
         </a>
       </div>
     </div>
@@ -258,7 +262,7 @@
           <span class="mono-tag" style="color:var(--emerald); border-color:rgba(16,185,129,0.3);">FINAL MODULE // PROCEDURAL SIDE-SCROLLING PLATFORMER</span>
           <h1 class="arena-title">Where Does an AI's Brain Come From?</h1>
           <p class="arena-sub">
-            Before an AI can slice tokens, map stars, or connect clues, it starts out as an empty neural network that knows nothing. Read the quick briefing below, then run the procedural obstacle course to reach the Neural Training Core!
+            Before an AI can slice tokens, map stars, or connect clues, it starts out as an empty neural network that knows nothing. Read the quick briefing below, then collect clean training data and power-ups to reach the Neural Training Core!
           </p>
         </div>
       </div>
@@ -270,7 +274,7 @@
           How does an AI learn millions of word probabilities and star coordinates? During a phase called <strong>Pre-Training</strong>, giant AI models like <strong>ChatGPT, Claude, and Gemini</strong> digest massive datasets collected from across the public internet—billions of web pages, books, articles, code repositories, and forum discussions.
         </p>
         <p>
-          <strong>The Catch ("Garbage In, Garbage Out"):</strong> Because the internet contains misinformation, biased arguments, spam, and offensive language, an unfiltered AI will absorb those flaws and repeat them! In the platformer below, you play as a <strong>Data Curator Bot</strong>: jump over <strong>Bad Info & Misinformation obstacles</strong>, leap across data gaps, and use your <strong>Laser Blaster</strong> to shoot down swooping <strong>Censored Toxic Bots</strong> before they corrupt the AI core!
+          <strong>The Catch ("Garbage In, Garbage Out"):</strong> Because the internet contains misinformation, biased arguments, spam, and offensive language, an unfiltered AI will absorb those flaws and repeat them! In the platformer below, collect glowing green <strong>Clean Data Bits</strong> to build your score, grab <strong>Randomized Power-Ups</strong> (<em>Rapid Triple-Laser</em>, <em>Data Magnet</em>, and <em>Shield Repair</em>), jump over static <strong>Bad Info</strong> barriers, and use your laser to blast patrolling <strong>Glitch Monsters</strong> and swooping <strong>Censored Toxic Bots</strong>!
         </p>
       </div>
 
@@ -280,19 +284,19 @@
         <div class="arcade-hud-overlay">
           <span class="arcade-hud-pill">
             <span style="width:8px; height:8px; border-radius:50%; background:var(--emerald); display:inline-block;" id="core-light"></span>
-            <span id="hud-score">SCORE: 0 PTS | INTEGRITY: 100%</span>
+            <span id="hud-score">DATA SCORE: 0 PTS | HEALTH: 100%</span>
           </span>
-          <span class="arcade-hud-pill" id="hud-progress">COURSE PROGRESS: 0%</span>
-          <span class="arcade-hud-pill">
-            Run: A/D or ◀/▶ • Jump/Double-Jump: Space/W/▲ • Shoot Laser: Click or F
+          <span class="arcade-hud-pill" id="hud-powerup" style="border-color:rgba(245,158,11,0.4); color:#fde68a;">
+            POWER-UP: NONE
           </span>
+          <span class="arcade-hud-pill" id="hud-progress">PROGRESS: 0%</span>
         </div>
       </div>
 
       <!-- Live Arcade Control & Status Bar -->
       <div class="diagnostic-bar status-neutral" id="arcade-diagnostic">
         <div id="arcade-diag-text">
-          <strong>Procedural Platformer Mission:</strong> Every run generates a brand-new level! Jump over <strong>Misinformation & Bad Info crates</strong> (+100 pts), clear <strong>Data Gaps</strong> (+100 pts), blast swooping <strong>Toxic Bots</strong> with your laser (+150 pts), and reach the <strong>Neural Core Portal</strong> at the end!
+          <strong>Controls & Scoring:</strong> Move with <strong>A/D or ◀/▶</strong> • Jump/Double-Jump with <strong>Space/W/▲</strong> • Shoot Laser with <strong>Click or F</strong>. Collect green <strong>Clean Data Bits</strong> (+100 pts), grab <strong>Power-Up Orbs</strong>, and shoot purple <strong>Ground Glitch Monsters</strong> & flying <strong>Toxic Bots</strong>!
         </div>
         <button id="btn-start-arcade" class="btn-primary">
           <i data-lucide="gamepad-2" class="icon-xs"></i>
@@ -344,11 +348,11 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding-top:0.5rem;">
           <span style="font-size:0.86rem; color:var(--text-primary); font-weight:600;">
-            Ready to make it official? Head to the formal 10-question Final Course Exam page to earn your printable Certificate of Completion!
+            Ready to graduate? Proceed to the formal Final Examination page to earn your printable Certificate of Completion!
           </span>
           <a href="../final-exam/index.html" class="btn-primary" style="background:var(--emerald); color:#052e16; font-weight:700;">
             <i data-lucide="award" class="icon-xs"></i>
-            <span>Proceed to Official Final Course Exam</span>
+            <span>Proceed to Official Final Examination</span>
           </a>
         </div>
       </div>
