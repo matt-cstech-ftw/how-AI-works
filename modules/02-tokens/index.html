@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab 02: The Token Puzzle Workshop — How AI Works</title>
+  <title>LAB 04: The Token Puzzle Workshop â€” How AI Works</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -371,7 +371,7 @@
 
     .cut-slot:hover::before { background: var(--amber); height: 48px; box-shadow: 0 0 10px var(--amber); }
     .cut-slot.active-cut::before { width: 4px; height: 54px; background: #ef4444; box-shadow: 0 0 14px #ef4444; }
-    .cut-slot.active-cut::after { content: '✂'; position: absolute; top: -18px; font-size: 0.75rem; color: #ef4444; }
+    .cut-slot.active-cut::after { content: 'âœ‚'; position: absolute; top: -18px; font-size: 0.75rem; color: #ef4444; }
 
     /* Modal Backdrop */
     .modal-backdrop {
@@ -496,7 +496,7 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">BACK TO DASHBOARD</span>
-          <span class="brand-badge">LAB 02 // THE TOKEN PUZZLE WORKSHOP</span>
+          <span class="brand-badge">LAB 04 // THE TOKEN PUZZLE WORKSHOP</span>
         </div>
       </a>
 
@@ -507,7 +507,7 @@
         </div>
         <button id="btn-open-quiz" class="btn-outline btn-xs">
           <i data-lucide="award" class="icon-xs text-amber"></i>
-          <span>Take Lab 02 Quiz</span>
+          <span>Take LAB 04 Quiz</span>
         </button>
       </div>
     </div>
@@ -614,7 +614,7 @@
           <span class="mono-tag" id="laser-round-tag">CHALLENGE 1 OF 2 // PREDICT THE CUT</span>
           <h2 class="arena-title">Where Does the AI Slice This Word?</h2>
           <p class="arena-sub">
-            Before the AI reads a word, its tokenizer slices it into pieces that exist in its dictionary (49,152 pieces in this pocket AI, or up to 200,000–256,000 in ChatGPT and Gemini). <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong>!
+            Before the AI reads a word, its tokenizer slices it into pieces that exist in its dictionary (49,152 pieces in this pocket AI, or up to 200,000â€“256,000 in ChatGPT and Gemini). <strong>Click between the letters below</strong> to place your laser cut(s), then press <strong>Fire Laser</strong>!
           </p>
         </div>
       </div>
@@ -652,7 +652,7 @@
           <span class="mono-tag">STAGE 3 // FREE-PLAY JIGSAW FORGE</span>
           <h2 class="arena-title">Type Anything & Watch It Forge into Jigsaw Pieces</h2>
           <p class="arena-sub">
-            Notice how <strong>strawberry</strong> slices into the exact same 3 pieces (<code>st</code> + <code>raw</code> + <code>berry</code>) and <strong>adores</strong> slices into <code>·ad</code> + <code>ores</code>—because all 3 stages run on the exact same live SmolLM2 tokenizer!
+            Notice how <strong>strawberry</strong> slices into the exact same 3 pieces (<code>st</code> + <code>raw</code> + <code>berry</code>) and <strong>adores</strong> slices into <code>Â·ad</code> + <code>ores</code>â€”because all 3 stages run on the exact same live SmolLM2 tokenizer!
           </p>
         </div>
         <button id="btn-forge-quiz" class="btn-primary">
@@ -685,7 +685,7 @@
       <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
       <div style="display:flex; justify-content:flex-end;">
         <button id="btn-wt-close" class="btn-primary">
-          <span id="btn-wt-label">Awesome — Continue</span>
+          <span id="btn-wt-label">Awesome â€” Continue</span>
           <i data-lucide="arrow-right" class="icon-xs"></i>
         </button>
       </div>
@@ -696,11 +696,11 @@
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mono-tag" style="color:var(--emerald);">LAB 02 ASSESSMENT // 3 QUESTIONS</span>
+        <span class="mono-tag" style="color:var(--emerald);">LAB 04 ASSESSMENT // 3 QUESTIONS</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
-      <h3>Lab 02 Final Mastery Assessment</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Tokenization and unlock Lab 03.</p>
+      <h3>LAB 04 Final Mastery Assessment</h3>
+      <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Tokenization and unlock Lab 05.</p>
 
       <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 and how we built 'unbelievable' and 'strawberry' using the pieces in the tray.">
         <h4>1. How does an AI handle long or less-common words like "unbelievable" and "strawberry"?</h4>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final Course Exam & Certificate — How AI Works | Fundamentals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/base.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .exam-shell {
+      position: relative;
+      z-index: 10;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .exam-header-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-top: 3px solid var(--cyan);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.5rem, 3vw, 2.25rem);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    .exam-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+    }
+
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .exam-q-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.35rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .exam-q-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .exam-q-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .exam-q-card h3 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.45;
+      margin-bottom: 0.25rem;
+    }
+
+    .exam-opt {
+      text-align: left;
+      justify-content: flex-start;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 0.75rem 1rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .exam-opt:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .exam-opt.selected {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: var(--cyan-dim);
+    }
+
+    .exam-opt.ans-correct {
+      border-color: var(--emerald) !important;
+      background: rgba(16, 185, 129, 0.14) !important;
+      color: #d1fae5 !important;
+    }
+
+    .exam-opt.ans-wrong {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, 0.14) !important;
+      color: #fecaca !important;
+    }
+
+    .quiz-status-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+      margin-left: 0.55rem;
+    }
+
+    .exam-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
+    .exam-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
+
+    .exam-submit-bar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Official Certificate Section */
+    .certificate-showcase-card {
+      background: var(--bg-surface);
+      border: 2px solid var(--emerald);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.25rem, 3vw, 2rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75);
+      animation: certReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes certReveal {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cert-paper-frame {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 6px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+
+    #cert-canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    @media print {
+      body { background: #ffffff !important; }
+      .bg-grid, .no-print { display: none !important; }
+      .exam-shell { padding: 0; max-width: 100%; }
+      .certificate-showcase-card {
+        border: none;
+        padding: 0;
+        box-shadow: none;
+        background: #ffffff;
+      }
+      .cert-paper-frame {
+        box-shadow: none;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- Top Navigation -->
+  <header class="topbar no-print">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">BACK TO DASHBOARD</span>
+          <span class="brand-badge">HOW AI WORKS // OFFICIAL FINAL EXAMINATION</span>
+        </div>
+      </a>
+
+      <div class="topbar-stats">
+        <div class="stat-chip">
+          <i data-lucide="check-square" class="icon-xs text-cyan"></i>
+          <span id="answered-readout">Answered: <strong>0 / 10</strong></span>
+        </div>
+        <a href="../05-hallucinations/index.html" class="btn-outline btn-xs">
+          <i data-lucide="gamepad-2" class="icon-xs text-emerald"></i>
+          <span>Back to Lab 05 Platformer</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="exam-shell">
+    <!-- Formal Examination Header -->
+    <section class="exam-header-card no-print">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);">FINAL CERTIFICATION ASSESSMENT // 10 QUESTIONS</span>
+        <span class="mono-tag" style="color:var(--amber); border-color:rgba(245,158,11,0.35);">PASSING SCORE: 70% (7 / 10) • NO HINTS</span>
+      </div>
+      <h1 style="font-size:1.6rem; font-weight:800; letter-spacing:-0.02em;">How AI Works | Fundamentals Final Exam</h1>
+      <p style="font-size:0.9rem; color:var(--text-secondary); line-height:1.6;">
+        This formal assessment covers all five modules of the curriculum—from Next-Word Prediction and Self-Attention to Vector Meaning Maps, Subword Tokenization, and Training Datasets. Select the best answer for all 10 questions below and submit your exam. Scoring <strong>70% or higher</strong> unlocks your official printable Certificate of Completion.
+      </p>
+      <div class="exam-meta-row">
+        <span>EXAM FORMAT: 10 Multiple-Choice Questions</span>
+        <span>GRADING: Direct Score Report (No Inline Hints)</span>
+        <span>REWARD: +300 XP & Official Certificate</span>
+      </div>
+    </section>
+
+    <!-- 10 Examination Questions -->
+    <section class="questions-list no-print" id="exam-questions-list">
+      <!-- Question 1 (Lab 01) -->
+      <article class="exam-q-card" data-q="1">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 01 OF 10 // LAB 01: NEXT-WORD PREDICTION</span>
+        </div>
+        <h3>1. When you ask an AI a question, how does it actually construct its multi-sentence response?</h3>
+        <button class="exam-opt" data-correct="false">It plans out the entire paragraph in hidden memory before typing the words on screen.</button>
+        <button class="exam-opt" data-correct="true">It scores its dictionary to pick strictly one word piece at a time and repeats the contest for the next spot.</button>
+        <button class="exam-opt" data-correct="false">It searches a database of complete human sentences and swaps out keywords to match your prompt.</button>
+        <button class="exam-opt" data-correct="false">It writes five complete drafts at the same time and displays whichever draft has the highest score.</button>
+      </article>
+
+      <!-- Question 2 (Lab 01) -->
+      <article class="exam-q-card" data-q="2">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 02 OF 10 // LAB 01: CREATIVITY & PROBABILITIES</span>
+        </div>
+        <h3>2. Why does an AI sometimes choose a runner-up word instead of the number one highest-scoring word?</h3>
+        <button class="exam-opt" data-correct="false">Because the browser occasionally makes tiny rounding errors when adding up the percentage scores.</button>
+        <button class="exam-opt" data-correct="false">Because a grammar rule forces the model to skip the top word whenever it was used earlier in the sentence.</button>
+        <button class="exam-opt" data-correct="true">Because turning the Creativity Dial above zero makes the model roll a weighted die so answers vary naturally.</button>
+        <button class="exam-opt" data-correct="false">Because the model automatically trades off between top choices and lower choices to keep sentences short.</button>
+      </article>
+
+      <!-- Question 3 (Lab 01) -->
+      <article class="exam-q-card" data-q="3">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 03 OF 10 // LAB 01: AUTOREGRESSIVE CONTEXT</span>
+        </div>
+        <h3>3. What happens to the rest of a sentence if you force the AI to use a different word mid-sentence?</h3>
+        <button class="exam-opt" data-correct="false">The model keeps its original sentence ending and simply replaces that single forced word in place.</button>
+        <button class="exam-opt" data-correct="true">Every word election after that point recalculates its odds based on the new word and writes a different ending.</button>
+        <button class="exam-opt" data-correct="false">The model resets the Creativity Dial to zero so that it can return to its original topic right away.</button>
+        <button class="exam-opt" data-correct="false">The model merges the forced word with the previous word so the total length of the sentence stays the same.</button>
+      </article>
+
+      <!-- Question 4 (Lab 02 - Self-Attention) -->
+      <article class="exam-q-card" data-q="4">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 04 OF 10 // LAB 02: SELF-ATTENTION CLUES</span>
+        </div>
+        <h3>4. How does an AI figure out who or what a pronoun like "it" or "she" refers to in a sentence?</h3>
+        <button class="exam-opt" data-correct="false">It always connects a pronoun to whichever noun appeared most recently right before it.</button>
+        <button class="exam-opt" data-correct="true">It uses self-attention to connect the pronoun with descriptive clue words across the sentence.</button>
+        <button class="exam-opt" data-correct="false">It pauses to look up the sentence in a grammar rulebook stored outside the neural network.</button>
+        <button class="exam-opt" data-correct="false">It assigns every pronoun to the very first noun that appeared at the beginning of the prompt.</button>
+      </article>
+
+      <!-- Question 5 (Lab 02 - Self-Attention) -->
+      <article class="exam-q-card" data-q="5">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 05 OF 10 // LAB 02: CONTEXTUAL MEANING</span>
+        </div>
+        <h3>5. How does an AI tell the difference between a river "bank" and a money "bank" when both use the same token ID?</h3>
+        <button class="exam-opt" data-correct="false">It assigns a brand-new token ID number to the word as soon as the sentence finishes loading.</button>
+        <button class="exam-opt" data-correct="false">It guesses randomly between the two meanings whenever a word has more than one definition.</button>
+        <button class="exam-opt" data-correct="true">Attention layers blend information from surrounding clue words into the word to shift its meaning.</button>
+        <button class="exam-opt" data-correct="false">The word slicer deletes ambiguous words and replaces them with more specific synonyms first.</button>
+      </article>
+
+      <!-- Question 6 (Lab 03 - Meaning Star Map) -->
+      <article class="exam-q-card" data-q="6">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 06 OF 10 // LAB 03: VECTOR MEANING MAPS</span>
+        </div>
+        <h3>6. How does an AI represent the meaning of words so that it knows "Espresso" and "Latte" are closely related?</h3>
+        <button class="exam-opt" data-correct="false">It stores an alphabetical English dictionary definition next to every word in its memory.</button>
+        <button class="exam-opt" data-correct="true">It places every word at a coordinate in a mathematical space where related words cluster close together.</button>
+        <button class="exam-opt" data-correct="false">It groups words strictly by how many letters they have and what letter of the alphabet they start with.</button>
+        <button class="exam-opt" data-correct="false">It translates every word into a computer image file so it can see what the object looks like.</button>
+      </article>
+
+      <!-- Question 7 (Lab 03 - Meaning Star Map) -->
+      <article class="exam-q-card" data-q="7">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 07 OF 10 // LAB 03: PROMPT COMPREHENSION</span>
+        </div>
+        <h3>7. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you mean?</h3>
+        <button class="exam-opt" data-correct="true">It maps the words from your prompt into space and calculates their combined center of gravity to lock onto your intent.</button>
+        <button class="exam-opt" data-correct="false">It ignores all the words in your sentence except for the very last noun right before the question mark.</button>
+        <button class="exam-opt" data-correct="false">It picks a random neighborhood on the star map first and checks afterward if it matches your prompt.</button>
+        <button class="exam-opt" data-correct="false">It averages the alphabetical ID numbers of your tokens to pick a single dictionary word in the middle.</button>
+      </article>
+
+      <!-- Question 8 (Lab 04 - Tokenization) -->
+      <article class="exam-q-card" data-q="8">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 08 OF 10 // LAB 04: SUBWORD TOKENIZATION</span>
+        </div>
+        <h3>8. How does an AI handle long or less-common words like "unbelievable" and "strawberry"?</h3>
+        <button class="exam-opt" data-correct="false">It breaks every word down into single letters and reads them one letter at a time.</button>
+        <button class="exam-opt" data-correct="true">It snaps together smaller reusable word chunks from its built-in dictionary table.</button>
+        <button class="exam-opt" data-correct="false">It swaps the long word out for a shorter synonym so it only uses a single piece.</button>
+        <button class="exam-opt" data-correct="false">It pauses to add the brand-new word permanently into its dictionary for next time.</button>
+      </article>
+
+      <!-- Question 9 (Lab 04 - Tokenization) -->
+      <article class="exam-q-card" data-q="9">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 09 OF 10 // LAB 04: TOKEN IDs VS. LETTERS</span>
+        </div>
+        <h3>9. Why do AI models often struggle with letter-counting questions like counting the R's in "strawberry"?</h3>
+        <button class="exam-opt" data-correct="false">Because the model ignores repeated consonant letters inside a word to save memory.</button>
+        <button class="exam-opt" data-correct="false">Because the word slicer deletes silent letters before sending the text to the model.</button>
+        <button class="exam-opt" data-correct="true">Because the model only receives ID numbers for the puzzle pieces rather than individual letters.</button>
+        <button class="exam-opt" data-correct="false">Because the puzzle pieces get shuffled into a random order when a word has three syllables.</button>
+      </article>
+
+      <!-- Question 10 (Lab 05 - Training Data) -->
+      <article class="exam-q-card" data-q="10">
+        <div class="exam-q-top">
+          <span class="exam-q-num">QUESTION 10 OF 10 // LAB 05: MASSIVE TRAINING DATASETS</span>
+        </div>
+        <h3>10. Where do large AI models like ChatGPT, Claude, and Gemini learn their language patterns, and why must their data be filtered?</h3>
+        <button class="exam-opt" data-correct="false">Engineers type every grammar rule by hand, and filtering is only used to make files smaller.</button>
+        <button class="exam-opt" data-correct="true">They train on massive datasets from across the internet, which must be filtered so the AI does not absorb toxic or false content.</button>
+        <button class="exam-opt" data-correct="false">They only read printed encyclopedias, and filtering is used to remove words longer than ten letters.</button>
+        <button class="exam-opt" data-correct="false">They learn strictly from user chat logs, and filtering is only needed to block foreign languages.</button>
+      </article>
+    </section>
+
+    <!-- Exam Submission & Official Score Report Bar -->
+    <section class="exam-submit-bar no-print">
+      <div id="exam-score-report" style="font-size:0.9rem; color:var(--text-secondary); line-height:1.5;">
+        Select an answer for all 10 questions above, then click <strong>Submit & Grade Final Exam</strong>.
+      </div>
+      <button id="btn-submit-exam" class="btn-primary">
+        <i data-lucide="check-circle" class="icon-xs"></i>
+        <span>Submit & Grade Final Exam</span>
+      </button>
+    </section>
+
+    <!-- ==========================================
+         CLASSIC WHITE-PAPER CERTIFICATE OF COMPLETION
+         ========================================== -->
+    <section id="certificate-section" class="certificate-showcase-card hidden">
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">EXAM PASSED // OFFICIAL GRADUATION CREDENTIAL</span>
+          <h2 style="font-size:1.35rem; font-weight:700; margin-top:0.25rem;">Your Official Certificate of Completion</h2>
+          <p style="font-size:0.84rem; color:var(--text-secondary);">
+            Enter your full name below to personalize your certificate, then download it as a high-resolution PNG or print it directly.
+          </p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+          <label for="cert-name-input" style="font-size:0.8rem; font-family:var(--font-mono); color:var(--text-secondary);">Recipient Name:</label>
+          <input
+            type="text"
+            id="cert-name-input"
+            placeholder="Enter your full name..."
+            value="Student Name"
+            style="background:var(--bg-canvas); border:1px solid var(--cyan); color:var(--text-primary); padding:0.55rem 0.85rem; border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;"
+          />
+        </div>
+      </div>
+
+      <!-- Classic White Paper Certificate Canvas -->
+      <div class="cert-paper-frame">
+        <canvas id="cert-canvas" width="1200" height="840"></canvas>
+      </div>
+
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <a href="../../index.html" class="btn-secondary">
+          <i data-lucide="arrow-left" class="icon-xs"></i>
+          <span>Return to Mastered Course Dashboard</span>
+        </a>
+        <div style="display:flex; gap:0.65rem; flex-wrap:wrap;">
+          <button id="btn-print-cert" class="btn-secondary">
+            <i data-lucide="printer" class="icon-xs"></i>
+            <span>Print Certificate</span>
+          </button>
+          <button id="btn-download-cert" class="btn-primary" style="background:var(--emerald); color:#052e16; font-weight:700;">
+            <i data-lucide="download" class="icon-xs"></i>
+            <span>Download Certificate (PNG)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

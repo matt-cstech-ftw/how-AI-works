@@ -1,4 +1,4 @@
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
+﻿import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
 env.allowLocalModels = false;
@@ -8,7 +8,7 @@ env.useBrowserCache = true;
 // STAGE 1 & 2 STAR CATALOG (Normalized 0..1 Coordinates)
 // ==========================================
 const STAR_CATALOG = [
-  // Nebula 1: Warm Café & Beverage Cluster (Top-Left, Amber/Gold)
+  // Nebula 1: Warm CafÃ© & Beverage Cluster (Top-Left, Amber/Gold)
   { id: 'espresso', label: 'Espresso', x: 0.18, y: 0.24, cluster: 'cafe', color: '#f59e0b' },
   { id: 'latte', label: 'Latte', x: 0.27, y: 0.17, cluster: 'cafe', color: '#f59e0b' },
   { id: 'roast', label: 'Coffee', x: 0.13, y: 0.37, cluster: 'cafe', color: '#f59e0b' },
@@ -26,7 +26,7 @@ const STAR_CATALOG = [
   { id: 'kitten', label: 'Kitten', x: 0.73, y: 0.84, cluster: 'nature', color: '#10b981' },
   { id: 'cat', label: 'Cat', x: 0.86, y: 0.82, cluster: 'nature', color: '#10b981' },
 
-  // Nebula 4: Royalty & World Capitals Cluster (Bottom-Left, Violet — Revealed in Stage 2)
+  // Nebula 4: Royalty & World Capitals Cluster (Bottom-Left, Violet â€” Revealed in Stage 2)
   { id: 'king', label: 'King', x: 0.16, y: 0.66, cluster: 'royalty', color: '#c084fc' },
   { id: 'queen', label: 'Queen', x: 0.29, y: 0.66, cluster: 'royalty', color: '#c084fc' },
   { id: 'man', label: 'Man', x: 0.16, y: 0.83, cluster: 'royalty', color: '#c084fc' },
@@ -77,7 +77,7 @@ const STAGE1_MISSIONS = [
     promptInstruction: `Look at the bottom-right emerald nebula! Click the <strong>3 furry neighbor stars</strong> around <code>"Puppy"</code> (<code>Dog</code>, <code>Kitten</code>, <code>Cat</code>) to complete all 3 constellations!`,
     successHtml: `<strong>All 3 Meaning Constellations Wired!</strong> Look how cleanly the AI organizes concepts into neighborhoods. Click <strong>Go to Stage 2: Star Math Navigation</strong> to see how the AI navigates across these stars!`,
     walkthrough: {
-      tag: 'LEARNING MOMENT • WHAT IS AN EMBEDDING?',
+      tag: 'LEARNING MOMENT â€¢ WHAT IS AN EMBEDDING?',
       title: 'Words Are Coordinates in a Meaning Galaxy',
       svgHtml: `
         <svg width="350" height="90" viewBox="0 0 350 90" fill="none">
@@ -112,7 +112,7 @@ const STAGE1_MISSIONS = [
 const STAGE2_MATH = [
   {
     roundTag: 'STAGE 2 // STAR MATH 1 OF 2',
-    title: 'Solve the Classic AI Vector Equation: King − Man + Woman = ?',
+    title: 'Solve the Classic AI Vector Equation: King âˆ’ Man + Woman = ?',
     startId: 'king',
     minusId: 'man',
     plusId: 'woman',
@@ -121,7 +121,7 @@ const STAGE2_MATH = [
   },
   {
     roundTag: 'STAGE 2 // STAR MATH 2 OF 2',
-    title: 'Navigate Across Countries: Paris − France + Japan = ?',
+    title: 'Navigate Across Countries: Paris âˆ’ France + Japan = ?',
     startId: 'paris',
     minusId: 'france',
     plusId: 'japan',
@@ -224,7 +224,7 @@ function updateDiscoveries(val) {
   discoveriesCount = Math.max(discoveriesCount, val);
   progressReadout.innerHTML = `Discoveries: <strong>${discoveriesCount} / 6</strong>`;
   if (discoveriesCount >= 6) {
-    completeActivity('mod-04', 150);
+    completeActivity('mod-03', 150);
     btnOpenQuiz.classList.add('btn-primary');
   }
 }
@@ -324,7 +324,7 @@ function renderCosmos() {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.font = '600 13px "Inter", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('✨ Type a sentence in the glowing box above and press "Map My Prompt"!', w / 2, h / 2);
+      ctx.fillText('âœ¨ Type a sentence in the glowing box above and press "Map My Prompt"!', w / 2, h / 2);
       requestAnimationFrame(renderCosmos);
       return;
     }
@@ -381,7 +381,7 @@ function renderCosmos() {
       ctx.fillStyle = '#d1fae5';
       ctx.font = '700 11px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('★ PROMPT CENTER OF GRAVITY (COMBINED THOUGHT)', cx, cy - 24);
+      ctx.fillText('â˜… PROMPT CENTER OF GRAVITY (COMBINED THOUGHT)', cx, cy - 24);
     }
 
     // Draw each Word Star from the user's prompt
@@ -553,7 +553,7 @@ canvas.addEventListener('mousemove', (e) => {
   hoveredStarId = hit ? hit.id : null;
   canvas.style.cursor = hit ? 'pointer' : 'crosshair';
   if (hit) {
-    hudRight.textContent = `Star: "${hit.label}" • Coordinates: (${(hit.x * 100).toFixed(0)}, ${(hit.y * 100).toFixed(0)})`;
+    hudRight.textContent = `Star: "${hit.label}" â€¢ Coordinates: (${(hit.x * 100).toFixed(0)}, ${(hit.y * 100).toFixed(0)})`;
   }
 });
 
@@ -668,7 +668,7 @@ function loadStage2Math(idx) {
 
   equationBar.innerHTML = `
     <span class="eq-chip">${getStar(eq.startId).label}</span>
-    <span class="eq-op">−</span>
+    <span class="eq-op">âˆ’</span>
     <span class="eq-chip">${getStar(eq.minusId).label}</span>
     <span class="eq-op">+</span>
     <span class="eq-chip">${getStar(eq.plusId).label}</span>
@@ -858,7 +858,7 @@ async function mapLiveUserPrompt() {
   s3Centroid = { x: avgX, y: avgY };
 
   const pairText = strongestPair
-    ? `Strongest semantic connection: <code>"${strongestPair.a}"</code> ↔ <code>"${strongestPair.b}"</code> (<strong>${Math.round(strongestPair.sim * 100)}% similarity</strong>).`
+    ? `Strongest semantic connection: <code>"${strongestPair.a}"</code> â†” <code>"${strongestPair.b}"</code> (<strong>${Math.round(strongestPair.sim * 100)}% similarity</strong>).`
     : '';
 
   cosmosViewport.className = 'cosmos-viewport solved';
@@ -985,11 +985,11 @@ btnSubmitQuiz.addEventListener('click', () => {
     if (isRight) {
       correct++;
       chosen.classList.add('ans-correct');
-      tag.textContent = '✔ CORRECT';
+      tag.textContent = 'âœ” CORRECT';
       chosen.appendChild(tag);
     } else {
       chosen.classList.add('ans-wrong');
-      tag.textContent = '✖ NOT QUITE';
+      tag.textContent = 'âœ– NOT QUITE';
       chosen.appendChild(tag);
 
       if (q.dataset.hint) {
@@ -1003,11 +1003,11 @@ btnSubmitQuiz.addEventListener('click', () => {
 
   quizFeedback.classList.remove('hidden');
   if (correct === 3) {
-    completeActivity('mod-04', 150);
-    saveQuizScore('mod-04', 100, 100);
+    completeActivity('mod-03', 150);
+    saveQuizScore('mod-03', 100, 100);
     quizFeedback.style.background = 'var(--emerald-dim)';
     quizFeedback.style.color = 'var(--emerald)';
-    quizFeedback.innerHTML = `<strong>3/3 Mastery Verified! (+250 XP)</strong> Unlocking the Lab 05 Capstone and returning to your Dashboard...`;
+    quizFeedback.innerHTML = `<strong>3/3 Mastery Verified! (+250 XP)</strong> Unlocking Lab 04 and returning to your Dashboard...`;
     setTimeout(() => { window.location.href = '../../index.html'; }, 1400);
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';

@@ -1,4 +1,4 @@
-import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
+﻿import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
 // ==========================================
 // STAGE 1 DATA: THE PRONOUN DETECTIVE (WINOGRAD CASES)
@@ -6,13 +6,13 @@ import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 const DETECTIVE_CASES = [
   {
     roundTag: 'CASE 1 OF 3 // THE "TOO BIG" CLUE',
-    title: 'What Was Too Big—The Trophy or The Suitcase?',
+    title: 'What Was Too Bigâ€”The Trophy or The Suitcase?',
     words: ['The', 'trophy', "didn't", 'fit', 'in', 'the', 'suitcase', 'because', 'it', 'was', 'too', 'big.'],
     spotlightIdx: 8, // "it"
     clueIdx: 11,     // "big."
     correctIdx: 1,   // "trophy"
     wrongExplanations: {
-      6: `<strong>Wait—think about the clue word <code>"big"</code>!</strong> If the <em>suitcase</em> were too big, the trophy would easily fit inside it! Because the sentence says <code>"too big"</code>, <strong>"it"</strong> must be the <code>"trophy"</code>!`,
+      6: `<strong>Waitâ€”think about the clue word <code>"big"</code>!</strong> If the <em>suitcase</em> were too big, the trophy would easily fit inside it! Because the sentence says <code>"too big"</code>, <strong>"it"</strong> must be the <code>"trophy"</code>!`,
       3: `<code>"fit"</code> is a verb! A pronoun like <strong>"it"</strong> is looking for the earlier <em>noun</em> that was too big.`
     },
     defaultWrong: `Not quite! Ask yourself: according to the clue word <code>"big."</code> at the end, which object was too large to fit inside the other?`,
@@ -21,18 +21,18 @@ const DETECTIVE_CASES = [
   },
   {
     roundTag: 'CASE 2 OF 3 // ONE WORD FLIPS THE LASER!',
-    title: 'Look! The Last Word Changed to "small." — Now What is "it"?',
+    title: 'Look! The Last Word Changed to "small." â€” Now What is "it"?',
     words: ['The', 'trophy', "didn't", 'fit', 'in', 'the', 'suitcase', 'because', 'it', 'was', 'too', 'small.'],
     spotlightIdx: 8, // "it"
     clueIdx: 11,     // "small."
     correctIdx: 6,   // "suitcase"
     wrongExplanations: {
-      1: `<strong>Aha—you fell for the trap!</strong> In Case 1, the last word was <code>"big"</code>, so "it" was the trophy. Now the last word is <code>"small."</code>! If the trophy didn't fit because something was too <em>small</em>, which object was too small to hold it?`
+      1: `<strong>Ahaâ€”you fell for the trap!</strong> In Case 1, the last word was <code>"big"</code>, so "it" was the trophy. Now the last word is <code>"small."</code>! If the trophy didn't fit because something was too <em>small</em>, which object was too small to hold it?`
     },
     defaultWrong: `Look at the yellow clue word <code>"small."</code> at the very end! Which of the two objects was too small for the other to fit inside?`,
     successHtml: `<strong>Mind-Blowing, Right?!</strong> Changing the final word from <code>"big"</code> to <code>"small"</code> caused the AI's attention beam to completely re-wire itself from <code>"trophy"</code> over to <code>"suitcase"</code>!`,
     walkthrough: {
-      tag: 'LEARNING MOMENT • HOW SELF-ATTENTION WORKS',
+      tag: 'LEARNING MOMENT â€¢ HOW SELF-ATTENTION WORKS',
       title: 'Why Changing One Word Rewired the Entire Sentence',
       svgHtml: `
         <svg width="360" height="92" viewBox="0 0 360 92" fill="none">
@@ -60,13 +60,13 @@ const DETECTIVE_CASES = [
   },
   {
     roundTag: 'CASE 3 OF 3 // TWO PEOPLE IN ONE SENTENCE',
-    title: 'Who Earned the Promotion—Maya or Chloe?',
+    title: 'Who Earned the Promotionâ€”Maya or Chloe?',
     words: ['Maya', 'congratulated', 'Chloe', 'because', 'she', 'had', 'earned', 'the', 'promotion.'],
     spotlightIdx: 4, // "she"
     clueIdx: 1,      // "congratulated"
     correctIdx: 2,   // "Chloe"
     wrongExplanations: {
-      0: `<strong>Wait—look at the verb <code>"congratulated"</code>!</strong> Maya is the one doing the congratulating. Why would Maya congratulate Chloe if Maya was the one who got promoted?`
+      0: `<strong>Waitâ€”look at the verb <code>"congratulated"</code>!</strong> Maya is the one doing the congratulating. Why would Maya congratulate Chloe if Maya was the one who got promoted?`
     },
     defaultWrong: `Think about the clue word <code>"congratulated"</code>! If Maya congratulated Chloe, who actually earned the promotion?`,
     successHtml: `<strong>3 for 3!</strong> By connecting <code>"she"</code> with both <code>"congratulated"</code> and <code>"earned"</code>, the AI knows with 94% attention weight that <strong>"she"</strong> refers to <code>"Chloe"</code>!`,
@@ -216,7 +216,7 @@ function updateSolvedCount(val) {
   solvedTotal = Math.max(solvedTotal, val);
   progressReadout.innerHTML = `Cases Solved: <strong>${solvedTotal} / 5</strong>`;
   if (solvedTotal >= 5) {
-    completeActivity('mod-03', 150);
+    completeActivity('mod-02', 150);
     btnOpenQuiz.classList.add('btn-primary');
   }
 }
@@ -242,7 +242,7 @@ tabStage2.addEventListener('click', () => switchStage(2));
 tabStage3.addEventListener('click', () => switchStage(3));
 
 // ==========================================
-// SVG BÉZIER ARC DRAWING UTILITY
+// SVG BÃ‰ZIER ARC DRAWING UTILITY
 // ==========================================
 function drawLaserArcBetweenElements(svgEl, boardEl, fromNode, toNode, color = '#10b981', strokeWidth = 3, dashed = false) {
   if (!fromNode || !toNode) return;
@@ -483,7 +483,7 @@ function handleChameleonClick(wIdx, node) {
     void s2Board.offsetWidth;
     s2Board.classList.add('error-shake');
     s2Diagnostic.className = 'diagnostic-bar status-error';
-    s2DiagText.innerHTML = `<code>"${exp.words[wIdx]}"</code> is a generic grammar word—it doesn't tell us whether <strong>"bank"</strong> means a river or a vault! Click a descriptive noun or adjective instead.`;
+    s2DiagText.innerHTML = `<code>"${exp.words[wIdx]}"</code> is a generic grammar wordâ€”it doesn't tell us whether <strong>"bank"</strong> means a river or a vault! Click a descriptive noun or adjective instead.`;
   }
 }
 
@@ -602,11 +602,11 @@ btnSubmitQuiz.addEventListener('click', () => {
     if (isRight) {
       correct++;
       chosen.classList.add('ans-correct');
-      tag.textContent = '✔ CORRECT';
+      tag.textContent = 'âœ” CORRECT';
       chosen.appendChild(tag);
     } else {
       chosen.classList.add('ans-wrong');
-      tag.textContent = '✖ NOT QUITE';
+      tag.textContent = 'âœ– NOT QUITE';
       chosen.appendChild(tag);
 
       if (q.dataset.hint) {
@@ -620,11 +620,11 @@ btnSubmitQuiz.addEventListener('click', () => {
 
   quizFeedback.classList.remove('hidden');
   if (correct === 3) {
-    completeActivity('mod-03', 150);
-    saveQuizScore('mod-03', 100, 100);
+    completeActivity('mod-02', 150);
+    saveQuizScore('mod-02', 100, 100);
     quizFeedback.style.background = 'var(--emerald-dim)';
     quizFeedback.style.color = 'var(--emerald)';
-    quizFeedback.innerHTML = `<strong>3/3 Mastery Verified! (+250 XP)</strong> Unlocking Lab 04 and returning to your Dashboard...`;
+    quizFeedback.innerHTML = `<strong>3/3 Mastery Verified! (+250 XP)</strong> Unlocking Lab 03 and returning to your Dashboard...`;
     setTimeout(() => { window.location.href = '../../index.html'; }, 1400);
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';

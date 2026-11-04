@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab 05 Capstone: The Data Diet & Final Exam — How AI Works</title>
+  <title>Lab 05: The Data Diet Platformer — How AI Works</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -84,22 +84,23 @@
 
     .briefing-box strong { color: var(--text-primary); }
 
-    /* Arcade Canvas Viewport */
+    /* Side-Scrolling Platformer Viewport */
     .arcade-viewport {
       position: relative;
       width: 100%;
-      height: 490px;
-      background: #06060a;
+      height: 480px;
+      background: #07070c;
       border: 2px solid var(--border-strong);
       border-radius: var(--radius-lg);
       overflow: hidden;
       user-select: none;
-      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+      cursor: crosshair;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.85);
     }
 
     .arcade-viewport.victory-glow {
       border-color: var(--emerald);
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
     }
 
     #arcade-canvas {
@@ -120,14 +121,14 @@
       flex-wrap: wrap;
       gap: 0.5rem;
       font-family: var(--font-mono);
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       color: var(--text-primary);
     }
 
     .arcade-hud-pill {
-      background: rgba(9, 9, 11, 0.86);
+      background: rgba(9, 9, 11, 0.88);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       padding: 0.35rem 0.8rem;
       border-radius: 99px;
       display: inline-flex;
@@ -217,153 +218,13 @@
     .diagnostic-bar.status-good { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.08); color: #e0f2fe; }
     .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
     .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
-
-    /* 10-Question Final Exam Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(9, 9, 11, 0.88);
-      backdrop-filter: blur(10px);
-      z-index: 200;
-      display: grid;
-      place-items: center;
-      padding: 1rem;
-    }
-
-    .exam-modal {
-      background: var(--bg-surface);
-      border: 1px solid var(--cyan);
-      border-radius: var(--radius-lg);
-      max-width: 760px;
-      width: 100%;
-      max-height: 92dvh;
-      overflow-y: auto;
-      padding: clamp(1.25rem, 3vw, 2rem);
-      display: flex;
-      flex-direction: column;
-      gap: 1.35rem;
-      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
-    }
-
-    .quiz-q {
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 1rem 1.15rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .quiz-q h4 {
-      font-size: 0.92rem;
-      color: var(--text-primary);
-      margin-bottom: 0.2rem;
-      line-height: 1.4;
-    }
-
-    .quiz-opt {
-      text-align: left;
-      justify-content: flex-start;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      padding: 0.65rem 0.85rem;
-      font-weight: 500;
-      font-size: 0.82rem;
-      line-height: 1.45;
-      transition: all 0.15s ease;
-    }
-
-    .quiz-opt:hover {
-      border-color: var(--border-strong);
-      color: var(--text-primary);
-    }
-
-    .quiz-opt.selected {
-      border-color: var(--cyan);
-      color: var(--text-primary);
-      background: var(--cyan-dim);
-    }
-
-    .quiz-opt.ans-correct {
-      border-color: var(--emerald) !important;
-      background: rgba(16, 185, 129, 0.14) !important;
-      color: #d1fae5 !important;
-    }
-
-    .quiz-opt.ans-wrong {
-      border-color: var(--red) !important;
-      background: rgba(239, 68, 68, 0.14) !important;
-      color: #fecaca !important;
-    }
-
-    .quiz-status-tag {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
-      font-weight: 700;
-      padding: 0.1rem 0.4rem;
-      border-radius: 4px;
-      margin-left: 0.5rem;
-    }
-
-    .quiz-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
-    .quiz-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
-
-    /* Certificate Modal & Canvas */
-    .cert-modal {
-      background: var(--bg-surface);
-      border: 1px solid var(--emerald);
-      border-radius: var(--radius-lg);
-      max-width: 860px;
-      width: 100%;
-      max-height: 94dvh;
-      overflow-y: auto;
-      padding: 1.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.15rem;
-      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
-    }
-
-    .cert-preview-wrap {
-      width: 100%;
-      background: #09090b;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-    }
-
-    #cert-canvas {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    /* Print Media Query for Direct Certificate Printing */
-    @media print {
-      body * { visibility: hidden; }
-      #cert-modal, #cert-modal * { visibility: visible; }
-      #cert-modal {
-        position: absolute;
-        inset: 0;
-        background: #ffffff;
-        padding: 0;
-        border: none;
-        box-shadow: none;
-      }
-      .no-print { display: none !important; }
-    }
   </style>
 </head>
 <body>
   <div class="bg-grid"></div>
 
   <!-- Top Navigation -->
-  <header class="topbar no-print">
+  <header class="topbar">
     <div class="topbar-inner">
       <a href="../../index.html" class="brand">
         <div class="brand-icon">
@@ -373,31 +234,31 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">BACK TO DASHBOARD</span>
-          <span class="brand-badge">LAB 05 // THE DATA DIET & FINAL EXAM</span>
+          <span class="brand-badge">LAB 05 // THE DATA DIET PLATFORMER</span>
         </div>
       </a>
 
       <div class="topbar-stats">
         <div class="stat-chip">
-          <i data-lucide="shield" class="icon-xs text-emerald"></i>
-          <span id="progress-readout">Core Integrity: <strong>100%</strong></span>
+          <i data-lucide="zap" class="icon-xs text-emerald"></i>
+          <span id="progress-readout">Score: <strong>0 PTS</strong></span>
         </div>
-        <button id="btn-open-exam" class="btn-outline btn-xs">
+        <a href="../final-exam/index.html" class="btn-outline btn-xs">
           <i data-lucide="graduation-cap" class="icon-xs text-amber"></i>
-          <span>Take 10-Question Final Exam</span>
-        </button>
+          <span>Go to Final Course Exam</span>
+        </a>
       </div>
     </div>
   </header>
 
-  <main class="capstone-shell no-print">
+  <main class="capstone-shell">
     <section class="arena-card">
       <div class="arena-header">
         <div>
-          <span class="mono-tag" style="color:var(--emerald); border-color:rgba(16,185,129,0.3);">FINAL MODULE // THE DATA DIET ARCADE</span>
+          <span class="mono-tag" style="color:var(--emerald); border-color:rgba(16,185,129,0.3);">FINAL MODULE // PROCEDURAL SIDE-SCROLLING PLATFORMER</span>
           <h1 class="arena-title">Where Does an AI's Brain Come From?</h1>
           <p class="arena-sub">
-            Before an AI can slice tokens, connect clues, or map stars, it starts out as an empty neural network that knows nothing. Read the quick briefing below, then defend the AI's training core in the arcade game!
+            Before an AI can slice tokens, map stars, or connect clues, it starts out as an empty neural network that knows nothing. Read the quick briefing below, then run the procedural obstacle course to reach the Neural Training Core!
           </p>
         </div>
       </div>
@@ -409,21 +270,21 @@
           How does an AI learn millions of word probabilities and star coordinates? During a phase called <strong>Pre-Training</strong>, giant AI models like <strong>ChatGPT, Claude, and Gemini</strong> digest massive datasets collected from across the public internet—billions of web pages, books, articles, code repositories, and forum discussions.
         </p>
         <p>
-          <strong>The Catch ("Garbage In, Garbage Out"):</strong> Because the internet contains human arguments, spam, conspiracy theories, and offensive language, an unfiltered AI will absorb those exact flaws and repeat them! Engineers must build high-speed filters to feed the model <strong>Clean Data</strong> while blasting away <strong>Toxic & Corrupted Data</strong>.
+          <strong>The Catch ("Garbage In, Garbage Out"):</strong> Because the internet contains misinformation, biased arguments, spam, and offensive language, an unfiltered AI will absorb those flaws and repeat them! In the platformer below, you play as a <strong>Data Curator Bot</strong>: jump over <strong>Bad Info & Misinformation obstacles</strong>, leap across data gaps, and use your <strong>Laser Blaster</strong> to shoot down swooping <strong>Censored Toxic Bots</strong> before they corrupt the AI core!
         </p>
       </div>
 
-      <!-- Arcade Game Viewport -->
+      <!-- Side-Scrolling Platformer Viewport -->
       <div class="arcade-viewport" id="arcade-viewport">
         <canvas id="arcade-canvas"></canvas>
         <div class="arcade-hud-overlay">
           <span class="arcade-hud-pill">
             <span style="width:8px; height:8px; border-radius:50%; background:var(--emerald); display:inline-block;" id="core-light"></span>
-            <span id="hud-score">CLEAN DATA FED: 0 / 12</span>
+            <span id="hud-score">SCORE: 0 PTS | INTEGRITY: 100%</span>
           </span>
-          <span class="arcade-hud-pill" id="hud-wave">WAVE 1: STANDARD WEB SCRAPE</span>
+          <span class="arcade-hud-pill" id="hud-progress">COURSE PROGRESS: 0%</span>
           <span class="arcade-hud-pill">
-            Move: Mouse or Left/Right Arrows • Shoot Laser: Click or Spacebar
+            Run: A/D or ◀/▶ • Jump/Double-Jump: Space/W/▲ • Shoot Laser: Click or F
           </span>
         </div>
       </div>
@@ -431,21 +292,21 @@
       <!-- Live Arcade Control & Status Bar -->
       <div class="diagnostic-bar status-neutral" id="arcade-diagnostic">
         <div id="arcade-diag-text">
-          <strong>How to Play:</strong> Slide your blue <strong>Neural Collector Shield</strong> to catch green/cyan <strong>Clean Data orbs</strong>, and press <strong>Spacebar (or Click)</strong> to fire your filter laser at spiky red <strong>Censored Toxic Packets</strong> (`@#%!`) before they hit your shield!
+          <strong>Procedural Platformer Mission:</strong> Every run generates a brand-new level! Jump over <strong>Misinformation & Bad Info crates</strong> (+100 pts), clear <strong>Data Gaps</strong> (+100 pts), blast swooping <strong>Toxic Bots</strong> with your laser (+150 pts), and reach the <strong>Neural Core Portal</strong> at the end!
         </div>
         <button id="btn-start-arcade" class="btn-primary">
           <i data-lucide="gamepad-2" class="icon-xs"></i>
-          <span>Launch Arcade Game</span>
+          <span>Generate Level & Start Run</span>
         </button>
       </div>
 
       <!-- Post-Game Complete Journey Summary (Revealed on Victory!) -->
       <div id="post-game-summary" class="capstone-summary-card hidden">
         <div>
-          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">TRAINING COMPLETE // HOW ALL 5 MODULES CONNECT</span>
-          <h2 style="font-size:1.3rem; font-weight:700; margin-top:0.35rem;">You Now Know the Full Journey of How AI Works!</h2>
+          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">LEVEL CLEARED // THE REVERSE-ORDER REVEAL</span>
+          <h2 style="font-size:1.3rem; font-weight:700; margin-top:0.35rem;">Aha! You Just Explored the Entire AI Pipeline in Reverse!</h2>
           <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.25rem;">
-            Combined with what you mastered in the earlier labs, you have just walked through the complete end-to-end process of how an AI "understands" what you type and figures out what words become its response:
+            Notice what we did across these 5 modules? We started at the very end—watching the final words appear on screen in Lab 01—and peeled back one layer at a time until we reached the origin of the AI's brain in Lab 05. When you put them in forward order, you have the complete end-to-end process of how AI understands you and writes a response:
           </p>
         </div>
 
@@ -453,204 +314,46 @@
           <div class="journey-step-box">
             <span>1. THE DATA DIET (LAB 05)</span>
             <strong>Digesting the Internet</strong>
-            <p>The AI learns language patterns by training on billions of curated web pages, books, and articles.</p>
+            <p>First, the AI learns language patterns by training on billions of curated web pages, books, and articles.</p>
           </div>
           <div class="journey-step-box">
-            <span>2. WORD SLICER (LAB 02)</span>
+            <span>2. WORD SLICER (LAB 04)</span>
             <strong>Chopping into Tokens</strong>
             <p>When you type a prompt, the tokenizer slices your words into numbered subword puzzle pieces.</p>
           </div>
           <div class="journey-step-box">
-            <span>3. STAR MAP (LAB 04)</span>
+            <span>3. STAR MAP (LAB 03)</span>
             <strong>Mapping Your Meaning</strong>
             <p>Your tokens light up as coordinates in vector space, finding the center of gravity of your thought.</p>
           </div>
           <div class="journey-step-box">
-            <span>4. SELF-ATTENTION (LAB 03)</span>
+            <span>4. SELF-ATTENTION (LAB 02)</span>
             <strong>Connecting the Clues</strong>
             <p>Words fire connection beams across the sentence so pronouns and context stay locked in.</p>
           </div>
           <div class="journey-step-box">
             <span>5. WORD CONTEST (LAB 01)</span>
             <strong>Guessing Word-by-Word</strong>
-            <p>The model scores its dictionary and elects one piece at a time until your answer is finished.</p>
+            <p>Finally, the model scores its dictionary and elects one piece at a time to build your response!</p>
           </div>
         </div>
 
         <div class="keep-learning-banner">
-          <strong>Where to Go From Here:</strong> This interactive lab gives you a rock-solid foundation in how modern Large Language Models operate. Beyond these basics, there is a massive world of advanced AI topics to explore—including <em>Reinforcement Learning from Human Feedback (RLHF)</em>, <em>Retrieval-Augmented Generation (RAG)</em>, <em>Multi-Modal Vision & Audio</em>, and <em>Neural Network Fine-Tuning</em>. Countless free courses, open-source documentation (like Hugging Face and PyTorch), and research communities are available online whenever you want to dive deeper!
+          <strong>Where to Go From Here:</strong> Combined, these five modules give you a complete foundational overview of how modern AI understands your prompt and figures out which words become its response. There are tons more advanced topics and resources available online—from <em>Reinforcement Learning from Human Feedback (RLHF)</em> and <em>Retrieval-Augmented Generation (RAG)</em> to open-source communities on Hugging Face, YouTube deep-dives, and interactive research papers!
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding-top:0.5rem;">
-          <span style="font-size:0.84rem; color:var(--text-primary); font-weight:600;">
-            Ready to graduate? Score <strong>70% or higher (7/10)</strong> on the Final Course Exam to unlock your official Certificate!
+          <span style="font-size:0.86rem; color:var(--text-primary); font-weight:600;">
+            Ready to make it official? Head to the formal 10-question Final Course Exam page to earn your printable Certificate of Completion!
           </span>
-          <button id="btn-summary-take-exam" class="btn-primary">
+          <a href="../final-exam/index.html" class="btn-primary" style="background:var(--emerald); color:#052e16; font-weight:700;">
             <i data-lucide="award" class="icon-xs"></i>
-            <span>Start 10-Question Final Course Exam</span>
-          </button>
+            <span>Proceed to Official Final Course Exam</span>
+          </a>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- ==========================================
-       10-QUESTION FINAL COURSE EXAM MODAL (NO HINTS!)
-       ========================================== -->
-  <div id="exam-modal" class="modal-backdrop hidden no-print">
-    <div class="exam-modal">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);">FINAL COURSE EXAM // 10 QUESTIONS ACROSS ALL 5 LABS</span>
-        <button id="btn-close-exam" class="btn-outline btn-xs">Close</button>
-      </div>
-
-      <div>
-        <h2 style="font-size:1.35rem; font-weight:700;">AI Foundations Final Mastery Exam</h2>
-        <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
-          Answer all 10 questions below. There are no hints on the final exam—when you submit, you will see your exact score and which questions you got right or wrong. Score <strong>70% or higher (7/10)</strong> to earn your downloadable Certificate of Completion!
-        </p>
-      </div>
-
-      <!-- Question 1 (Lab 01) -->
-      <div class="quiz-q" data-q="1">
-        <h4>1. When you ask an AI a question, how does it actually construct its multi-sentence response?</h4>
-        <button class="quiz-opt" data-correct="false">It plans out the entire paragraph in hidden memory before typing the words on screen.</button>
-        <button class="quiz-opt" data-correct="true">It scores its dictionary to pick strictly one word piece at a time and repeats the contest for the next spot.</button>
-        <button class="quiz-opt" data-correct="false">It searches a database of complete human sentences and swaps out keywords to match your prompt.</button>
-        <button class="quiz-opt" data-correct="false">It writes five complete drafts at the same time and displays whichever draft has the highest score.</button>
-      </div>
-
-      <!-- Question 2 (Lab 01) -->
-      <div class="quiz-q" data-q="2">
-        <h4>2. Why does an AI sometimes choose a runner-up word instead of the number one highest-scoring word?</h4>
-        <button class="quiz-opt" data-correct="false">Because the browser occasionally makes tiny rounding errors when adding up the percentage scores.</button>
-        <button class="quiz-opt" data-correct="false">Because a grammar rule forces the model to skip the top word whenever it was used earlier in the sentence.</button>
-        <button class="quiz-opt" data-correct="true">Because turning the Creativity Dial above zero makes the model roll a weighted die so answers vary naturally.</button>
-        <button class="quiz-opt" data-correct="false">Because the model automatically trades off between top choices and lower choices to keep sentences short.</button>
-      </div>
-
-      <!-- Question 3 (Lab 01) -->
-      <div class="quiz-q" data-q="3">
-        <h4>3. What happens to the rest of a sentence if you force the AI to use a different word mid-sentence?</h4>
-        <button class="quiz-opt" data-correct="false">The model keeps its original sentence ending and simply replaces that single forced word in place.</button>
-        <button class="quiz-opt" data-correct="true">Every word election after that point recalculates its odds based on the new word and writes a different ending.</button>
-        <button class="quiz-opt" data-correct="false">The model resets the Creativity Dial to zero so that it can return to its original topic right away.</button>
-        <button class="quiz-opt" data-correct="false">The model merges the forced word with the previous word so the total length of the sentence stays the same.</button>
-      </div>
-
-      <!-- Question 4 (Lab 02) -->
-      <div class="quiz-q" data-q="4">
-        <h4>4. How does an AI handle long or less-common words like "unbelievable" and "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="false">It breaks every word down into single letters and reads them one letter at a time.</button>
-        <button class="quiz-opt" data-correct="true">It snaps together smaller reusable word chunks from its built-in dictionary table.</button>
-        <button class="quiz-opt" data-correct="false">It swaps the long word out for a shorter synonym so it only uses a single piece.</button>
-        <button class="quiz-opt" data-correct="false">It pauses to add the brand-new word permanently into its dictionary for next time.</button>
-      </div>
-
-      <!-- Question 5 (Lab 02) -->
-      <div class="quiz-q" data-q="5">
-        <h4>5. Why do AI models often struggle with letter-counting questions like counting the R's in "strawberry"?</h4>
-        <button class="quiz-opt" data-correct="false">Because the model ignores repeated consonant letters inside a word to save memory.</button>
-        <button class="quiz-opt" data-correct="false">Because the word slicer deletes silent letters before sending the text to the model.</button>
-        <button class="quiz-opt" data-correct="true">Because the model only receives ID numbers for the puzzle pieces rather than individual letters.</button>
-        <button class="quiz-opt" data-correct="false">Because the puzzle pieces get shuffled into a random order when a word has three syllables.</button>
-      </div>
-
-      <!-- Question 6 (Lab 03) -->
-      <div class="quiz-q" data-q="6">
-        <h4>6. How does an AI figure out who or what a pronoun like "it" or "she" refers to in a sentence?</h4>
-        <button class="quiz-opt" data-correct="false">It always connects a pronoun to whichever noun appeared most recently right before it.</button>
-        <button class="quiz-opt" data-correct="true">It uses self-attention to connect the pronoun with descriptive clue words across the sentence.</button>
-        <button class="quiz-opt" data-correct="false">It pauses to look up the sentence in a grammar rulebook stored outside the neural network.</button>
-        <button class="quiz-opt" data-correct="false">It assigns every pronoun to the very first noun that appeared at the beginning of the prompt.</button>
-      </div>
-
-      <!-- Question 7 (Lab 03) -->
-      <div class="quiz-q" data-q="7">
-        <h4>7. How does an AI tell the difference between a river "bank" and a money "bank" when both use the same token ID?</h4>
-        <button class="quiz-opt" data-correct="false">It assigns a brand-new token ID number to the word as soon as the sentence finishes loading.</button>
-        <button class="quiz-opt" data-correct="false">It guesses randomly between the two meanings whenever a word has more than one definition.</button>
-        <button class="quiz-opt" data-correct="true">Attention layers blend information from surrounding clue words into the word to shift its meaning.</button>
-        <button class="quiz-opt" data-correct="false">The word slicer deletes ambiguous words and replaces them with more specific synonyms first.</button>
-      </div>
-
-      <!-- Question 8 (Lab 04) -->
-      <div class="quiz-q" data-q="8">
-        <h4>8. How does an AI represent the meaning of words so that it knows "Espresso" and "Latte" are closely related?</h4>
-        <button class="quiz-opt" data-correct="false">It stores an alphabetical English dictionary definition next to every word in its memory.</button>
-        <button class="quiz-opt" data-correct="true">It places every word at a coordinate in a mathematical space where related words cluster close together.</button>
-        <button class="quiz-opt" data-correct="false">It groups words strictly by how many letters they have and what letter of the alphabet they start with.</button>
-        <button class="quiz-opt" data-correct="false">It translates every word into a computer image file so it can see what the object looks like.</button>
-      </div>
-
-      <!-- Question 9 (Lab 04) -->
-      <div class="quiz-q" data-q="9">
-        <h4>9. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you mean?</h4>
-        <button class="quiz-opt" data-correct="true">It maps the words from your prompt into space and calculates their combined center of gravity to lock onto your intent.</button>
-        <button class="quiz-opt" data-correct="false">It ignores all the words in your sentence except for the very last noun right before the question mark.</button>
-        <button class="quiz-opt" data-correct="false">It picks a random neighborhood on the star map first and checks afterward if it matches your prompt.</button>
-        <button class="quiz-opt" data-correct="false">It averages the alphabetical ID numbers of your tokens to pick a single dictionary word in the middle.</button>
-      </div>
-
-      <!-- Question 10 (Lab 05) -->
-      <div class="quiz-q" data-q="10">
-        <h4>10. Where do large AI models like ChatGPT, Claude, and Gemini learn their language patterns, and why must their data be filtered?</h4>
-        <button class="quiz-opt" data-correct="false">Engineers type every grammar rule by hand, and filtering is only used to make files smaller.</button>
-        <button class="quiz-opt" data-correct="true">They train on massive datasets from across the internet, which must be filtered so the AI does not absorb toxic or false content.</button>
-        <button class="quiz-opt" data-correct="false">They only read printed encyclopedias, and filtering is used to remove words longer than ten letters.</button>
-        <button class="quiz-opt" data-correct="false">They learn strictly from user chat logs, and filtering is only needed to block foreign languages.</button>
-      </div>
-
-      <div id="exam-result-banner" class="hidden" style="padding:1rem; border-radius:var(--radius-md); font-size:0.9rem; line-height:1.5;"></div>
-
-      <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-        <button id="btn-submit-exam" class="btn-primary">Grade My Final Exam</button>
-        <button id="btn-open-cert-after-pass" class="btn-primary hidden" style="background:var(--emerald); color:#052e16;">
-          <i data-lucide="award" class="icon-xs"></i>
-          <span>View & Download My Certificate!</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==========================================
-       OFFICIAL CERTIFICATE OF COMPLETION MODAL
-       ========================================== -->
-  <div id="cert-modal" class="modal-backdrop hidden">
-    <div class="cert-modal">
-      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
-        <div>
-          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">OFFICIAL GRADUATION CREDENTIAL</span>
-          <h3 style="font-size:1.2rem; margin-top:0.2rem;">Your AI Foundations Certificate</h3>
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <input type="text" id="cert-name-input" placeholder="Type your name for the certificate..." value="AI Lab Graduate" style="background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.45rem 0.75rem; border-radius:var(--radius-sm); font-size:0.82rem;" />
-          <button id="btn-close-cert" class="btn-outline btn-xs">Close</button>
-        </div>
-      </div>
-
-      <div class="cert-preview-wrap">
-        <canvas id="cert-canvas" width="1000" height="680"></canvas>
-      </div>
-
-      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
-        <a href="../../index.html" class="btn-secondary">
-          <i data-lucide="arrow-left" class="icon-xs"></i>
-          <span>Return to Mastered Dashboard</span>
-        </a>
-        <div style="display:flex; gap:0.6rem;">
-          <button id="btn-print-cert" class="btn-secondary">
-            <i data-lucide="printer" class="icon-xs"></i>
-            <span>Print Certificate</span>
-          </button>
-          <button id="btn-download-cert" class="btn-primary" style="background:var(--emerald); color:#052e16;">
-            <i data-lucide="download" class="icon-xs"></i>
-            <span>Download Certificate (PNG)</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="app.js"></script>
 </body>

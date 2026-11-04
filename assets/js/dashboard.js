@@ -5,44 +5,44 @@ const MODULES_CATALOG = [
     id: 'mod-01',
     number: 'LAB 01',
     title: 'How AI Guesses the Next Word',
-    description: 'Watch a real AI hold a word-guessing contest in slow motion. Step in and force a runner-up word to win to see how the whole sentence changes.',
-    conceptTaught: 'Teaches: Next-Word Prediction & Word Probabilities (Logits)',
+    description: 'Start at the finish line: watch a real AI hold a word-guessing contest in slow motion and force a runner-up word to win to see how the sentence changes.',
+    conceptTaught: 'Pipeline Step 5 (Output): Next-Word Prediction & Probabilities',
     xp: 250,
     url: 'modules/01-transformer/index.html'
   },
   {
     id: 'mod-02',
     number: 'LAB 02',
-    title: 'How AI Cuts Words into Puzzle Pieces',
-    description: 'AI does not actually read whole words—it chops text into numbered chunks. Discover why words like "strawberry" or "adore" get split into pieces.',
-    conceptTaught: 'Teaches: Tokens & Subword Slicing (Tokenization)',
-    xp: 200,
-    url: 'modules/02-tokens/index.html'
-  },
-  {
-    id: 'mod-03',
-    number: 'LAB 03',
     title: 'How Words Look for Clues',
-    description: 'See how the AI connects pronouns and topics across a sentence so it remembers what you asked at the beginning.',
-    conceptTaught: 'Teaches: Context & Word Connections (Self-Attention)',
+    description: 'Step one layer deeper: see how the AI connects pronouns and context clues across a sentence before it picks the next word.',
+    conceptTaught: 'Pipeline Step 4 (Context): Word Connections & Self-Attention',
     xp: 250,
     url: 'modules/03-attention/index.html'
   },
   {
-    id: 'mod-04',
-    number: 'LAB 04',
+    id: 'mod-03',
+    number: 'LAB 03',
     title: 'How AI Understands What You Mean',
-    description: 'Explore a deep-space star map where words live as glowing stars. Connect constellations and do Star Math to see how AI forms a thought from your prompt.',
-    conceptTaught: 'Teaches: Meaning Maps & Word Coordinates (Embeddings)',
+    description: 'Explore a deep-space star map where words live as glowing coordinates. Connect constellations and do Star Math to see how AI forms a thought.',
+    conceptTaught: 'Pipeline Step 3 (Meaning): Vector Star Maps & Embeddings',
     xp: 250,
     url: 'modules/04-entropy/index.html'
   },
   {
+    id: 'mod-04',
+    number: 'LAB 04',
+    title: 'How AI Cuts Words into Puzzle Pieces',
+    description: 'See what happens the instant you type a prompt: the AI chops your words into numbered subword puzzle pieces before mapping their meaning.',
+    conceptTaught: 'Pipeline Step 2 (Input): Tokens & Subword Slicing',
+    xp: 200,
+    url: 'modules/02-tokens/index.html'
+  },
+  {
     id: 'mod-05',
     number: 'LAB 05',
-    title: 'The Data Diet Arcade & Final Exam',
-    description: 'Play an arcade data-sorting game to see how massive internet datasets train AI models, then pass the 10-question Final Course Exam to earn your certificate.',
-    conceptTaught: 'Teaches: Training Datasets, Bias & Full-Course Mastery',
+    title: 'Where AI Knowledge Comes From (The Data Diet)',
+    description: 'Reach the origin of the AI brain! Run, jump over bad info, and blast toxic bots in a procedural side-scrolling platformer, then take the Final Course Exam.',
+    conceptTaught: 'Pipeline Step 1 (Origin): Training Datasets, Bias & Final Exam',
     xp: 300,
     url: 'modules/05-hallucinations/index.html'
   }
@@ -69,14 +69,19 @@ function updateHeroButton(state) {
     }
 
     if (modState.completed && !modState.quizPassed) {
-      heroCta.href = `${mod.url}?quiz=1`;
-      heroCtaText.textContent = `Take ${mod.number} Final Assessment: ${mod.title}`;
+      if (mod.id === 'mod-05') {
+        heroCta.href = 'modules/final-exam/index.html';
+        heroCtaText.textContent = 'Take Final Course Exam & Earn Certificate';
+      } else {
+        heroCta.href = `${mod.url}?quiz=1`;
+        heroCtaText.textContent = `Take ${mod.number} Final Assessment: ${mod.title}`;
+      }
       return;
     }
   }
 
-  heroCta.href = MODULES_CATALOG[0].url;
-  heroCtaText.textContent = 'All Labs Mastered! Replay Lab 01 Anytime';
+  heroCta.href = 'modules/final-exam/index.html';
+  heroCtaText.textContent = 'Course Complete! View Final Exam & Certificate';
 }
 
 function renderDashboard() {
@@ -99,7 +104,7 @@ function renderDashboard() {
     if (isDone) {
       statusPillHtml = `<span class="mod-status-pill done"><i data-lucide="check" class="icon-xs"></i> Completed</span>`;
     } else if (isQuizReady) {
-      statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="award" class="icon-xs"></i> Lab Done • Quiz Ready</span>`;
+      statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="award" class="icon-xs"></i> ${mod.id === 'mod-05' ? 'Exam Ready' : 'Lab Done • Quiz Ready'}</span>`;
     } else if (modState.unlocked) {
       statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="play" class="icon-xs"></i> Ready to Start</span>`;
     } else {
@@ -108,8 +113,12 @@ function renderDashboard() {
 
     let actionBtnHtml = '';
     if (modState.unlocked) {
-      const targetHref = isQuizReady ? `${mod.url}?quiz=1` : mod.url;
-      const btnLabel = isDone ? `Replay ${mod.number}` : (isQuizReady ? 'Take Final Quiz' : `Launch ${mod.number}`);
+      const targetHref = isQuizReady
+        ? (mod.id === 'mod-05' ? 'modules/final-exam/index.html' : `${mod.url}?quiz=1`)
+        : mod.url;
+      const btnLabel = isDone
+        ? `Replay ${mod.number}`
+        : (isQuizReady ? (mod.id === 'mod-05' ? 'Take Final Exam' : 'Take Final Quiz') : `Launch ${mod.number}`);
       actionBtnHtml = `
         <a href="${targetHref}" class="${isDone ? 'btn-secondary' : 'btn-primary'} btn-xs">
           <span>${btnLabel}</span>
