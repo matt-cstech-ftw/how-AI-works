@@ -40,9 +40,9 @@ const MODULES_CATALOG = [
   {
     id: 'mod-05',
     number: 'LAB 05',
-    title: 'Why AI Sometimes Makes Things Up',
-    description: 'Test situations where the AI sounds 99% confident on the speedometer while inventing a completely fake fact.',
-    conceptTaught: 'Teaches: Confidence vs. Truth (Hallucinations)',
+    title: 'The Data Diet Arcade & Final Exam',
+    description: 'Play an arcade data-sorting game to see how massive internet datasets train AI models, then pass the 10-question Final Course Exam to earn your certificate.',
+    conceptTaught: 'Teaches: Training Datasets, Bias & Full-Course Mastery',
     xp: 300,
     url: 'modules/05-hallucinations/index.html'
   }

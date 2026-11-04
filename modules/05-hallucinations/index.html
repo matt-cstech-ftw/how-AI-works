@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab 05: Why AI Sometimes Makes Things Up — How AI Works</title>
+  <title>Lab 05 Capstone: The Data Diet & Final Exam — How AI Works</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/base.css" />
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .bureau-shell {
+    .capstone-shell {
       position: relative;
       z-index: 10;
       max-width: 1060px;
@@ -18,65 +18,9 @@
       padding: 1.5rem 1.25rem 4rem;
       display: flex;
       flex-direction: column;
-      gap: 1.35rem;
+      gap: 1.5rem;
     }
 
-    /* 3-Stage Stepper */
-    .stage-stepper {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 0.75rem;
-    }
-
-    .stage-tab {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.7rem 0.9rem;
-      border-radius: var(--radius-md);
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.2s ease;
-    }
-
-    .stage-tab.active {
-      border-color: var(--cyan);
-      color: var(--text-primary);
-      background: rgba(56, 189, 248, 0.08);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
-    }
-
-    .stage-tab.completed {
-      border-color: rgba(16, 185, 129, 0.45);
-      color: var(--emerald);
-      background: rgba(16, 185, 129, 0.08);
-    }
-
-    .stage-num {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-strong);
-      display: grid;
-      place-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .stage-tab.active .stage-num { background: var(--cyan); color: #09090b; border-color: var(--cyan); }
-    .stage-tab.completed .stage-num { background: var(--emerald); color: #052e16; border-color: var(--emerald); }
-
-    /* Main Arena Card */
     .arena-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
@@ -112,231 +56,150 @@
       margin-top: 0.25rem;
     }
 
-    /* ==========================================
-       STAGE 1: THE INTERROGATION DOSSIER & UV SCANNER
-       ========================================== */
-    .interrogation-grid {
-      display: grid;
-      grid-template-columns: 230px 1fr;
-      gap: 1.1rem;
-      align-items: stretch;
-    }
-
-    .deception-gauge-card {
+    /* Briefing Lesson Box */
+    .briefing-box {
       background: var(--bg-canvas);
       border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan);
       border-radius: var(--radius-md);
-      padding: 1rem;
+      padding: 1.15rem 1.35rem;
       display: flex;
       flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .briefing-box h3 {
+      font-size: 1rem;
+      color: var(--text-primary);
+      display: flex;
       align-items: center;
-      justify-content: space-between;
-      text-align: center;
       gap: 0.5rem;
     }
 
-    .dossier-terminal {
-      background: #0b0b0f;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      position: relative;
-      transition: border-color 0.2s ease, background 0.2s ease;
+    .briefing-box p {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
     }
 
-    .dossier-terminal.solved {
+    .briefing-box strong { color: var(--text-primary); }
+
+    /* Arcade Canvas Viewport */
+    .arcade-viewport {
+      position: relative;
+      width: 100%;
+      height: 490px;
+      background: #06060a;
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      user-select: none;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .arcade-viewport.victory-glow {
       border-color: var(--emerald);
-      background: rgba(16, 185, 129, 0.04);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
     }
 
-    .dossier-terminal.error-shake {
-      border-color: var(--red);
-      animation: terminalShake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    #arcade-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
-    @keyframes terminalShake {
-      10%, 90% { transform: translateX(-4px); }
-      20%, 80% { transform: translateX(6px); }
-      30%, 50%, 70% { transform: translateX(-7px); }
-      40%, 60% { transform: translateX(7px); }
-    }
-
-    .user-query-bubble {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-left: 3px solid var(--cyan);
-      padding: 0.65rem 0.9rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      color: var(--text-primary);
-    }
-
-    .claims-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .claim-segment {
-      position: relative;
-      background: var(--bg-surface);
-      border: 1.5px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.8rem 1rem;
-      font-family: var(--font-sans);
-      font-size: 0.92rem;
-      color: var(--text-primary);
-      cursor: pointer;
+    .arcade-hud-overlay {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 1rem;
-      transition: all 0.18s ease;
-    }
-
-    .claim-segment:hover {
-      border-color: var(--violet);
-      background: rgba(192, 132, 252, 0.08);
-      transform: translateX(3px);
-    }
-
-    .claim-segment.caught-lie {
-      border-color: var(--red) !important;
-      background: rgba(239, 68, 68, 0.14) !important;
-      color: #fecaca !important;
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
-    }
-
-    .claim-segment.verified-truth {
-      border-color: var(--emerald) !important;
-      background: rgba(16, 185, 129, 0.1) !important;
-      color: #d1fae5 !important;
-    }
-
-    .conf-pill {
+      pointer-events: none;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       font-family: var(--font-mono);
-      font-size: 0.68rem;
-      padding: 0.2rem 0.5rem;
+      font-size: 0.76rem;
+      color: var(--text-primary);
+    }
+
+    .arcade-hud-pill {
+      background: rgba(9, 9, 11, 0.86);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.35rem 0.8rem;
       border-radius: 99px;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: var(--emerald);
-      white-space: nowrap;
-      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    /* ==========================================
-       STAGE 2: THE RAG FACT-VAULT INJECTOR
-       ========================================== */
-    .rag-workbench {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.15rem;
-      align-items: stretch;
-    }
-
-    .evidence-cards-col {
+    /* Post-Game Capstone Summary Card */
+    .capstone-summary-card {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(9, 9, 11, 0.95));
+      border: 1px solid var(--emerald);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
+      gap: 1.25rem;
+      animation: slideUpFade 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .evidence-card {
-      background: var(--bg-canvas);
-      border: 1.5px solid var(--border-subtle);
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .journey-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .journey-step-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 0.85rem 1rem;
-      cursor: pointer;
-      transition: all 0.18s ease;
+      padding: 0.85rem;
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
     }
 
-    .evidence-card:hover {
-      border-color: var(--cyan);
-      transform: translateY(-2px);
-    }
-
-    .evidence-card.injected {
-      border-color: var(--emerald);
-      background: rgba(16, 185, 129, 0.1);
-      box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
-    }
-
-    .evidence-card.wrong-doc {
-      border-color: var(--red);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .ai-output-monitor {
-      background: #0b0b0f;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-md);
-      padding: 1.15rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 0.9rem;
-    }
-
-    .hallucination-warning-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
+    .journey-step-box span {
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      font-size: 0.68rem;
+      color: var(--cyan);
+      font-weight: 700;
     }
 
-    .grounded-tag {
-      background: rgba(16, 185, 129, 0.16);
-      color: var(--emerald);
-      border-color: rgba(16, 185, 129, 0.4);
+    .journey-step-box strong {
+      font-size: 0.85rem;
+      color: var(--text-primary);
     }
 
-    /* ==========================================
-       STAGE 3: LIVE AI HALLUCINATION TRAP (SMOLLM2)
-       ========================================== */
-    .live-trap-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    .mode-card-btn {
-      padding: 0.85rem 1rem;
-      border-radius: var(--radius-md);
-      background: var(--bg-canvas);
-      border: 1.5px solid var(--border-subtle);
+    .journey-step-box p {
+      font-size: 0.76rem;
       color: var(--text-secondary);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.25rem;
-      text-align: left;
+      line-height: 1.45;
     }
 
-    .mode-card-btn.active-mode- bluff {
-      border-color: var(--amber);
-      background: rgba(245, 158, 11, 0.1);
-      color: var(--text-primary);
+    .keep-learning-banner {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--violet);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem 1.1rem;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
     }
 
-    .mode-card-btn.active-mode-rag {
-      border-color: var(--emerald);
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--text-primary);
-    }
+    .keep-learning-banner strong { color: var(--text-primary); }
 
-    /* Live Diagnostic Bar */
+    /* Diagnostic Bar */
     .diagnostic-bar {
       padding: 0.9rem 1.15rem;
       border-radius: var(--radius-md);
@@ -355,71 +218,90 @@
     .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
     .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
 
-    /* Modals & Quiz Grading */
+    /* 10-Question Final Exam Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(9, 9, 11, 0.86);
-      backdrop-filter: blur(8px);
+      background: rgba(9, 9, 11, 0.88);
+      backdrop-filter: blur(10px);
       z-index: 200;
       display: grid;
       place-items: center;
       padding: 1rem;
     }
 
-    .walkthrough-modal, .quiz-modal {
+    .exam-modal {
       background: var(--bg-surface);
       border: 1px solid var(--cyan);
       border-radius: var(--radius-lg);
-      max-width: 640px;
+      max-width: 760px;
       width: 100%;
       max-height: 92dvh;
       overflow-y: auto;
-      padding: 1.75rem;
+      padding: clamp(1.25rem, 3vw, 2rem);
       display: flex;
       flex-direction: column;
-      gap: 1.15rem;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+      gap: 1.35rem;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
     }
 
-    .wt-visual-stage {
+    .quiz-q {
       background: var(--bg-canvas);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 1rem;
+      padding: 1rem 1.15rem;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
-    .quiz-q { display: flex; flex-direction: column; gap: 0.45rem; }
-    .quiz-q h4 { font-size: 0.92rem; color: var(--text-primary); margin-bottom: 0.15rem; }
+    .quiz-q h4 {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+      line-height: 1.4;
+    }
 
     .quiz-opt {
       text-align: left;
       justify-content: flex-start;
-      background: var(--bg-canvas);
+      background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       padding: 0.65rem 0.85rem;
       font-weight: 500;
       font-size: 0.82rem;
       line-height: 1.45;
-      transition: all 0.18s ease;
+      transition: all 0.15s ease;
     }
 
-    .quiz-opt.selected { border-color: var(--cyan); color: var(--text-primary); background: var(--cyan-dim); }
-    .quiz-opt.ans-correct { border-color: var(--emerald) !important; background: rgba(16, 185, 129, 0.14) !important; color: #d1fae5 !important; }
+    .quiz-opt:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .quiz-opt.selected {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+      background: var(--cyan-dim);
+    }
+
+    .quiz-opt.ans-correct {
+      border-color: var(--emerald) !important;
+      background: rgba(16, 185, 129, 0.14) !important;
+      color: #d1fae5 !important;
+    }
+
     .quiz-opt.ans-wrong {
       border-color: var(--red) !important;
       background: rgba(239, 68, 68, 0.14) !important;
       color: #fecaca !important;
-      animation: terminalShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     }
 
     .quiz-status-tag {
       display: inline-block;
       font-family: var(--font-mono);
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 700;
       padding: 0.1rem 0.4rem;
       border-radius: 4px;
@@ -429,20 +311,51 @@
     .quiz-opt.ans-correct .quiz-status-tag { background: var(--emerald); color: #052e16; }
     .quiz-opt.ans-wrong .quiz-status-tag { background: var(--red); color: #450a0a; }
 
-    .q-inline-hint {
-      font-size: 0.78rem;
-      color: #fca5a5;
-      background: rgba(239, 68, 68, 0.08);
-      border-left: 3px solid var(--red);
-      padding: 0.45rem 0.65rem;
-      border-radius: 0 4px 4px 0;
-      margin-top: 0.25rem;
+    /* Certificate Modal & Canvas */
+    .cert-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--emerald);
+      border-radius: var(--radius-lg);
+      max-width: 860px;
+      width: 100%;
+      max-height: 94dvh;
+      overflow-y: auto;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
     }
 
-    @media (max-width: 820px) {
-      .stage-stepper, .interrogation-grid, .rag-workbench, .live-trap-controls {
-        grid-template-columns: 1fr;
+    .cert-preview-wrap {
+      width: 100%;
+      background: #09090b;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+
+    #cert-canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Print Media Query for Direct Certificate Printing */
+    @media print {
+      body * { visibility: hidden; }
+      #cert-modal, #cert-modal * { visibility: visible; }
+      #cert-modal {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+        padding: 0;
+        border: none;
+        box-shadow: none;
       }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
@@ -450,7 +363,7 @@
   <div class="bg-grid"></div>
 
   <!-- Top Navigation -->
-  <header class="topbar">
+  <header class="topbar no-print">
     <div class="topbar-inner">
       <a href="../../index.html" class="brand">
         <div class="brand-icon">
@@ -460,285 +373,281 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">BACK TO DASHBOARD</span>
-          <span class="brand-badge">LAB 05 CAPSTONE // THE TRUTH DETECTOR BUREAU</span>
+          <span class="brand-badge">LAB 05 // THE DATA DIET & FINAL EXAM</span>
         </div>
       </a>
 
       <div class="topbar-stats">
         <div class="stat-chip">
-          <i data-lucide="shield-alert" class="icon-xs text-amber"></i>
-          <span id="progress-readout">Audits Cleared: <strong>0 / 6</strong></span>
+          <i data-lucide="shield" class="icon-xs text-emerald"></i>
+          <span id="progress-readout">Core Integrity: <strong>100%</strong></span>
         </div>
-        <button id="btn-open-quiz" class="btn-outline btn-xs">
-          <i data-lucide="award" class="icon-xs text-amber"></i>
-          <span>Take Final Capstone Quiz</span>
+        <button id="btn-open-exam" class="btn-outline btn-xs">
+          <i data-lucide="graduation-cap" class="icon-xs text-amber"></i>
+          <span>Take 10-Question Final Exam</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="bureau-shell">
-    <!-- 3-Stage Stepper -->
-    <nav class="stage-stepper">
-      <button class="stage-tab active" id="tab-stage-1">
-        <span class="stage-num">1</span>
-        <div>
-          <strong style="display:block; font-size:0.84rem;">Spot the Hallucination</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Catch the 99% confident AI bluff</small>
-        </div>
-      </button>
-
-      <button class="stage-tab" id="tab-stage-2">
-        <span class="stage-num">2</span>
-        <div>
-          <strong style="display:block; font-size:0.84rem;">The RAG Fact-Injector</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Cure hallucinations with live evidence</small>
-        </div>
-      </button>
-
-      <button class="stage-tab" id="tab-stage-3">
-        <span class="stage-num">3</span>
-        <div>
-          <strong style="display:block; font-size:0.84rem;">Live AI Bluff Trap</strong>
-          <small style="font-size:0.72rem; color:var(--text-muted);">Trick our real browser AI live</small>
-        </div>
-      </button>
-    </nav>
-
-    <!-- ==========================================
-         STAGE 1: THE INTERROGATION ROOM
-         ========================================== -->
-    <section class="arena-card" id="stage-1-panel">
+  <main class="capstone-shell no-print">
+    <section class="arena-card">
       <div class="arena-header">
         <div>
-          <span class="mono-tag" id="audit-round-tag">AUDIT CASE 1 OF 3 // THE FLUENCY TRAP</span>
-          <h1 class="arena-title" id="audit-title">Two Truths and a 99%-Confident Hallucination!</h1>
+          <span class="mono-tag" style="color:var(--emerald); border-color:rgba(16,185,129,0.3);">FINAL MODULE // THE DATA DIET ARCADE</span>
+          <h1 class="arena-title">Where Does an AI's Brain Come From?</h1>
           <p class="arena-sub">
-            Remember Lab 01? An AI doesn't have a "Truth Meter" inside its head—it only has a <strong>Next-Word Fluency Meter</strong>! That means when an AI invents a fake fact, its confidence dial still slams into <strong>98% Green</strong> because the grammar sounds smooth. <strong>Click the 1 fabricated statement below to bust the hallucination!</strong>
+            Before an AI can slice tokens, connect clues, or map stars, it starts out as an empty neural network that knows nothing. Read the quick briefing below, then defend the AI's training core in the arcade game!
           </p>
         </div>
       </div>
 
-      <div class="interrogation-grid">
-        <!-- Deceptive Speedometer Gauge -->
-        <div class="deception-gauge-card">
-          <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted);">AI WORD CERTAINTY</span>
-          <svg viewBox="0 0 150 90" style="width:145px; height:86px; overflow:visible;">
-            <path d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#27272a" stroke-width="12" stroke-linecap="round" />
-            <path id="s1-arc" d="M 15 75 A 60 60 0 0 1 135 75" fill="none" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="6" />
-            <g id="s1-needle" style="transform-origin:75px 75px; transform:rotate(84deg); transition:transform 0.35s ease;">
-              <line x1="75" y1="75" x2="75" y2="22" stroke="#fafafa" stroke-width="2.5" stroke-linecap="round" />
-              <circle cx="75" cy="75" r="5" fill="#fafafa" />
-            </g>
-          </svg>
-          <div id="s1-gauge-pct" style="font-family:var(--font-mono); font-size:1.35rem; font-weight:800; color:var(--emerald);">98%</div>
-          <span id="s1-gauge-label" class="mono-tag" style="color:var(--emerald); border-color:rgba(16,185,129,0.3);">SOUNDS SMOOTH!</span>
-          <small style="font-size:0.7rem; color:var(--text-muted); line-height:1.35;">
-            Warning: High word certainty only means the <em>grammar</em> fits—not that the fact is true!
-          </small>
-        </div>
+      <!-- Intro & Training Data Mini-Lesson -->
+      <div class="briefing-box">
+        <h3><i data-lucide="database" class="icon-sm text-cyan"></i> The 30-Second Lesson: Massive Internet Datasets & Bias</h3>
+        <p>
+          How does an AI learn millions of word probabilities and star coordinates? During a phase called <strong>Pre-Training</strong>, giant AI models like <strong>ChatGPT, Claude, and Gemini</strong> digest massive datasets collected from across the public internet—billions of web pages, books, articles, code repositories, and forum discussions.
+        </p>
+        <p>
+          <strong>The Catch ("Garbage In, Garbage Out"):</strong> Because the internet contains human arguments, spam, conspiracy theories, and offensive language, an unfiltered AI will absorb those exact flaws and repeat them! Engineers must build high-speed filters to feed the model <strong>Clean Data</strong> while blasting away <strong>Toxic & Corrupted Data</strong>.
+        </p>
+      </div>
 
-        <!-- Dossier Claims List -->
-        <div class="dossier-terminal" id="s1-terminal">
-          <div class="user-query-bubble" id="s1-prompt-display">
-            <strong>User Prompt:</strong> "Give me 3 quick facts about the 1969 Apollo 11 Moon Landing."
-          </div>
-          <span style="font-family:var(--font-mono); font-size:0.7rem; color:var(--violet);">
-            <i data-lucide="scan-eye" class="icon-xs"></i>
-            UV TRUTH SCANNER: Click the 1 sentence below where the AI hallucinated a fake detail!
+      <!-- Arcade Game Viewport -->
+      <div class="arcade-viewport" id="arcade-viewport">
+        <canvas id="arcade-canvas"></canvas>
+        <div class="arcade-hud-overlay">
+          <span class="arcade-hud-pill">
+            <span style="width:8px; height:8px; border-radius:50%; background:var(--emerald); display:inline-block;" id="core-light"></span>
+            <span id="hud-score">CLEAN DATA FED: 0 / 12</span>
           </span>
-          <div class="claims-list" id="s1-claims-list"></div>
-        </div>
-      </div>
-
-      <!-- Stage 1 Diagnostic -->
-      <div class="diagnostic-bar status-neutral" id="s1-diagnostic">
-        <div id="s1-diag-text">
-          <strong>Your Mission:</strong> All 3 sentences above have a 96%+ fluency score. Click the <strong>one sentence</strong> that is factually false!
-        </div>
-        <button id="btn-s1-next" class="btn-primary hidden">
-          <span>Next Audit Case</span>
-          <i data-lucide="arrow-right" class="icon-xs"></i>
-        </button>
-      </div>
-    </section>
-
-    <!-- ==========================================
-         STAGE 2: THE RAG FACT-INJECTOR
-         ========================================== -->
-    <section class="arena-card hidden" id="stage-2-panel">
-      <div class="arena-header">
-        <div>
-          <span class="mono-tag" id="rag-round-tag">CURE 1 OF 2 // RETRIEVAL-AUGMENTED GENERATION (RAG)</span>
-          <h2 class="arena-title" id="rag-title">Cure the Hallucination by Injecting a Fact Card!</h2>
-          <p class="arena-sub">
-            How do modern AI tools stop hallucinations? Instead of letting the AI guess from blurry memory, they search a trusted database first and <strong>paste the verified document directly into the prompt</strong> (called <strong>RAG</strong> or <strong>Grounding</strong>). Click the correct Evidence Card on the left to cure the AI's hallucination on the right!
-          </p>
-        </div>
-      </div>
-
-      <div class="rag-workbench">
-        <!-- Left: Available Evidence Dossiers -->
-        <div class="evidence-cards-col">
-          <span style="font-family:var(--font-mono); font-size:0.72rem; color:var(--cyan);">
-            1. SELECT A VERIFIED FACT CARD TO INJECT INTO THE PROMPT:
+          <span class="arcade-hud-pill" id="hud-wave">WAVE 1: STANDARD WEB SCRAPE</span>
+          <span class="arcade-hud-pill">
+            Move: Mouse or Left/Right Arrows • Shoot Laser: Click or Spacebar
           </span>
-          <div id="rag-cards-container" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
-        </div>
-
-        <!-- Right: Live AI Response Monitor -->
-        <div class="ai-output-monitor" id="rag-monitor">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
-              <span style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted);">2. AI LIVE OUTPUT MONITOR</span>
-              <span class="hallucination-warning-tag" id="rag-status-pill">STATUS: HALLUCINATING FROM MEMORY</span>
-            </div>
-
-            <div class="user-query-bubble" id="rag-question-box" style="margin-bottom:0.75rem;"></div>
-
-            <div id="rag-injected-context" class="hidden" style="background:rgba(16,185,129,0.08); border:1px dashed var(--emerald); padding:0.55rem 0.75rem; border-radius:6px; font-family:var(--font-mono); font-size:0.73rem; color:#a7f3d0; margin-bottom:0.75rem;"></div>
-
-            <div id="rag-ai-answer" style="font-family:var(--font-mono); font-size:0.88rem; line-height:1.65; padding:0.85rem; background:var(--bg-surface); border-radius:8px; border:1px solid var(--border-subtle);"></div>
-          </div>
         </div>
       </div>
 
-      <!-- Stage 2 Diagnostic -->
-      <div class="diagnostic-bar status-neutral" id="s2-diagnostic">
-        <div id="s2-diag-text">
-          <strong>Look at the red hallucination on the right!</strong> Click the matching Verified Fact Card on the left to ground the AI in real data.
+      <!-- Live Arcade Control & Status Bar -->
+      <div class="diagnostic-bar status-neutral" id="arcade-diagnostic">
+        <div id="arcade-diag-text">
+          <strong>How to Play:</strong> Slide your blue <strong>Neural Collector Shield</strong> to catch green/cyan <strong>Clean Data orbs</strong>, and press <strong>Spacebar (or Click)</strong> to fire your filter laser at spiky red <strong>Censored Toxic Packets</strong> (`@#%!`) before they hit your shield!
         </div>
-        <button id="btn-s2-next" class="btn-primary hidden">
-          <span>Next RAG Challenge</span>
-          <i data-lucide="arrow-right" class="icon-xs"></i>
+        <button id="btn-start-arcade" class="btn-primary">
+          <i data-lucide="gamepad-2" class="icon-xs"></i>
+          <span>Launch Arcade Game</span>
         </button>
       </div>
-    </section>
 
-    <!-- ==========================================
-         STAGE 3: LIVE BROWSER AI HALLUCINATION TRAP
-         ========================================== -->
-    <section class="arena-card hidden" id="stage-3-panel">
-      <div class="arena-header">
+      <!-- Post-Game Complete Journey Summary (Revealed on Victory!) -->
+      <div id="post-game-summary" class="capstone-summary-card hidden">
         <div>
-          <span class="mono-tag">STAGE 3 // LIVE SMOLLM2 HALLUCINATION SANDBOX</span>
-          <h2 class="arena-title">Watch Our Real Browser AI Bluff—Then Cure It Live!</h2>
-          <p class="arena-sub">
-            Pick a trick question below (like asking about a fake historical invention) and test our real miniature AI brain in two modes: <strong>Mode A (Raw Memory — Watch It Bluff)</strong> vs. <strong>Mode B (Grounded with a Fact Check Note)</strong>!
+          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">TRAINING COMPLETE // HOW ALL 5 MODULES CONNECT</span>
+          <h2 style="font-size:1.3rem; font-weight:700; margin-top:0.35rem;">You Now Know the Full Journey of How AI Works!</h2>
+          <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.25rem;">
+            Combined with what you mastered in the earlier labs, you have just walked through the complete end-to-end process of how an AI "understands" what you type and figures out what words become its response:
           </p>
         </div>
-        <button id="btn-stage3-quiz" class="btn-primary">
-          <i data-lucide="award" class="icon-xs"></i>
-          <span>Take Final Capstone Quiz & Claim 300 XP</span>
-        </button>
-      </div>
 
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn-secondary btn-xs trap-preset" data-q="In one short sentence, why did Leonardo da Vinci invent the first iPhone in 1495?" data-fact="FACT CHECK: Leonardo da Vinci lived from 1452 to 1519 and never invented the iPhone. The iPhone was introduced by Apple in 2007.">
-          Trick 1: "Why did Leonardo da Vinci invent the iPhone in 1495?"
-        </button>
-        <button class="btn-secondary btn-xs trap-preset" data-q="In one short sentence, how did the Great Penguin Army win the Antarctic War of 1998?" data-fact="FACT CHECK: There was never a Great Penguin Army or an Antarctic War of 1998. Penguins are flightless birds, not soldiers.">
-          Trick 2: "How did the Penguin Army win the War of 1998?"
-        </button>
-      </div>
-
-      <div class="live-trap-controls">
-        <button class="mode-card-btn" id="btn-run-bluff">
-          <div style="display:flex; align-items:center; gap:0.45rem; color:var(--amber); font-weight:700; font-size:0.86rem;">
-            <i data-lucide="flame" class="icon-sm"></i>
-            <span>Run Mode A: Raw Unassisted AI (Watch It Bluff!)</span>
+        <div class="journey-grid">
+          <div class="journey-step-box">
+            <span>1. THE DATA DIET (LAB 05)</span>
+            <strong>Digesting the Internet</strong>
+            <p>The AI learns language patterns by training on billions of curated web pages, books, and articles.</p>
           </div>
-          <small style="font-size:0.75rem; color:var(--text-muted);">
-            Sends the trick question straight to SmolLM2 with zero fact-checking context.
-          </small>
-        </button>
-
-        <button class="mode-card-btn" id="btn-run-grounded">
-          <div style="display:flex; align-items:center; gap:0.45rem; color:var(--emerald); font-weight:700; font-size:0.86rem;">
-            <i data-lucide="shield-check" class="icon-sm"></i>
-            <span>Run Mode B: Inject Fact-Check Note First (RAG)</span>
+          <div class="journey-step-box">
+            <span>2. WORD SLICER (LAB 02)</span>
+            <strong>Chopping into Tokens</strong>
+            <p>When you type a prompt, the tokenizer slices your words into numbered subword puzzle pieces.</p>
           </div>
-          <small style="font-size:0.75rem; color:var(--text-muted);">
-            Attaches a verified fact-check note to the prompt so Self-Attention catches the trick!
-          </small>
-        </button>
-      </div>
-
-      <div class="dossier-terminal" id="s3-live-box">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="mono-tag" id="s3-Selected-q">Trick Question: "Why did Leonardo da Vinci invent the first iPhone in 1495?"</span>
-          <span class="mono-tag" id="s3-model-status">SmolLM2-135M</span>
+          <div class="journey-step-box">
+            <span>3. STAR MAP (LAB 04)</span>
+            <strong>Mapping Your Meaning</strong>
+            <p>Your tokens light up as coordinates in vector space, finding the center of gravity of your thought.</p>
+          </div>
+          <div class="journey-step-box">
+            <span>4. SELF-ATTENTION (LAB 03)</span>
+            <strong>Connecting the Clues</strong>
+            <p>Words fire connection beams across the sentence so pronouns and context stay locked in.</p>
+          </div>
+          <div class="journey-step-box">
+            <span>5. WORD CONTEST (LAB 01)</span>
+            <strong>Guessing Word-by-Word</strong>
+            <p>The model scores its dictionary and elects one piece at a time until your answer is finished.</p>
+          </div>
         </div>
-        <div id="s3-stream-output" style="font-family:var(--font-mono); font-size:0.9rem; line-height:1.7; min-height:75px; padding:0.85rem; background:var(--bg-canvas); border-radius:8px; border:1px solid var(--border-subtle); color:var(--text-primary);">
-          Click either <strong>Run Mode A (Watch It Bluff!)</strong> or <strong>Run Mode B (Inject Fact-Check Note)</strong> above to test the live AI model!
-        </div>
-      </div>
 
-      <div class="diagnostic-bar status-neutral" id="s3-diagnostic">
-        <div id="s3-diag-text">
-          <strong>Final Experiment:</strong> Click either mode above to test the live AI, or click <strong>Take Final Capstone Quiz</strong> in the top right to complete all 5 Labs!
+        <div class="keep-learning-banner">
+          <strong>Where to Go From Here:</strong> This interactive lab gives you a rock-solid foundation in how modern Large Language Models operate. Beyond these basics, there is a massive world of advanced AI topics to explore—including <em>Reinforcement Learning from Human Feedback (RLHF)</em>, <em>Retrieval-Augmented Generation (RAG)</em>, <em>Multi-Modal Vision & Audio</em>, and <em>Neural Network Fine-Tuning</em>. Countless free courses, open-source documentation (like Hugging Face and PyTorch), and research communities are available online whenever you want to dive deeper!
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding-top:0.5rem;">
+          <span style="font-size:0.84rem; color:var(--text-primary); font-weight:600;">
+            Ready to graduate? Score <strong>70% or higher (7/10)</strong> on the Final Course Exam to unlock your official Certificate!
+          </span>
+          <button id="btn-summary-take-exam" class="btn-primary">
+            <i data-lucide="award" class="icon-xs"></i>
+            <span>Start 10-Question Final Course Exam</span>
+          </button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Interactive Learning Moment Popup -->
-  <div id="walkthrough-modal" class="modal-backdrop hidden">
-    <div class="walkthrough-modal">
+  <!-- ==========================================
+       10-QUESTION FINAL COURSE EXAM MODAL (NO HINTS!)
+       ========================================== -->
+  <div id="exam-modal" class="modal-backdrop hidden no-print">
+    <div class="exam-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);" id="wt-tag">LEARNING MOMENT</span>
-        <span class="mono-tag">Discovery Unlocked</span>
+        <span class="mono-tag" style="color:var(--cyan); border-color:var(--cyan);">FINAL COURSE EXAM // 10 QUESTIONS ACROSS ALL 5 LABS</span>
+        <button id="btn-close-exam" class="btn-outline btn-xs">Close</button>
       </div>
-      <h3 style="font-size:1.2rem; font-weight:700;" id="wt-title">The Fluency Trap</h3>
-      <div class="wt-visual-stage" id="wt-visual"></div>
-      <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
-      <div style="display:flex; justify-content:flex-end;">
-        <button id="btn-wt-close" class="btn-primary">
-          <span>Got It — Continue</span>
-          <i data-lucide="arrow-right" class="icon-xs"></i>
+
+      <div>
+        <h2 style="font-size:1.35rem; font-weight:700;">AI Foundations Final Mastery Exam</h2>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
+          Answer all 10 questions below. There are no hints on the final exam—when you submit, you will see your exact score and which questions you got right or wrong. Score <strong>70% or higher (7/10)</strong> to earn your downloadable Certificate of Completion!
+        </p>
+      </div>
+
+      <!-- Question 1 (Lab 01) -->
+      <div class="quiz-q" data-q="1">
+        <h4>1. When you ask an AI a question, how does it actually construct its multi-sentence response?</h4>
+        <button class="quiz-opt" data-correct="false">It plans out the entire paragraph in hidden memory before typing the words on screen.</button>
+        <button class="quiz-opt" data-correct="true">It scores its dictionary to pick strictly one word piece at a time and repeats the contest for the next spot.</button>
+        <button class="quiz-opt" data-correct="false">It searches a database of complete human sentences and swaps out keywords to match your prompt.</button>
+        <button class="quiz-opt" data-correct="false">It writes five complete drafts at the same time and displays whichever draft has the highest score.</button>
+      </div>
+
+      <!-- Question 2 (Lab 01) -->
+      <div class="quiz-q" data-q="2">
+        <h4>2. Why does an AI sometimes choose a runner-up word instead of the number one highest-scoring word?</h4>
+        <button class="quiz-opt" data-correct="false">Because the browser occasionally makes tiny rounding errors when adding up the percentage scores.</button>
+        <button class="quiz-opt" data-correct="false">Because a grammar rule forces the model to skip the top word whenever it was used earlier in the sentence.</button>
+        <button class="quiz-opt" data-correct="true">Because turning the Creativity Dial above zero makes the model roll a weighted die so answers vary naturally.</button>
+        <button class="quiz-opt" data-correct="false">Because the model automatically trades off between top choices and lower choices to keep sentences short.</button>
+      </div>
+
+      <!-- Question 3 (Lab 01) -->
+      <div class="quiz-q" data-q="3">
+        <h4>3. What happens to the rest of a sentence if you force the AI to use a different word mid-sentence?</h4>
+        <button class="quiz-opt" data-correct="false">The model keeps its original sentence ending and simply replaces that single forced word in place.</button>
+        <button class="quiz-opt" data-correct="true">Every word election after that point recalculates its odds based on the new word and writes a different ending.</button>
+        <button class="quiz-opt" data-correct="false">The model resets the Creativity Dial to zero so that it can return to its original topic right away.</button>
+        <button class="quiz-opt" data-correct="false">The model merges the forced word with the previous word so the total length of the sentence stays the same.</button>
+      </div>
+
+      <!-- Question 4 (Lab 02) -->
+      <div class="quiz-q" data-q="4">
+        <h4>4. How does an AI handle long or less-common words like "unbelievable" and "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="false">It breaks every word down into single letters and reads them one letter at a time.</button>
+        <button class="quiz-opt" data-correct="true">It snaps together smaller reusable word chunks from its built-in dictionary table.</button>
+        <button class="quiz-opt" data-correct="false">It swaps the long word out for a shorter synonym so it only uses a single piece.</button>
+        <button class="quiz-opt" data-correct="false">It pauses to add the brand-new word permanently into its dictionary for next time.</button>
+      </div>
+
+      <!-- Question 5 (Lab 02) -->
+      <div class="quiz-q" data-q="5">
+        <h4>5. Why do AI models often struggle with letter-counting questions like counting the R's in "strawberry"?</h4>
+        <button class="quiz-opt" data-correct="false">Because the model ignores repeated consonant letters inside a word to save memory.</button>
+        <button class="quiz-opt" data-correct="false">Because the word slicer deletes silent letters before sending the text to the model.</button>
+        <button class="quiz-opt" data-correct="true">Because the model only receives ID numbers for the puzzle pieces rather than individual letters.</button>
+        <button class="quiz-opt" data-correct="false">Because the puzzle pieces get shuffled into a random order when a word has three syllables.</button>
+      </div>
+
+      <!-- Question 6 (Lab 03) -->
+      <div class="quiz-q" data-q="6">
+        <h4>6. How does an AI figure out who or what a pronoun like "it" or "she" refers to in a sentence?</h4>
+        <button class="quiz-opt" data-correct="false">It always connects a pronoun to whichever noun appeared most recently right before it.</button>
+        <button class="quiz-opt" data-correct="true">It uses self-attention to connect the pronoun with descriptive clue words across the sentence.</button>
+        <button class="quiz-opt" data-correct="false">It pauses to look up the sentence in a grammar rulebook stored outside the neural network.</button>
+        <button class="quiz-opt" data-correct="false">It assigns every pronoun to the very first noun that appeared at the beginning of the prompt.</button>
+      </div>
+
+      <!-- Question 7 (Lab 03) -->
+      <div class="quiz-q" data-q="7">
+        <h4>7. How does an AI tell the difference between a river "bank" and a money "bank" when both use the same token ID?</h4>
+        <button class="quiz-opt" data-correct="false">It assigns a brand-new token ID number to the word as soon as the sentence finishes loading.</button>
+        <button class="quiz-opt" data-correct="false">It guesses randomly between the two meanings whenever a word has more than one definition.</button>
+        <button class="quiz-opt" data-correct="true">Attention layers blend information from surrounding clue words into the word to shift its meaning.</button>
+        <button class="quiz-opt" data-correct="false">The word slicer deletes ambiguous words and replaces them with more specific synonyms first.</button>
+      </div>
+
+      <!-- Question 8 (Lab 04) -->
+      <div class="quiz-q" data-q="8">
+        <h4>8. How does an AI represent the meaning of words so that it knows "Espresso" and "Latte" are closely related?</h4>
+        <button class="quiz-opt" data-correct="false">It stores an alphabetical English dictionary definition next to every word in its memory.</button>
+        <button class="quiz-opt" data-correct="true">It places every word at a coordinate in a mathematical space where related words cluster close together.</button>
+        <button class="quiz-opt" data-correct="false">It groups words strictly by how many letters they have and what letter of the alphabet they start with.</button>
+        <button class="quiz-opt" data-correct="false">It translates every word into a computer image file so it can see what the object looks like.</button>
+      </div>
+
+      <!-- Question 9 (Lab 04) -->
+      <div class="quiz-q" data-q="9">
+        <h4>9. When you type a full sentence into a prompt, how does the AI form an initial "thought" of what you mean?</h4>
+        <button class="quiz-opt" data-correct="true">It maps the words from your prompt into space and calculates their combined center of gravity to lock onto your intent.</button>
+        <button class="quiz-opt" data-correct="false">It ignores all the words in your sentence except for the very last noun right before the question mark.</button>
+        <button class="quiz-opt" data-correct="false">It picks a random neighborhood on the star map first and checks afterward if it matches your prompt.</button>
+        <button class="quiz-opt" data-correct="false">It averages the alphabetical ID numbers of your tokens to pick a single dictionary word in the middle.</button>
+      </div>
+
+      <!-- Question 10 (Lab 05) -->
+      <div class="quiz-q" data-q="10">
+        <h4>10. Where do large AI models like ChatGPT, Claude, and Gemini learn their language patterns, and why must their data be filtered?</h4>
+        <button class="quiz-opt" data-correct="false">Engineers type every grammar rule by hand, and filtering is only used to make files smaller.</button>
+        <button class="quiz-opt" data-correct="true">They train on massive datasets from across the internet, which must be filtered so the AI does not absorb toxic or false content.</button>
+        <button class="quiz-opt" data-correct="false">They only read printed encyclopedias, and filtering is used to remove words longer than ten letters.</button>
+        <button class="quiz-opt" data-correct="false">They learn strictly from user chat logs, and filtering is only needed to block foreign languages.</button>
+      </div>
+
+      <div id="exam-result-banner" class="hidden" style="padding:1rem; border-radius:var(--radius-md); font-size:0.9rem; line-height:1.5;"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+        <button id="btn-submit-exam" class="btn-primary">Grade My Final Exam</button>
+        <button id="btn-open-cert-after-pass" class="btn-primary hidden" style="background:var(--emerald); color:#052e16;">
+          <i data-lucide="award" class="icon-xs"></i>
+          <span>View & Download My Certificate!</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 3-Question Capstone Assessment Modal (Uniform 4-Choice Style, Zero Parentheses Tells) -->
-  <div id="quiz-modal" class="modal-backdrop hidden">
-    <div class="quiz-modal">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="mono-tag" style="color:var(--emerald);">LAB 05 CAPSTONE ASSESSMENT // 3 QUESTIONS</span>
-        <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
-      </div>
-      <h3>Lab 05 Final Capstone Assessment</h3>
-      <p style="font-size:0.84rem; color:var(--text-secondary);">Answer all 3 questions to claim your final 300 XP and achieve 100% Course Mastery!</p>
-
-      <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 when the AI's certainty gauge read 98% even while claiming Buzz Aldrin played the saxophone on the Moon.">
-        <h4>1. Why can an AI sound 99% confident on its word meter while stating a completely fake fact?</h4>
-        <button class="quiz-opt" data-correct="false">Because the model intentionally invents stories whenever it wants to test if the human user is paying attention.</button>
-        <button class="quiz-opt" data-correct="true">Because the certainty meter only measures how smoothly the next word fits the grammar pattern rather than checking if a fact is true.</button>
-        <button class="quiz-opt" data-correct="false">Because a hardware bug causes the certainty speedometer to get stuck at the top of the dial on long sentences.</button>
-        <button class="quiz-opt" data-correct="false">Because the word slicer replaces true historical dates with random numbers whenever a prompt mentions a year.</button>
+  <!-- ==========================================
+       OFFICIAL CERTIFICATE OF COMPLETION MODAL
+       ========================================== -->
+  <div id="cert-modal" class="modal-backdrop hidden">
+    <div class="cert-modal">
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div>
+          <span class="mono-tag" style="color:var(--emerald); border-color:var(--emerald);">OFFICIAL GRADUATION CREDENTIAL</span>
+          <h3 style="font-size:1.2rem; margin-top:0.2rem;">Your AI Foundations Certificate</h3>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input type="text" id="cert-name-input" placeholder="Type your name for the certificate..." value="AI Lab Graduate" style="background:var(--bg-canvas); border:1px solid var(--border-strong); color:var(--text-primary); padding:0.45rem 0.75rem; border-radius:var(--radius-sm); font-size:0.82rem;" />
+          <button id="btn-close-cert" class="btn-outline btn-xs">Close</button>
+        </div>
       </div>
 
-      <div class="quiz-q" data-q="2" data-hint="Think about what happened in Stage 3 when we asked why Leonardo da Vinci invented the iPhone in 1495.">
-        <h4>2. What usually happens when you ask an unassisted AI a leading question about a fake event?</h4>
-        <button class="quiz-opt" data-correct="true">Its next-word prediction game tries to play along with the patterns in your prompt and smoothly invents a plausible-sounding story.</button>
-        <button class="quiz-opt" data-correct="false">The neural network automatically shuts off your browser tab to prevent generating an inaccurate sentence.</button>
-        <button class="quiz-opt" data-correct="false">The tokenizer refuses to slice words into puzzle pieces if the sentence contains a historical contradiction.</button>
-        <button class="quiz-opt" data-correct="false">It switches into calculator mode and replies only with raw token ID numbers instead of English words.</button>
+      <div class="cert-preview-wrap">
+        <canvas id="cert-canvas" width="1000" height="680"></canvas>
       </div>
 
-      <div class="quiz-q" data-q="3" data-hint="Remember Stage 2 when you clicked a Verified Fact Card to paste real evidence into the AI's prompt.">
-        <h4>3. How does Retrieval-Augmented Generation help modern AI systems avoid hallucinations?</h4>
-        <button class="quiz-opt" data-correct="false">It deletes half of the words in the AI dictionary so the model can only use short and simple words.</button>
-        <button class="quiz-opt" data-correct="false">It turns the Creativity Dial all the way up to maximum so the model takes wild guesses on every word.</button>
-        <button class="quiz-opt" data-correct="true">It searches trusted documents first and pastes the verified facts directly into the prompt so the AI can read them using self-attention.</button>
-        <button class="quiz-opt" data-correct="false">It forces the model to generate its answer backwards from the last word to the first word to double-check its spelling.</button>
-      </div>
-
-      <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
-
-      <div style="display:flex; justify-content:flex-end;">
-        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Complete Course!</button>
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <a href="../../index.html" class="btn-secondary">
+          <i data-lucide="arrow-left" class="icon-xs"></i>
+          <span>Return to Mastered Dashboard</span>
+        </a>
+        <div style="display:flex; gap:0.6rem;">
+          <button id="btn-print-cert" class="btn-secondary">
+            <i data-lucide="printer" class="icon-xs"></i>
+            <span>Print Certificate</span>
+          </button>
+          <button id="btn-download-cert" class="btn-primary" style="background:var(--emerald); color:#052e16;">
+            <i data-lucide="download" class="icon-xs"></i>
+            <span>Download Certificate (PNG)</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
