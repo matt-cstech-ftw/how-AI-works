@@ -60,6 +60,18 @@ const heroCta = document.getElementById('hero-cta');
 const heroCtaText = document.getElementById('hero-cta-text');
 const btnReset = document.getElementById('btn-reset-progress');
 
+function openPayPalPopupWindow() {
+  const w = 520;
+  const h = 720;
+  const left = Math.max(0, Math.round((window.screen.width - w) / 2));
+  const top = Math.max(0, Math.round((window.screen.height - h) / 2));
+  window.open(
+    PAYPAL_DONATE_URL,
+    'PayPalDonateWindow',
+    `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`
+  );
+}
+
 // Inject Top-Right "Need Help?" and "Support" Buttons + Modals
 function setupTopbarActionsAndModals() {
   if (document.getElementById('dashboard-extra-modals-style')) return;
@@ -135,10 +147,10 @@ function setupTopbarActionsAndModals() {
       to { opacity: 1; }
     }
 
-    /* PayPal Support Embed Window (Matches Reference Screenshot) */
+    /* Native PayPal Support Window (Zero Iframe Blocking!) */
     .paypal-embed-window {
       width: 100%;
-      max-width: 420px;
+      max-width: 380px;
       background: #ffffff;
       border-radius: 14px;
       overflow: hidden;
@@ -146,6 +158,7 @@ function setupTopbarActionsAndModals() {
       border: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       flex-direction: column;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .paypal-window-bar {
       background: #f1f5f9;
@@ -181,17 +194,88 @@ function setupTopbarActionsAndModals() {
       background: #e2e8f0;
       color: #0f172a;
     }
-    .paypal-iframe-container {
-      width: 100%;
-      height: 420px;
-      background: #ffffff;
-      position: relative;
+    .paypal-card-body {
+      padding: 1.65rem 1.5rem 1.75rem;
+      text-align: center;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
     }
-    .paypal-iframe-container iframe {
+    .paypal-donate-to {
+      font-size: 0.82rem;
+      color: #475569;
+      margin: 0;
+      font-weight: 500;
+    }
+    .paypal-org-title {
+      font-size: 1.28rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: -0.45rem 0 0;
+      letter-spacing: -0.01em;
+    }
+    .paypal-org-desc {
+      font-size: 0.82rem;
+      color: #475569;
+      line-height: 1.45;
+      margin: 0 0 0.35rem;
+    }
+    .paypal-btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .pp-action-btn {
       width: 100%;
-      height: 100%;
+      height: 46px;
+      border-radius: 999px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      transition: filter 0.15s ease, transform 0.12s ease;
+      text-decoration: none;
+    }
+    .pp-action-btn:hover {
+      filter: brightness(0.96);
+      transform: translateY(-1px);
+    }
+    .pp-btn-yellow {
+      background: #ffc439;
       border: none;
-      display: block;
+      color: #111827;
+      font-weight: 600;
+    }
+    .pp-btn-yellow .pp-logo-italic {
+      font-style: italic;
+      font-weight: 800;
+      color: #003087;
+      letter-spacing: -0.02em;
+    }
+    .pp-btn-yellow .pp-logo-italic span {
+      color: #0079c1;
+    }
+    .pp-btn-venmo {
+      background: #008cff;
+      border: none;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .pp-btn-venmo .venmo-italic {
+      font-style: italic;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .pp-btn-card {
+      background: #ffffff;
+      border: 1.5px solid #1e3a8a;
+      color: #003087;
+      font-weight: 600;
+      font-size: 0.84rem;
     }
 
     /* Need Help Modal */
@@ -278,10 +362,10 @@ function setupTopbarActionsAndModals() {
     topbarStats.appendChild(supportBtn);
   }
 
-  // Create Support Modal & Need Help Modal in DOM
+  // Create Native Support Modal & Need Help Modal in DOM
   const modalsWrapper = document.createElement('div');
   modalsWrapper.innerHTML = `
-    <!-- PayPal Support Embed Modal -->
+    <!-- Native PayPal Support Modal (Matches Reference UI & Avoids Firefox X-Frame-Options Block) -->
     <div id="support-modal" class="dash-modal-backdrop hidden">
       <div class="paypal-embed-window">
         <div class="paypal-window-bar">
@@ -290,8 +374,25 @@ function setupTopbarActionsAndModals() {
           </div>
           <button type="button" class="paypal-window-close" id="btn-close-support" aria-label="Close">&times;</button>
         </div>
-        <div class="paypal-iframe-container">
-          <iframe src="${PAYPAL_DONATE_URL}" title="Donate with PayPal"></iframe>
+        <div class="paypal-card-body">
+          <p class="paypal-donate-to">Donate to</p>
+          <h3 class="paypal-org-title">Matt | CS Tech Solutions</h3>
+          <p class="paypal-org-desc">
+            Empower progress by supporting our online community tool development.
+          </p>
+          <div class="paypal-btn-stack">
+            <button type="button" class="pp-action-btn pp-btn-yellow js-paypal-trigger">
+              <span class="pp-logo-italic">Pay<span>Pal</span></span>
+              <span>Donate</span>
+            </button>
+            <button type="button" class="pp-action-btn pp-btn-venmo js-paypal-trigger">
+              <span class="venmo-italic">venmo</span>
+              <span>Donate</span>
+            </button>
+            <button type="button" class="pp-action-btn pp-btn-card js-paypal-trigger">
+              Donate with Debit or Credit Card
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -359,6 +460,12 @@ function setupTopbarActionsAndModals() {
   });
   supportModal.addEventListener('click', (e) => {
     if (e.target === supportModal) supportModal.classList.add('hidden');
+  });
+
+  document.querySelectorAll('.js-paypal-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openPayPalPopupWindow();
+    });
   });
 
   document.getElementById('btn-open-help')?.addEventListener('click', () => {
