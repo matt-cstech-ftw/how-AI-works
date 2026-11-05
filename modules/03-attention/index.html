@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAB 02: How Words Look for Clues â€” How AI Works</title>
+  <title>Lab 02: How Words Look for Clues - How AI Works</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -275,12 +275,12 @@
       pointer-events: none;
     }
 
-    /* Animated SVG Arc Path */
+    /* Animated SVG Arc Path - Full Length Support */
     .laser-arc-path {
       fill: none;
       stroke-linecap: round;
-      stroke-dasharray: 400;
-      stroke-dashoffset: 400;
+      stroke-dasharray: 1600;
+      stroke-dashoffset: 1600;
       animation: drawArc 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
@@ -491,7 +491,7 @@
         </div>
         <button id="btn-open-quiz" class="btn-outline btn-xs">
           <i data-lucide="award" class="icon-xs text-amber"></i>
-          <span>Take LAB 02 Quiz</span>
+          <span>Take Lab 02 Quiz</span>
         </button>
       </div>
     </div>
@@ -540,7 +540,7 @@
       </div>
 
       <div class="context-scale-note">
-        <strong>How far back can an AI look for clues?</strong> The number of tokens an AI can connect at once is called its <strong>Context Window</strong>. Small local models look back across <strong>2,000 to 8,000</strong> pieces, while advanced cloud models like <strong>ChatGPT</strong>, <strong>Gemini</strong>, or <strong>Claude</strong> can scan hundreds of thousands or even millions of pieces (whole books!) at once.
+        <strong>How far back can an AI look for clues?</strong> The number of tokens an AI can connect at once is called its <strong>Context Window</strong>. Small local models look back across <strong>2,000 to 8,000</strong> pieces, while advanced cloud models like <strong>ChatGPT, Gemini, or Claude</strong> can scan hundreds of thousands or even millions of pieces (whole books!) at once.
       </div>
 
       <!-- Interactive Switchboard with SVG Laser Overlay -->
@@ -620,13 +620,13 @@
         </div>
         <button id="btn-radar-quiz" class="btn-primary">
           <i data-lucide="award" class="icon-xs"></i>
-          <span>Take Final Quiz & Claim 250 XP</span>
+          <span>Take Final Quiz &amp; Claim 250 XP</span>
         </button>
       </div>
 
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
         <button class="btn-secondary btn-xs radar-preset" data-idx="0">Sentence A: The Tired Pilot</button>
-        <button class="btn-secondary btn-xs radar-preset" data-idx="1">Sentence B: The Barking Dog & The Tree</button>
+        <button class="btn-secondary btn-xs radar-preset" data-idx="1">Sentence B: The Barking Dog &amp; The Tree</button>
       </div>
 
       <div class="switchboard-box" id="s3-board">
@@ -654,21 +654,21 @@
       <div style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;" id="wt-body"></div>
       <div style="display:flex; justify-content:flex-end;">
         <button id="btn-wt-close" class="btn-primary">
-          <span>Got It â€” Continue</span>
+          <span>Got It - Continue</span>
           <i data-lucide="arrow-right" class="icon-xs"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 3-Question Assessment Modal (Uniform 4-Choice Style, Zero Parentheses Tells) -->
+  <!-- 3-Question Assessment Modal -->
   <div id="quiz-modal" class="modal-backdrop hidden">
     <div class="quiz-modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="mono-tag" style="color:var(--emerald);">LAB 02 ASSESSMENT // 3 QUESTIONS</span>
         <button id="btn-close-quiz" class="btn-outline btn-xs">Close</button>
       </div>
-      <h3>LAB 02 Final Mastery Assessment</h3>
+      <h3>Lab 02 Final Mastery Assessment</h3>
       <p style="font-size:0.84rem; color:var(--text-secondary);">Choose the best answer for all 3 questions to verify your mastery of Self-Attention and unlock Lab 03.</p>
 
       <div class="quiz-q" data-q="1" data-hint="Think back to Stage 1 with the trophy and the suitcase: how did changing the last word from 'big' to 'small' change what 'it' meant?">
@@ -698,7 +698,7 @@
       <div id="quiz-feedback" class="hidden" style="font-size:0.82rem; padding:0.75rem; border-radius:var(--radius-sm); line-height:1.5;"></div>
 
       <div style="display:flex; justify-content:flex-end;">
-        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers & Claim 250 XP</button>
+        <button id="btn-submit-quiz" class="btn-primary">Verify All 3 Answers &amp; Claim 250 XP</button>
       </div>
     </div>
   </div>

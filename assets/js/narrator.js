@@ -1,20 +1,128 @@
 // ==========================================
-// ON-SCREEN CHARACTER NARRATOR ENGINE
+// ON-SCREEN CHARACTER NARRATOR ENGINE + GLOBAL MOJIBAKE SCRUBBER
+// - Automatically scrubs any Windows-1252 / UTF-8 mojibake (e.g. "//", " - ", "")
+//   from both the live DOM and HTML5 Canvas text across all modules!
 // - Instant playback with pre-buffered audio + Mobile Touch-Unlock support
 // - Fast, natural educational cadence (~15% faster: 1.20x playbackRate)
 // - Smooth "AI" pronunciation (no periods/sentence-split pause between A and I)
-// - Reads ONLY the main point (skips black callout boxes / <small> notes)
 // - Static character with arms resting down at her sides & transparent background
 // ==========================================
 
 const NARRATOR_MUTE_KEY = 'ai_lab_narrator_muted_v1';
-const SPEECH_SPEED_RATE = 1.20; // ~15% faster than previous 1.05x cadence
+const SPEECH_SPEED_RATE = 1.20;
 
 let isMuted = localStorage.getItem(NARRATOR_MUTE_KEY) === 'true';
 let isSpeaking = false;
 let playbackAborted = false;
 let mouthFrameTimer = null;
 let mobileAudioUnlocked = false;
+
+// ==========================================
+// GLOBAL UTF-8 MOJIBAKE AUTO-SCRUBBER (DOM + CANVAS)
+// Fixes any corrupted characters caused by Windows PowerShell ANSI encoding
+// ==========================================
+const MOJIBAKE_REPLACEMENTS = [
+  [////g, '//'],   // // -> //
+  [/ - /g, ' - '],  //  -  -> -
+  [/-/g, '-'],    // - -> -
+  [/'/g, "'"],    // ' -> '
+  [/"/g, '"'],    // " -> "
+  [/"/g, '"'],    //  -   -> "
+  [//g, ''],     //  (sparkles) -> clean
+  [/OK/g, '✔'], // OK -> ✔
+  [/OK/g, '✔'],
+  [/X/g, '✖'], // X -> ✖
+  [/g, '✂'], //  -> ✂
+  [/g, '✂'], //  -> ✂
+  [/./g, '·'],     // . -> ·
+  [/-/g, '-'],    // - -> -
+  [/*/g, '*'],    // * -> *
+  [/> /g, '> '],   // >  -> >
+  [/â—€/g, '<'],    // â—€ -> <
+  [/â–²/g, '^'],    // â–² -> ^
+  [/->/g, '->'],   // -> -> ->
+  [/â†‘/g, '<-'],   // â†  -> <-
+  [/!=/g, '!='],   // â‰  -> !=
+  [/x/g, 'x'],          // x -> x
+  [/ deg/g, ' deg']        //  deg -> deg
+];
+
+function cleanMojibakeString(str) {
+  if (!str || typeof str !== 'string') return str;
+  if (str.indexOf('â') === -1 && str.indexOf('Â') === -1 && str.indexOf('Ã') === -1 && str.indexOf('ð') === -1) {
+    return str;
+  }
+  let out = str;
+  for (const [pattern, replacement] of MOJIBAKE_REPLACEMENTS) {
+    out = out.replace(pattern, replacement);
+  }
+  // Catch-all for any remaining " -  or "ðŸ..." sequences
+  out = out.replace(/ - sA-Za-z0-9]*/g, ' - ');
+  out = out.replace(/sA-Za-z0-9]*/g, '');
+  out = out.replace(/ðŸ[^\sA-Za-z0-9]*/g, '');
+  return out;
+}
+
+function scrubDomMojibake(root = document.body) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  let node;
+  while ((node = walker.nextNode())) {
+    const val = node.nodeValue;
+    if (val && (val.indexOf('â') !== -1 || val.indexOf('Â') !== -1 || val.indexOf('Ã') !== -1 || val.indexOf('ð') !== -1)) {
+      node.nodeValue = cleanMojibakeString(val);
+    }
+  }
+  if (document.title) {
+    document.title = cleanMojibakeString(document.title);
+  }
+}
+
+function setupGlobalMojibakeProtection() {
+  if (typeof window === 'undefined') return;
+
+  // 1. Patch Canvas fillText so canvas drawings are also 100% immune to mojibake
+  if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype._mojibakePatched) {
+    const origFillText = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
+      const clean = cleanMojibakeString(String(text));
+      if (maxWidth !== undefined) {
+        return origFillText.call(this, clean, x, y, maxWidth);
+      }
+      return origFillText.call(this, clean, x, y);
+    };
+    CanvasRenderingContext2D.prototype._mojibakePatched = true;
+  }
+
+  // 2. Scrub initial DOM & observe any dynamic text insertions
+  scrubDomMojibake(document.body);
+  const domCleanerObserver = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.type === 'characterData' && m.target) {
+        const v = m.target.nodeValue;
+        if (v && (v.indexOf('â') !== -1 || v.indexOf('Â') !== -1 || v.indexOf('Ã') !== -1 || v.indexOf('ð') !== -1)) {
+          m.target.nodeValue = cleanMojibakeString(v);
+        }
+      } else if (m.addedNodes && m.addedNodes.length > 0) {
+        m.addedNodes.forEach(n => {
+          if (n.nodeType === Node.TEXT_NODE) {
+            n.nodeValue = cleanMojibakeString(n.nodeValue);
+          } else if (n.nodeType === Node.ELEMENT_NODE) {
+            scrubDomMojibake(n);
+          }
+        });
+      }
+    }
+  });
+
+  if (document.body) {
+    domCleanerObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+}
 
 // Persistent shared Audio element unlocked on first user tap for iOS Safari / Android
 const sharedAudioPlayer = typeof Audio !== 'undefined' ? new Audio() : null;
@@ -23,10 +131,8 @@ if (sharedAudioPlayer) {
   sharedAudioPlayer.defaultPlaybackRate = SPEECH_SPEED_RATE;
 }
 
-// Pre-loaded Audio element cache keyed by chunk text
 const preloadedAudioMap = new Map();
 
-// Ensure no-referrer meta tag is present so Google TTS streams load with 200 OK on desktop & mobile
 function ensureNoReferrerMeta() {
   if (typeof document === 'undefined') return;
   if (!document.querySelector('meta[name="referrer"]')) {
@@ -37,7 +143,6 @@ function ensureNoReferrerMeta() {
   }
 }
 
-// Unlock mobile audio & Web Speech on the very first tap/click anywhere on the page
 function setupMobileAudioUnlocker() {
   if (typeof window === 'undefined') return;
 
@@ -45,7 +150,6 @@ function setupMobileAudioUnlocker() {
     if (mobileAudioUnlocked) return;
     mobileAudioUnlocked = true;
 
-    // 1. Prime the shared HTML5 Audio element with a tiny silent WAV so mobile browsers allow async .play()
     if (sharedAudioPlayer && !isSpeaking) {
       sharedAudioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
       sharedAudioPlayer.volume = 0.01;
@@ -61,7 +165,6 @@ function setupMobileAudioUnlocker() {
       }
     }
 
-    // 2. Prime Web Speech API fallback for mobile Safari/Chrome
     if ('speechSynthesis' in window && !isSpeaking) {
       try {
         const silentUtter = new SpeechSynthesisUtterance('');
@@ -81,26 +184,24 @@ function setupMobileAudioUnlocker() {
 }
 
 // Clean & normalize text for natural educational pronunciation
-// Uses "A-I" (hyphen, NO periods) so the sentence splitter and TTS never pause between A and I!
 function normalizeTextForSpeech(rawText) {
-  return rawText
-    .replace(/\([^)]*\)/g, '')           // Strip parenthetical side-notes
-    .replace(/\bAI's\b/g, "A-I's")       // Smooth acronym possessive with zero pause
-    .replace(/\bAI\b/g, 'A-I')           // Smooth acronym with zero pause (never "A... I" or "ay")
+  return cleanMojibakeString(rawText)
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\bAI's\b/g, "A-I's")
+    .replace(/\bAI\b/g, 'A-I')
     .replace(/#1\b/g, 'number one')
     .replace(/#2\b/g, 'number two')
     .replace(/#3\b/g, 'number three')
     .replace(/#[0-9]+/g, '')
     .replace(/SmolLM2/gi, 'Small L-M 2')
     .replace(/Logits/gi, 'low-jits')
-    .replace(/[•·]/g, ' ')
-    .replace(/—/g, ', ')
-    .replace(/["“”`]/g, '')
+    .replace(/[\u2022\u00b7]/g, ' ')
+    .replace(/\u2014/g, ', ')
+    .replace(/["\u201c\u201d`]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-// Split normalized text into <175-char sentence chunks
 function splitIntoSpeechChunks(cleanText) {
   const rawSentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
   const chunks = [];
@@ -131,7 +232,6 @@ function buildGoogleTtsUrl(chunkText) {
   return `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=en-US&q=${encodeURIComponent(chunkText)}`;
 }
 
-// Pre-warm browser HTTP cache for a chunk
 function preloadChunkAudio(chunkText) {
   if (preloadedAudioMap.has(chunkText)) {
     return preloadedAudioMap.get(chunkText);
@@ -147,7 +247,6 @@ function preloadChunkAudio(chunkText) {
   return audio;
 }
 
-// Pre-warm all known course Learning Moment scripts in the background on page load
 const KNOWN_WALKTHROUGH_SCRIPTS = [
   "We just unlocked the Inside the AI's Head panel on the right. Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an election across its dictionary to pick strictly one word piece at a time.",
   "The AI just read your question and scored every piece in its dictionary. Look at the Word Election Leaderboard on the right, and look at the Certainty Meter dial. Now it glues this piece onto your sentence and repeats the contest!",
@@ -255,7 +354,7 @@ function getInstructorSvgHtml() {
       <!-- Nose -->
       <ellipse cx="120" cy="103" rx="2.5" ry="1.8" fill="#e5b293"/>
 
-      <!-- Lip-Sync Mouth States (Idle = Closed Smile; Speaking = Alternating Open/Mid/Smile) -->
+      <!-- Lip-Sync Mouth States -->
       <g class="narrator-mouth-group">
         <g class="mouth-state mouth-open" style="display:none;">
           <path d="M 106 113 Q 120 116 134 113 C 134 128, 106 128, 106 113 Z" fill="#b92b4f"/>
@@ -303,7 +402,6 @@ function injectNarratorStyles() {
       align-items: center;
     }
 
-    /* Transparent background, no border, static character */
     .narrator-stage-col {
       display: flex;
       flex-direction: column;
@@ -383,9 +481,6 @@ function injectNarratorStyles() {
   document.head.appendChild(style);
 }
 
-// ==========================================
-// EXTRACT ONLY THE MAIN POINT (SKIPS BLACK BOX / <small> & SKIPS TITLE)
-// ==========================================
 function extractMainPointChunks(bodyEl) {
   if (!bodyEl) return [];
 
@@ -418,7 +513,6 @@ function startLipSyncAnimation(stageEl) {
   const states = ['open', 'mid', 'open', 'smile', 'mid', 'open'];
   let idx = 0;
   setMouthState(stageEl, 'open');
-  // Faster 105ms mouth cycle to match the 1.20x speaking cadence
   mouthFrameTimer = setInterval(() => {
     setMouthState(stageEl, states[idx % states.length]);
     idx++;
@@ -449,12 +543,10 @@ export function stopNarration() {
   stopLipSyncAnimation();
 }
 
-// Play a single chunk through the mobile-unlocked sharedAudioPlayer at 1.20x speed
 function playPreloadedChunk(chunkText, stageEl, isFirstChunk) {
   return new Promise((resolve) => {
     if (playbackAborted || !sharedAudioPlayer) return resolve(true);
 
-    // Ensure chunk is in browser cache
     preloadChunkAudio(chunkText);
 
     const url = buildGoogleTtsUrl(chunkText);
@@ -515,7 +607,6 @@ function playPreloadedChunk(chunkText, stageEl, isFirstChunk) {
   });
 }
 
-// Instant Web Speech fallback at 1.18x speed (only used if offline / Google TTS blocked)
 function playInstantBrowserSpeechFallback(chunks, stageEl) {
   if (!('speechSynthesis' in window) || playbackAborted) {
     stopLipSyncAnimation();
@@ -546,9 +637,6 @@ function playInstantBrowserSpeechFallback(chunks, stageEl) {
   window.speechSynthesis.speak(utter);
 }
 
-// ==========================================
-// MAIN INSTANT NARRATION ORCHESTRATOR
-// ==========================================
 export async function speakMainPoint(bodyEl, stageEl) {
   stopNarration();
   if (isMuted) return;
@@ -559,7 +647,6 @@ export async function speakMainPoint(bodyEl, stageEl) {
   playbackAborted = false;
   isSpeaking = true;
 
-  // Pre-buffer all chunks for this popup immediately
   chunks.forEach(ch => preloadChunkAudio(ch));
 
   for (let i = 0; i < chunks.length; i++) {
@@ -577,7 +664,6 @@ export async function speakMainPoint(bodyEl, stageEl) {
   }
 }
 
-// Enhance any #walkthrough-modal with the Static Character Narrator
 function setupWalkthroughModalNarrator() {
   const wtModal = document.getElementById('walkthrough-modal');
   if (!wtModal || wtModal.dataset.narratorBound === 'true') return;
@@ -600,8 +686,8 @@ function setupWalkthroughModalNarrator() {
   stageCol.innerHTML = `
     ${getInstructorSvgHtml()}
     <div class="narrator-controls-bar">
-      <button type="button" class="narrator-btn narrator-replay-btn">🔊 Replay</button>
-      <button type="button" class="narrator-btn narrator-mute-btn">${isMuted ? '🔇 Unmute' : '🔈 Mute'}</button>
+      <button type="button" class="narrator-btn narrator-replay-btn">Replay</button>
+      <button type="button" class="narrator-btn narrator-mute-btn">${isMuted ? 'Unmute' : 'Mute'}</button>
     </div>
   `;
 
@@ -625,7 +711,7 @@ function setupWalkthroughModalNarrator() {
     if (isMuted) {
       isMuted = false;
       localStorage.setItem(NARRATOR_MUTE_KEY, 'false');
-      muteBtn.textContent = '🔈 Mute';
+      muteBtn.textContent = 'Mute';
     }
     speakMainPoint(wtBody, stageCol);
   });
@@ -633,7 +719,7 @@ function setupWalkthroughModalNarrator() {
   muteBtn.addEventListener('click', () => {
     isMuted = !isMuted;
     localStorage.setItem(NARRATOR_MUTE_KEY, String(isMuted));
-    muteBtn.textContent = isMuted ? '🔇 Unmute' : '🔈 Mute';
+    muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
     if (isMuted) {
       stopNarration();
     } else {
@@ -641,10 +727,10 @@ function setupWalkthroughModalNarrator() {
     }
   });
 
-  // Begin reading the main point INSTANTLY when #walkthrough-modal opens!
   const observer = new MutationObserver(() => {
     const isHidden = wtModal.classList.contains('hidden');
     if (!isHidden) {
+      scrubDomMojibake(wtModal);
       speakMainPoint(wtBody, stageCol);
     } else {
       stopNarration();
@@ -654,7 +740,6 @@ function setupWalkthroughModalNarrator() {
   observer.observe(wtModal, { attributes: true, attributeFilter: ['class'] });
 }
 
-// Enhance Lab 05 Briefing Box with the Static Character Narrator
 function setupLab05BriefingNarrator() {
   const briefingBox = document.querySelector('.briefing-box');
   if (!briefingBox || briefingBox.dataset.narratorBound === 'true') return;
@@ -668,8 +753,8 @@ function setupLab05BriefingNarrator() {
   stageCol.innerHTML = `
     ${getInstructorSvgHtml()}
     <div class="narrator-controls-bar">
-      <button type="button" class="narrator-btn narrator-replay-btn">🔊 Replay</button>
-      <button type="button" class="narrator-btn narrator-mute-btn">${isMuted ? '🔇 Unmute' : '🔈 Mute'}</button>
+      <button type="button" class="narrator-btn narrator-replay-btn">Replay</button>
+      <button type="button" class="narrator-btn narrator-mute-btn">${isMuted ? 'Unmute' : 'Mute'}</button>
     </div>
   `;
 
@@ -695,7 +780,7 @@ function setupLab05BriefingNarrator() {
     if (isMuted) {
       isMuted = false;
       localStorage.setItem(NARRATOR_MUTE_KEY, 'false');
-      muteBtn.textContent = '🔈 Mute';
+      muteBtn.textContent = 'Mute';
     }
     speakMainPoint(firstParagraphEl, stageCol);
   });
@@ -703,7 +788,7 @@ function setupLab05BriefingNarrator() {
   muteBtn.addEventListener('click', () => {
     isMuted = !isMuted;
     localStorage.setItem(NARRATOR_MUTE_KEY, String(isMuted));
-    muteBtn.textContent = isMuted ? '🔇 Unmute' : '🔈 Mute';
+    muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
     if (isMuted) stopNarration();
     else speakMainPoint(firstParagraphEl, stageCol);
   });
@@ -725,6 +810,7 @@ function setupLab05BriefingNarrator() {
 
 export function initNarrator() {
   if (typeof document === 'undefined') return;
+  setupGlobalMojibakeProtection();
   setupMobileAudioUnlocker();
   prewarmKnownScripts();
   injectNarratorStyles();

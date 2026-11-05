@@ -1,4 +1,4 @@
-﻿import { AutoTokenizer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
+import { AutoTokenizer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
 env.allowLocalModels = false;
@@ -16,7 +16,7 @@ const JIGSAW_PUZZLES = [
     targetWord: 'unbelievable',
     roundTag: 'PUZZLE 1 OF 2 // SUBWORD ASSEMBLY',
     title: 'Build "unbelievable" Out of Real AI Puzzle Pieces',
-    instructions: 'The AI does not store every long English word as a single piece. Click the jigsaw pieces in left-to-right order to snap "unbelievable" togetherâ€”and watch what happens if you click a wrong piece or a decoy!',
+    instructions: 'The AI does not store every long English word as a single piece. Click the jigsaw pieces in left-to-right order to snap "unbelievable" together - and watch what happens if you click a wrong piece or a decoy!',
     // Real SmolLM2 tokens for "unbelievable": ["un", "believ", "able"]
     solutionChunks: ['un', 'believ', 'able'],
     solutionIds: [403, 18341, 1094],
@@ -36,12 +36,12 @@ const JIGSAW_PUZZLES = [
     solutionChunks: ['st', 'raw', 'berry'],
     solutionIds: [302, 1709, 9500],
     decoys: [
-      { chunk: 'straw', id: 20412, reason: 'Good guess! While "Â·straw" (with a leading space) exists in the dictionary, when "strawberry" is typed without a leading space, SmolLM2 actually slices the front into TWO smaller pieces: [st] (#302) + [raw] (#1709)!' },
-      { chunk: 'awberry', id: 99901, reason: '"awberry" is a fake decoyâ€”it does not exist in the AI\'s 49,152-piece dictionary! Remove it and build the word using [st] + [raw] + [berry].' }
+      { chunk: 'straw', id: 20412, reason: 'Good guess! While ".straw" (with a leading space) exists in the dictionary, when "strawberry" is typed without a leading space, SmolLM2 actually slices the front into TWO smaller pieces: [st] (#302) + [raw] (#1709)!' },
+      { chunk: 'awberry', id: 99901, reason: '"awberry" is a fake decoy - it does not exist in the AI\'s 49,152-piece dictionary! Remove it and build the word using [st] + [raw] + [berry].' }
     ],
     successHtml: `<strong>Mystery Solved!</strong> Look at the Assembly Track now: we flipped the pieces into <strong>AI Vision Mode</strong>. Whether a model splits strawberry into 2 pieces or 3 pieces (<code>#302</code>, <code>#1709</code>, <code>#9500</code>), the AI <strong>never sees the individual letters s-t-r-a-w-b-e-r-r-y</strong>!`,
     walkthrough: {
-      tag: 'LEARNING MOMENT â€¢ THE STRAWBERRY MYSTERY SOLVED!',
+      tag: 'LEARNING MOMENT // THE STRAWBERRY MYSTERY SOLVED!',
       title: 'Why AI Cannot Count the Letters Inside a Word',
       svgHtml: `
         <svg width="360" height="86" viewBox="0 0 360 86" fill="none">
@@ -569,7 +569,7 @@ async function renderLiveForge() {
 
   forgeStage.innerHTML = '';
   ids.forEach((id, i) => {
-    const rawStr = tokenizer.decode([id]).replace(/ /g, 'Â·');
+    const rawStr = tokenizer.decode([id]).replace(/ /g, '.');
     const piece = {
       chunk: rawStr,
       id,
@@ -634,11 +634,11 @@ btnSubmitQuiz.addEventListener('click', () => {
     if (isRight) {
       correct++;
       chosen.classList.add('ans-correct');
-      tag.textContent = 'âœ” CORRECT';
+      tag.textContent = 'OK CORRECT';
       chosen.appendChild(tag);
     } else {
       chosen.classList.add('ans-wrong');
-      tag.textContent = 'âœ– NOT QUITE';
+      tag.textContent = 'X NOT QUITE';
       chosen.appendChild(tag);
 
       if (q.dataset.hint) {
@@ -661,7 +661,7 @@ btnSubmitQuiz.addEventListener('click', () => {
   } else {
     quizFeedback.style.background = 'rgba(239, 68, 68, 0.15)';
     quizFeedback.style.color = '#fca5a5';
-    quizFeedback.innerHTML = `<strong>You scored ${correct} out of 3.</strong> Look for the red <strong>âœ– NOT QUITE</strong> button(s) and hint above, pick a new answer, and click Verify again!`;
+    quizFeedback.innerHTML = `<strong>You scored ${correct} out of 3.</strong> Look for the red <strong>X NOT QUITE</strong> button(s) and hint above, pick a new answer, and click Verify again!`;
   }
 });
 

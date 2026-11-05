@@ -1,4 +1,4 @@
-﻿import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 import { completeActivity, saveQuizScore } from '../../assets/js/progress.js';
 
 env.allowLocalModels = false;
@@ -8,25 +8,21 @@ env.useBrowserCache = true;
 // STAGE 1 & 2 STAR CATALOG (Normalized 0..1 Coordinates)
 // ==========================================
 const STAR_CATALOG = [
-  // Nebula 1: Warm CafÃ© & Beverage Cluster (Top-Left, Amber/Gold)
   { id: 'espresso', label: 'Espresso', x: 0.18, y: 0.24, cluster: 'cafe', color: '#f59e0b' },
   { id: 'latte', label: 'Latte', x: 0.27, y: 0.17, cluster: 'cafe', color: '#f59e0b' },
   { id: 'roast', label: 'Coffee', x: 0.13, y: 0.37, cluster: 'cafe', color: '#f59e0b' },
   { id: 'cafe', label: 'Cafe', x: 0.28, y: 0.34, cluster: 'cafe', color: '#f59e0b' },
 
-  // Nebula 2: Deep Space & Cosmos Cluster (Top-Right, Cyan)
   { id: 'astronaut', label: 'Astronaut', x: 0.74, y: 0.23, cluster: 'space', color: '#38bdf8' },
   { id: 'orbit', label: 'Orbit', x: 0.84, y: 0.16, cluster: 'space', color: '#38bdf8' },
   { id: 'rocket', label: 'Rocket', x: 0.66, y: 0.32, cluster: 'space', color: '#38bdf8' },
   { id: 'saturn', label: 'Saturn', x: 0.83, y: 0.35, cluster: 'space', color: '#38bdf8' },
 
-  // Nebula 3: Living Creatures Cluster (Bottom-Right, Emerald)
   { id: 'puppy', label: 'Puppy', x: 0.72, y: 0.68, cluster: 'nature', color: '#10b981' },
   { id: 'dog', label: 'Dog', x: 0.85, y: 0.66, cluster: 'nature', color: '#10b981' },
   { id: 'kitten', label: 'Kitten', x: 0.73, y: 0.84, cluster: 'nature', color: '#10b981' },
   { id: 'cat', label: 'Cat', x: 0.86, y: 0.82, cluster: 'nature', color: '#10b981' },
 
-  // Nebula 4: Royalty & World Capitals Cluster (Bottom-Left, Violet â€” Revealed in Stage 2)
   { id: 'king', label: 'King', x: 0.16, y: 0.66, cluster: 'royalty', color: '#c084fc' },
   { id: 'queen', label: 'Queen', x: 0.29, y: 0.66, cluster: 'royalty', color: '#c084fc' },
   { id: 'man', label: 'Man', x: 0.16, y: 0.83, cluster: 'royalty', color: '#c084fc' },
@@ -77,7 +73,7 @@ const STAGE1_MISSIONS = [
     promptInstruction: `Look at the bottom-right emerald nebula! Click the <strong>3 furry neighbor stars</strong> around <code>"Puppy"</code> (<code>Dog</code>, <code>Kitten</code>, <code>Cat</code>) to complete all 3 constellations!`,
     successHtml: `<strong>All 3 Meaning Constellations Wired!</strong> Look how cleanly the AI organizes concepts into neighborhoods. Click <strong>Go to Stage 2: Star Math Navigation</strong> to see how the AI navigates across these stars!`,
     walkthrough: {
-      tag: 'LEARNING MOMENT â€¢ WHAT IS AN EMBEDDING?',
+      tag: 'LEARNING MOMENT // WHAT IS AN EMBEDDING?',
       title: 'Words Are Coordinates in a Meaning Galaxy',
       svgHtml: `
         <svg width="350" height="90" viewBox="0 0 350 90" fill="none">
@@ -112,7 +108,7 @@ const STAGE1_MISSIONS = [
 const STAGE2_MATH = [
   {
     roundTag: 'STAGE 2 // STAR MATH 1 OF 2',
-    title: 'Solve the Classic AI Vector Equation: King âˆ’ Man + Woman = ?',
+    title: 'Solve the Classic AI Vector Equation: King - Man + Woman = ?',
     startId: 'king',
     minusId: 'man',
     plusId: 'woman',
@@ -121,7 +117,7 @@ const STAGE2_MATH = [
   },
   {
     roundTag: 'STAGE 2 // STAR MATH 2 OF 2',
-    title: 'Navigate Across Countries: Paris âˆ’ France + Japan = ?',
+    title: 'Navigate Across Countries: Paris - France + Japan = ?',
     startId: 'paris',
     minusId: 'france',
     plusId: 'japan',
@@ -130,7 +126,6 @@ const STAGE2_MATH = [
   }
 ];
 
-// Stopwords to filter out so Stage 3 maps meaningful content words in the user's prompt
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'over', 'after', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'it', 'its', 'they', 'them', 'their', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'my', 'your', 'our'
 ]);
@@ -152,9 +147,9 @@ let completedMathVectors = [];
 // Stage 3 Live Neural Embedding State
 let extractor = null;
 let isEmbeddingLoading = false;
-let s3DynamicStars = []; // Array of { label, x, y, color, vec }
-let s3Links = [];        // Array of { fromIdx, toIdx, sim }
-let s3Centroid = null;   // { x, y }
+let s3DynamicStars = [];
+let s3Links = [];
+let s3Centroid = null;
 
 let hoveredStarId = null;
 let discoveriesCount = 0;
@@ -234,7 +229,7 @@ function getStar(id) {
 }
 
 function getVisibleStars() {
-  if (currentStage === 3) return []; // Stage 3 uses clean blank sky + live user prompt stars!
+  if (currentStage === 3) return [];
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     return STAR_CATALOG.filter(
@@ -245,7 +240,7 @@ function getVisibleStars() {
 }
 
 function getVisibleNebulae() {
-  if (currentStage === 3) return []; // Original nebulae disappear in Stage 3!
+  if (currentStage === 3) return [];
   if (currentStage === 1) {
     const m = STAGE1_MISSIONS[s1Idx];
     return NEBULA_CLOUDS.filter(neb => m.visibleClusters.includes(neb.id));
@@ -321,15 +316,14 @@ function renderCosmos() {
   // 3. STAGE 3: Render ONLY the User's Live Prompt Constellation on a Clean Sky!
   if (currentStage === 3) {
     if (s3DynamicStars.length === 0) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
       ctx.font = '600 13px "Inter", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('âœ¨ Type a sentence in the glowing box above and press "Map My Prompt"!', w / 2, h / 2);
+      ctx.fillText('* Type a sentence in the glowing box above and press "Map My Prompt"!', w / 2, h / 2);
       requestAnimationFrame(renderCosmos);
       return;
     }
 
-    // Draw soft nebula glow around the user's Prompt Center of Gravity
     if (s3Centroid) {
       const cx = s3Centroid.x * w;
       const cy = s3Centroid.y * h;
@@ -342,14 +336,12 @@ function renderCosmos() {
       ctx.arc(cx, cy, 190, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw Semantic Constellation Links between related words in user's prompt
       s3Links.forEach(link => {
         const sA = s3DynamicStars[link.fromIdx];
         const sB = s3DynamicStars[link.toIdx];
         if (!sA || !sB) return;
         drawGlowLine(sA.x * w, sA.y * h, sB.x * w, sB.y * h, '#38bdf8', 2.2, false);
 
-        // Show similarity percentage on the line midpoint
         const mx = ((sA.x + sB.x) / 2) * w;
         const my = ((sA.y + sB.y) / 2) * h;
         ctx.fillStyle = 'rgba(9, 9, 11, 0.8)';
@@ -360,12 +352,10 @@ function renderCosmos() {
         ctx.fillText(`${Math.round(link.sim * 100)}%`, mx, my + 2);
       });
 
-      // Draw gravitational tether lines from each word star to the Center of Gravity
       s3DynamicStars.forEach(st => {
         drawGlowLine(st.x * w, st.y * h, cx, cy, 'rgba(16, 185, 129, 0.5)', 1.5, true);
       });
 
-      // Draw Pulsing Center of Gravity (AI Thought Core)
       const pulseR = 16 + 5 * Math.sin(animTick * 0.08);
       ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 2.2;
@@ -381,10 +371,9 @@ function renderCosmos() {
       ctx.fillStyle = '#d1fae5';
       ctx.font = '700 11px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('â˜… PROMPT CENTER OF GRAVITY (COMBINED THOUGHT)', cx, cy - 24);
+      ctx.fillText('PROMPT CENTER OF GRAVITY (COMBINED THOUGHT)', cx, cy - 24);
     }
 
-    // Draw each Word Star from the user's prompt
     s3DynamicStars.forEach(star => {
       const sx = star.x * w;
       const sy = star.y * h;
@@ -553,7 +542,7 @@ canvas.addEventListener('mousemove', (e) => {
   hoveredStarId = hit ? hit.id : null;
   canvas.style.cursor = hit ? 'pointer' : 'crosshair';
   if (hit) {
-    hudRight.textContent = `Star: "${hit.label}" â€¢ Coordinates: (${(hit.x * 100).toFixed(0)}, ${(hit.y * 100).toFixed(0)})`;
+    hudRight.textContent = `Star: "${hit.label}" | Coordinates: (${(hit.x * 100).toFixed(0)}, ${(hit.y * 100).toFixed(0)})`;
   }
 });
 
@@ -668,7 +657,7 @@ function loadStage2Math(idx) {
 
   equationBar.innerHTML = `
     <span class="eq-chip">${getStar(eq.startId).label}</span>
-    <span class="eq-op">âˆ’</span>
+    <span class="eq-op">-</span>
     <span class="eq-chip">${getStar(eq.minusId).label}</span>
     <span class="eq-op">+</span>
     <span class="eq-chip">${getStar(eq.plusId).label}</span>
@@ -770,7 +759,6 @@ async function mapLiveUserPrompt() {
     return;
   }
 
-  // Extract meaningful words from the user's sentence (up to 8 key words so the sky stays crisp)
   const cleanWords = rawText
     .replace(/[^a-zA-Z0-9\s'-]/g, '')
     .split(/\s+/)
@@ -790,18 +778,15 @@ async function mapLiveUserPrompt() {
       vectors.push(Array.from(out.data));
     }
   } else {
-    // Fallback deterministic 384-D projection if offline
     for (const word of uniqueWords) {
       const v = Array.from({ length: 32 }, (_, idx) => Math.sin(word.charCodeAt(idx % word.length) * (idx + 1)));
       vectors.push(v);
     }
   }
 
-  // Project high-dimensional vectors onto 2D canvas coordinates where semantically similar words pull closer together!
   const count = uniqueWords.length;
   const rawCoords = uniqueWords.map((word, idx) => {
     const vec = vectors[idx];
-    // Use two orthogonal slices of the normalized embedding vector for initial 2D projection
     let sumX = 0;
     let sumY = 0;
     for (let i = 0; i < vec.length; i++) {
@@ -811,7 +796,6 @@ async function mapLiveUserPrompt() {
     return { label: word, x: sumX, y: sumY, vec };
   });
 
-  // Normalize coordinates nicely into the safe canvas viewport [0.18 .. 0.82] and apply a similarity spring pass
   const minX = Math.min(...rawCoords.map(c => c.x));
   const maxX = Math.max(...rawCoords.map(c => c.x));
   const minY = Math.min(...rawCoords.map(c => c.y));
@@ -832,7 +816,6 @@ async function mapLiveUserPrompt() {
     };
   });
 
-  // Compute pairwise Cosine Similarities & pull strongly related words closer together
   s3Links = [];
   let strongestPair = null;
 
@@ -848,17 +831,15 @@ async function mapLiveUserPrompt() {
     }
   }
 
-  // Sort links and keep top 5 clearest constellation lines
   s3Links.sort((a, b) => b.sim - a.sim);
   s3Links = s3Links.slice(0, 5);
 
-  // Compute combined Prompt Center of Gravity
   const avgX = s3DynamicStars.reduce((s, st) => s + st.x, 0) / s3DynamicStars.length;
   const avgY = s3DynamicStars.reduce((s, st) => s + st.y, 0) / s3DynamicStars.length;
   s3Centroid = { x: avgX, y: avgY };
 
   const pairText = strongestPair
-    ? `Strongest semantic connection: <code>"${strongestPair.a}"</code> â†” <code>"${strongestPair.b}"</code> (<strong>${Math.round(strongestPair.sim * 100)}% similarity</strong>).`
+    ? `Strongest semantic connection: <code>"${strongestPair.a}"</code> &lt;-&gt; <code>"${strongestPair.b}"</code> (<strong>${Math.round(strongestPair.sim * 100)}% similarity</strong>).`
     : '';
 
   cosmosViewport.className = 'cosmos-viewport solved';
@@ -894,7 +875,6 @@ function switchStage(stageNum) {
     hudRight.textContent = '384-Dimensional Vector Projection';
     cosmosViewport.className = 'cosmos-viewport';
 
-    // Focus the blank, pulsing input box and preload the embedding model
     customPromptInput.focus();
     ensureEmbeddingModelLoaded();
 
@@ -941,7 +921,7 @@ btnWtClose.addEventListener('click', () => {
 });
 
 // ==========================================
-// QUIZ MODAL LOGIC (Visual Per-Option Grading)
+// QUIZ MODAL LOGIC
 // ==========================================
 btnOpenQuiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
 btnStage3Quiz.addEventListener('click', () => quizModal.classList.remove('hidden'));
@@ -985,11 +965,11 @@ btnSubmitQuiz.addEventListener('click', () => {
     if (isRight) {
       correct++;
       chosen.classList.add('ans-correct');
-      tag.textContent = 'âœ” CORRECT';
+      tag.textContent = '\u2714 CORRECT';
       chosen.appendChild(tag);
     } else {
       chosen.classList.add('ans-wrong');
-      tag.textContent = 'âœ– NOT QUITE';
+      tag.textContent = '\u2716 NOT QUITE';
       chosen.appendChild(tag);
 
       if (q.dataset.hint) {
