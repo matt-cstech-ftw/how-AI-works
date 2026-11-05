@@ -115,7 +115,7 @@ btnSubmitExam.addEventListener('click', () => {
     setTimeout(() => modalNameInput.focus(), 80);
   } else {
     // Did not pass: show supportive pop-up without revealing specific answers
-    failModalScoreText.textContent = `You scored ${pct}% (${correctCount} out of 10). A score of 70% (7 out of 10) is required to pass. Take your time—you can try the examination again or review the interactive modules on the dashboard first.`;
+    failModalScoreText.textContent = `You scored ${pct}% (${correctCount} out of 10). A score of 70% (7 out of 10) is required to pass. Take your time. You can try the exam again right now, or head back to the dashboard to review the modules first.`;
     failModal.classList.remove('hidden');
   }
 });
