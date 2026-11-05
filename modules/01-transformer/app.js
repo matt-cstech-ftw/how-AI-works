@@ -332,7 +332,7 @@ btnInit.addEventListener('click', async () => {
 
     markGoalDone('wake', goalWakeEl, goalStreamEl);
 
-    // Walkthrough #1: Explain what just loaded + compare 49k vs ChatGPT/Gemini/Claude
+    // Walkthrough #1: Neutral comparison of 49k vs 200,000+ or millions in large cloud models
     triggerWalkthrough({
       id: 'wt_awake',
       tag: 'STEP 1 COMPLETE • AI BRAIN AWAKE',
@@ -344,7 +344,7 @@ btnInit.addEventListener('click', async () => {
           <path d="M105 40 H135" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="140" y="12" width="80" height="56" rx="8" fill="#052e16" stroke="#10b981" stroke-width="2"/>
           <text x="180" y="37" fill="#10b981" font-family="JetBrains Mono" font-size="11" font-weight="bold" text-anchor="middle">AI Brain</text>
-          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49k–256k Pieces</text>
+          <text x="180" y="52" fill="#a7f3d0" font-family="JetBrains Mono" font-size="9" text-anchor="middle">49k+ Pieces</text>
           <path d="M225 40 H255" stroke="#71717a" stroke-width="2" stroke-dasharray="4 4"/>
           <rect x="260" y="18" width="50" height="44" rx="6" fill="#18181b" stroke="#c084fc" stroke-width="1.5"/>
           <text x="285" y="44" fill="#d8b4fe" font-family="JetBrains Mono" font-size="11" text-anchor="middle">1 Piece</text>
@@ -354,7 +354,7 @@ btnInit.addEventListener('click', async () => {
         We just unlocked the <strong>Inside the AI's Head</strong> panel on the right.<br><br>
         Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an election across its dictionary to pick strictly <em>one word piece at a time</em>.<br><br>
         <small style="color:var(--text-secondary); display:block; background:var(--bg-canvas); padding:0.55rem 0.7rem; border-radius:6px; border:1px solid var(--border-subtle); line-height:1.45;">
-          <strong>Pocket AI vs. Big Cloud AI:</strong> This miniature browser AI has a dictionary of <strong>49,152 word pieces</strong>. Giant cloud models use much larger dictionaries—<strong>Claude</strong> uses ~<strong>100,000+</strong> pieces, <strong>ChatGPT (GPT-4o)</strong> uses <strong>200,000</strong> pieces, and <strong>Google Gemini</strong> uses <strong>256,000</strong> pieces!
+          <strong>Pocket AI vs. Big Cloud AI:</strong> This miniature browser AI has a dictionary of <strong>49,152 word pieces</strong>. Large cloud models like <strong>ChatGPT, Claude, and Gemini</strong> can use <strong>200,000+ or even millions of pieces</strong> depending on the model!
         </small>
       `,
       buttonLabel: 'Got It — Let’s Watch It Think',
@@ -372,7 +372,6 @@ async function stepGeneration() {
 
   try {
     if (!currentInputIds) {
-      // Ultra-concise system instruction for 1 short sentence
       const chatPrompt = `<|im_start|>system\nYou are a concise AI assistant. Reply in ONE short sentence under 15 words. Stop immediately after the first period.<|im_end|>\n<|im_start|>user\n${promptInput.value.trim()}<|im_end|>\n<|im_start|>assistant\n`;
       const encoded = await tokenizer(chatPrompt);
       currentInputIds = encoded.input_ids;
@@ -411,7 +410,6 @@ async function stepGeneration() {
     const stepIdx = tokenHistory.length;
     const currentSnapshot = Array.from(currentInputIds.data).map(Number);
 
-    // Check if this token is a SUBWORD SPLIT (e.g., "ad" + "ore" -> no leading space, alphabetical continuation)
     const prevTokenObj = stepIdx > 0 ? tokenHistory[stepIdx - 1] : null;
     const isSubwordContinuation = prevTokenObj &&
       !/^\s/.test(selected.token) &&
@@ -454,7 +452,6 @@ async function stepGeneration() {
 
     renderTokenMatrix(Array.from(nextIds).map(Number));
 
-    // Check if the AI just completed its first sentence naturally (after at least 6 pieces)
     const endsSentence = /[.!?]\s*$/.test(selected.token);
     if (stepIdx >= 5 && endsSentence) {
       finishGenerationCleanly();
@@ -492,7 +489,7 @@ async function stepGeneration() {
       if (paused) { isBusy = false; return; }
     }
 
-    // LEARNING MOMENT #2: Pause the first time a Word is Split into Subword Tokens (e.g., ad + ore)
+    // LEARNING MOMENT #2: Pause the first time a Word is Split into Subword Tokens
     if (isSubwordContinuation) {
       const part1 = prevTokenObj.tokenStr.trim();
       const part2 = selected.token;
@@ -547,7 +544,7 @@ async function stepGeneration() {
         bodyHtml: `
           Notice how that piece turned <strong>purple</strong> in the output box!<br><br>
           Even though <code>"${favWord}"</code> was the #1 favorite (${favPct}%), the AI didn't pick it. Because your <strong>Creativity Dial (Temperature)</strong> is turned above 0, the AI rolls a weighted die.<br><br>
-          This time, the roll landed on underdog <code>"${winWord}"</code> (${winPct}%)! That's why ChatGPT gives slightly different answers every time you ask the same question.
+          This time, the roll landed on underdog <code>"${winWord}"</code> (${winPct}%)! That's why AI gives slightly different answers every time you ask the same question.
         `,
         buttonLabel: 'Cool! Keep Watching',
         autoResume: true
@@ -635,7 +632,6 @@ async function startStreamingLoop() {
   btnStream.innerHTML = `<i data-lucide="pause" class="icon-xs"></i><span>Pause</span>`;
   refreshIcons();
 
-  // Capped at 28 tokens max (and stops earlier at first period!)
   for (let i = 0; i < 28; i++) {
     if (!isPlaying) break;
     await stepGeneration();
