@@ -530,7 +530,7 @@ function renderDashboard() {
     if (isDone) {
       statusPillHtml = `<span class="mod-status-pill done"><i data-lucide="check" class="icon-xs"></i> Completed</span>`;
     } else if (isQuizReady) {
-      statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="award" class="icon-xs"></i> ${mod.id === 'mod-05' ? 'Final Exam Ready' : 'Lab Done • Quiz Ready'}</span>`;
+      statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="award" class="icon-xs"></i> ${mod.id === 'mod-05' ? 'Final Exam Ready' : 'Lab Done // Quiz Ready'}</span>`;
     } else if (modState.unlocked) {
       statusPillHtml = `<span class="mod-status-pill ready"><i data-lucide="play" class="icon-xs"></i> Ready to Start</span>`;
     } else {

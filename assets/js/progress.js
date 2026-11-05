@@ -1,4 +1,5 @@
-import './narrator.js';
+// Load narrator & mojibake scrubber asynchronously so it can never block the dashboard or lab scripts
+import('./narrator.js').catch((err) => console.warn('Narrator module note:', err));
 
 const STORAGE_KEY = 'how_ai_works_progress_v1';
 

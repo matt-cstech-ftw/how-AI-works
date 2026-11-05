@@ -1,10 +1,10 @@
 // ==========================================
 // ON-SCREEN CHARACTER NARRATOR ENGINE + GLOBAL MOJIBAKE SCRUBBER
-// - Automatically scrubs any Windows-1252 / UTF-8 mojibake (e.g. "//", " - ", "")
-//   from both the live DOM and HTML5 Canvas text across all modules!
+// - 100% Pure ASCII source (immune to encoding corruption)
+// - Automatically scrubs any Windows-1252 / UTF-8 mojibake from DOM and Canvas
 // - Instant playback with pre-buffered audio + Mobile Touch-Unlock support
 // - Fast, natural educational cadence (~15% faster: 1.20x playbackRate)
-// - Smooth "AI" pronunciation (no periods/sentence-split pause between A and I)
+// - Smooth "AI" pronunciation (no pause between A and I)
 // - Static character with arms resting down at her sides & transparent background
 // ==========================================
 
@@ -19,47 +19,52 @@ let mobileAudioUnlocked = false;
 
 // ==========================================
 // GLOBAL UTF-8 MOJIBAKE AUTO-SCRUBBER (DOM + CANVAS)
-// Fixes any corrupted characters caused by Windows PowerShell ANSI encoding
+// Uses pure \uXXXX unicode escapes so this file is 100% pure ASCII
 // ==========================================
 const MOJIBAKE_REPLACEMENTS = [
-  [////g, '//'],   // // -> //
-  [/ - /g, ' - '],  //  -  -> -
-  [/-/g, '-'],    // - -> -
-  [/'/g, "'"],    // ' -> '
-  [/"/g, '"'],    // " -> "
-  [/"/g, '"'],    //  -   -> "
-  [//g, ''],     //  (sparkles) -> clean
-  [/OK/g, '✔'], // OK -> ✔
-  [/OK/g, '✔'],
-  [/X/g, '✖'], // X -> ✖
-  [/g, '✂'], //  -> ✂
-  [/g, '✂'], //  -> ✂
-  [/./g, '·'],     // . -> ·
-  [/-/g, '-'],    // - -> -
-  [/*/g, '*'],    // * -> *
-  [/> /g, '> '],   // >  -> >
-  [/â—€/g, '<'],    // â—€ -> <
-  [/â–²/g, '^'],    // â–² -> ^
-  [/->/g, '->'],   // -> -> ->
-  [/â†‘/g, '<-'],   // â†  -> <-
-  [/!=/g, '!='],   // â‰  -> !=
-  [/x/g, 'x'],          // x -> x
-  [/ deg/g, ' deg']        //  deg -> deg
+  [new RegExp('\\u00e2\\u20ac\\u00a2', 'g'), '//'],
+  [new RegExp('\\u00e2\\u20ac\\u201d', 'g'), ' - '],
+  [new RegExp('\\u00e2\\u20ac\\u201c', 'g'), '-'],
+  [new RegExp('\\u00e2\\u20ac\\u2122', 'g'), "'"],
+  [new RegExp('\\u00e2\\u20ac\\u0153', 'g'), '"'],
+  [new RegExp('\\u00e2\\u20ac\\u009d', 'g'), '"'],
+  [new RegExp('\\u00e2\\u0153\\u00a8', 'g'), ''],
+  [new RegExp('\\u00e2\\u0153\\u201c', 'g'), '\u2714'],
+  [new RegExp('\\u00e2\\u0153\\u201d', 'g'), '\u2714'],
+  [new RegExp('\\u00e2\\u0153\\u2013', 'g'), '\u2716'],
+  [new RegExp('\\u00e2\\u0153\\u201e', 'g'), '\u2702'],
+  [new RegExp('\\u00e2\\u0153\\u201a', 'g'), '\u2702'],
+  [new RegExp('\\u00c2\\u00b7', 'g'), '\u00b7'],
+  [new RegExp('\\u00e2\\u02c6\\u2019', 'g'), '-'],
+  [new RegExp('\\u00e2\\u02dc\\u2026', 'g'), '*'],
+  [new RegExp('\\u00e2\\u2013\\u00b6', 'g'), '> '],
+  [new RegExp('\\u00e2\\u2014\\u20ac', 'g'), '<'],
+  [new RegExp('\\u00e2\\u2013\\u00b2', 'g'), '^'],
+  [new RegExp('\\u00e2\\u2020\\u2019', 'g'), '->'],
+  [new RegExp('\\u00e2\\u2020\\u2018', 'g'), '<-'],
+  [new RegExp('\\u00e2\\u2030\\u00a0', 'g'), '!='],
+  [new RegExp('\\u00c3\\u2014', 'g'), 'x'],
+  [new RegExp('\\u00c2\\u00b0', 'g'), ' deg']
 ];
 
+function hasMojibakeMarkers(str) {
+  return (
+    str.indexOf('\u00e2') !== -1 ||
+    str.indexOf('\u00c2') !== -1 ||
+    str.indexOf('\u00c3') !== -1 ||
+    str.indexOf('\u00f0') !== -1
+  );
+}
+
 function cleanMojibakeString(str) {
-  if (!str || typeof str !== 'string') return str;
-  if (str.indexOf('â') === -1 && str.indexOf('Â') === -1 && str.indexOf('Ã') === -1 && str.indexOf('ð') === -1) {
-    return str;
-  }
+  if (!str || typeof str !== 'string' || !hasMojibakeMarkers(str)) return str;
   let out = str;
   for (const [pattern, replacement] of MOJIBAKE_REPLACEMENTS) {
     out = out.replace(pattern, replacement);
   }
-  // Catch-all for any remaining " -  or "ðŸ..." sequences
-  out = out.replace(/ - sA-Za-z0-9]*/g, ' - ');
-  out = out.replace(/sA-Za-z0-9]*/g, '');
-  out = out.replace(/ðŸ[^\sA-Za-z0-9]*/g, '');
+  out = out.replace(new RegExp('\\u00e2\\u20ac[^\\sA-Za-z0-9]*', 'g'), ' - ');
+  out = out.replace(new RegExp('\\u00e2\\u0153[^\\sA-Za-z0-9]*', 'g'), '');
+  out = out.replace(new RegExp('\\u00f0\\u0178[^\\sA-Za-z0-9]*', 'g'), '');
   return out;
 }
 
@@ -69,11 +74,11 @@ function scrubDomMojibake(root = document.body) {
   let node;
   while ((node = walker.nextNode())) {
     const val = node.nodeValue;
-    if (val && (val.indexOf('â') !== -1 || val.indexOf('Â') !== -1 || val.indexOf('Ã') !== -1 || val.indexOf('ð') !== -1)) {
+    if (val && hasMojibakeMarkers(val)) {
       node.nodeValue = cleanMojibakeString(val);
     }
   }
-  if (document.title) {
+  if (document.title && hasMojibakeMarkers(document.title)) {
     document.title = cleanMojibakeString(document.title);
   }
 }
@@ -81,7 +86,6 @@ function scrubDomMojibake(root = document.body) {
 function setupGlobalMojibakeProtection() {
   if (typeof window === 'undefined') return;
 
-  // 1. Patch Canvas fillText so canvas drawings are also 100% immune to mojibake
   if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype._mojibakePatched) {
     const origFillText = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
@@ -94,18 +98,17 @@ function setupGlobalMojibakeProtection() {
     CanvasRenderingContext2D.prototype._mojibakePatched = true;
   }
 
-  // 2. Scrub initial DOM & observe any dynamic text insertions
   scrubDomMojibake(document.body);
   const domCleanerObserver = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'characterData' && m.target) {
         const v = m.target.nodeValue;
-        if (v && (v.indexOf('â') !== -1 || v.indexOf('Â') !== -1 || v.indexOf('Ã') !== -1 || v.indexOf('ð') !== -1)) {
+        if (v && hasMojibakeMarkers(v)) {
           m.target.nodeValue = cleanMojibakeString(v);
         }
       } else if (m.addedNodes && m.addedNodes.length > 0) {
         m.addedNodes.forEach(n => {
-          if (n.nodeType === Node.TEXT_NODE) {
+          if (n.nodeType === Node.TEXT_NODE && hasMojibakeMarkers(n.nodeValue || '')) {
             n.nodeValue = cleanMojibakeString(n.nodeValue);
           } else if (n.nodeType === Node.ELEMENT_NODE) {
             scrubDomMojibake(n);
@@ -183,7 +186,6 @@ function setupMobileAudioUnlocker() {
   window.addEventListener('click', unlockHandler, { capture: true, passive: true });
 }
 
-// Clean & normalize text for natural educational pronunciation
 function normalizeTextForSpeech(rawText) {
   return cleanMojibakeString(rawText)
     .replace(/\([^)]*\)/g, '')
@@ -266,7 +268,6 @@ function prewarmKnownScripts() {
   });
 }
 
-// Static Chibi Female Instructor SVG with Arms Resting Down at Her Sides
 function getInstructorSvgHtml() {
   return `
     <svg class="narrator-avatar-svg" viewBox="0 0 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -285,59 +286,45 @@ function getInstructorSvgHtml() {
         </linearGradient>
       </defs>
 
-      <!-- Side Ponytail -->
       <path d="M 158 58 C 195 45, 222 82, 206 126 C 198 110, 188 104, 175 102 C 166 90, 160 72, 158 58 Z" fill="url(#hairGrad)" />
       <ellipse cx="161" cy="67" rx="6" ry="11" transform="rotate(-22 161 67)" fill="#4a2106"/>
 
-      <!-- Fitted Black Skirt -->
       <path d="M 88 216 L 152 216 L 158 266 L 82 266 Z" fill="#1e1f24"/>
-
-      <!-- White V-Neck Blouse -->
       <path d="M 92 156 L 148 156 L 146 220 L 94 220 Z" fill="#f4f4f6"/>
 
-      <!-- Neck & V-Neck Skin Triangle -->
       <rect x="111" y="134" width="18" height="24" rx="6" fill="#f3c3a4"/>
       <polygon points="106,154 134,154 120,182" fill="#fbd3b7"/>
 
-      <!-- Left Arm & Hand Resting Down at Her Side -->
       <g class="narrator-arm-left-down">
         <rect x="69" y="224" width="12" height="17" rx="6" fill="#fbd3b7"/>
         <rect x="69" y="218" width="13" height="7" rx="2" fill="#ffffff"/>
         <path d="M 86 155 C 76 158, 71 170, 68 219 L 83 219 L 88 168 Z" fill="url(#suitGrad)"/>
       </g>
 
-      <!-- Right Arm & Hand Resting Down at Her Side -->
       <g class="narrator-arm-right-down">
         <rect x="159" y="224" width="12" height="17" rx="6" fill="#fbd3b7"/>
         <rect x="158" y="218" width="13" height="7" rx="2" fill="#ffffff"/>
         <path d="M 154 155 C 164 158, 169 170, 172 219 L 157 219 L 152 168 Z" fill="url(#suitGrad)"/>
       </g>
 
-      <!-- Tailored Grey Blazer Jacket Torso -->
       <path d="M 86 155 L 106 154 L 114 218 L 82 222 C 79 200, 82 174, 86 155 Z" fill="url(#suitGrad)"/>
       <path d="M 154 155 L 134 154 L 126 218 L 158 222 C 161 200, 158 174, 154 155 Z" fill="url(#suitGrad)"/>
 
-      <!-- Blazer Lapels -->
       <polygon points="106,154 95,162 111,196 114,186" fill="#6c6f78"/>
       <polygon points="134,154 145,162 129,196 126,186" fill="#6c6f78"/>
 
-      <!-- Back Hair Layer -->
       <ellipse cx="120" cy="84" rx="54" ry="52" fill="url(#hairGrad)"/>
 
-      <!-- Ears & Pearl Earrings -->
       <ellipse cx="68" cy="98" rx="9" ry="13" fill="#f7c8aa"/>
       <ellipse cx="172" cy="98" rx="9" ry="13" fill="#f7c8aa"/>
       <circle cx="67" cy="108" r="2.2" fill="#ffffff"/>
       <circle cx="173" cy="108" r="2.2" fill="#ffffff"/>
 
-      <!-- Head / Face Base -->
       <rect x="72" y="44" width="96" height="96" rx="46" fill="#fbd3b7"/>
 
-      <!-- Rosy Cheeks -->
       <circle cx="88" cy="108" r="14" fill="url(#cheekGlow)"/>
       <circle cx="152" cy="108" r="14" fill="url(#cheekGlow)"/>
 
-      <!-- Expressive Brown Eyes -->
       <g class="narrator-eyes">
         <ellipse cx="98" cy="92" rx="7.5" ry="11.5" fill="#43230f"/>
         <ellipse cx="98" cy="95" rx="6" ry="7" fill="#7c431e"/>
@@ -347,14 +334,11 @@ function getInstructorSvgHtml() {
         <circle cx="140" cy="87" r="2.8" fill="#ffffff"/>
       </g>
 
-      <!-- Eyebrows -->
       <path d="M 88 74 Q 98 69 107 74" stroke="#5c2c0c" stroke-width="2.5" stroke-linecap="round"/>
       <path d="M 133 74 Q 142 69 152 74" stroke="#5c2c0c" stroke-width="2.5" stroke-linecap="round"/>
 
-      <!-- Nose -->
       <ellipse cx="120" cy="103" rx="2.5" ry="1.8" fill="#e5b293"/>
 
-      <!-- Lip-Sync Mouth States -->
       <g class="narrator-mouth-group">
         <g class="mouth-state mouth-open" style="display:none;">
           <path d="M 106 113 Q 120 116 134 113 C 134 128, 106 128, 106 113 Z" fill="#b92b4f"/>
@@ -369,7 +353,6 @@ function getInstructorSvgHtml() {
         </g>
       </g>
 
-      <!-- Round Glasses -->
       <g class="narrator-glasses">
         <circle cx="96" cy="92" r="21" fill="rgba(255,255,255,0.12)" stroke="#8c867e" stroke-width="3.2"/>
         <circle cx="144" cy="92" r="21" fill="rgba(255,255,255,0.12)" stroke="#8c867e" stroke-width="3.2"/>
@@ -378,7 +361,6 @@ function getInstructorSvgHtml() {
         <path d="M 131 80 L 138 75" stroke="rgba(255,255,255,0.6)" stroke-width="2.2" stroke-linecap="round"/>
       </g>
 
-      <!-- Front Sweeping Bangs -->
       <path d="M 68 78 C 68 38, 172 38, 172 78 C 152 68, 118 58, 92 48 C 84 60, 76 70, 68 78 Z" fill="url(#hairGrad)"/>
     </svg>
   `;
