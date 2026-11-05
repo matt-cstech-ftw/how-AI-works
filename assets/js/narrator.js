@@ -1,24 +1,32 @@
 // ==========================================
 // ON-SCREEN CHARACTER NARRATOR ENGINE
-// - Instant playback (pre-loads audio on page load, zero "Loading Voice..." wait)
+// - Instant playback with pre-buffered audio + Mobile Touch-Unlock support
+// - Fast, natural educational cadence (~15% faster: 1.20x playbackRate)
+// - Smooth "AI" pronunciation (no periods/sentence-split pause between A and I)
 // - Reads ONLY the main point (skips black callout boxes / <small> notes)
-// - Pronounces "AI" clearly as "A. I." (never "ay")
-// - Static character with arms resting down at her sides, transparent background,
-//   lip-sync mouth animation, and Replay / Mute buttons below
+// - Static character with arms resting down at her sides & transparent background
 // ==========================================
 
 const NARRATOR_MUTE_KEY = 'ai_lab_narrator_muted_v1';
+const SPEECH_SPEED_RATE = 1.20; // ~15% faster than previous 1.05x cadence
 
 let isMuted = localStorage.getItem(NARRATOR_MUTE_KEY) === 'true';
 let isSpeaking = false;
 let playbackAborted = false;
 let mouthFrameTimer = null;
-let activeAudioEl = null;
+let mobileAudioUnlocked = false;
 
-// Pre-loaded Audio element cache keyed by sentence text
+// Persistent shared Audio element unlocked on first user tap for iOS Safari / Android
+const sharedAudioPlayer = typeof Audio !== 'undefined' ? new Audio() : null;
+if (sharedAudioPlayer) {
+  sharedAudioPlayer.preload = 'auto';
+  sharedAudioPlayer.defaultPlaybackRate = SPEECH_SPEED_RATE;
+}
+
+// Pre-loaded Audio element cache keyed by chunk text
 const preloadedAudioMap = new Map();
 
-// Ensure no-referrer meta tag is present so Google Neural TTS streams load with 200 OK
+// Ensure no-referrer meta tag is present so Google TTS streams load with 200 OK on desktop & mobile
 function ensureNoReferrerMeta() {
   if (typeof document === 'undefined') return;
   if (!document.querySelector('meta[name="referrer"]')) {
@@ -29,17 +37,61 @@ function ensureNoReferrerMeta() {
   }
 }
 
-// Clean & normalize text for natural educational pronunciation ("AI" -> "A. I.")
+// Unlock mobile audio & Web Speech on the very first tap/click anywhere on the page
+function setupMobileAudioUnlocker() {
+  if (typeof window === 'undefined') return;
+
+  const unlockHandler = () => {
+    if (mobileAudioUnlocked) return;
+    mobileAudioUnlocked = true;
+
+    // 1. Prime the shared HTML5 Audio element with a tiny silent WAV so mobile browsers allow async .play()
+    if (sharedAudioPlayer && !isSpeaking) {
+      sharedAudioPlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      sharedAudioPlayer.volume = 0.01;
+      const p = sharedAudioPlayer.play();
+      if (p !== undefined) {
+        p.then(() => {
+          sharedAudioPlayer.pause();
+          sharedAudioPlayer.currentTime = 0;
+          sharedAudioPlayer.volume = 1.0;
+        }).catch(() => {
+          sharedAudioPlayer.volume = 1.0;
+        });
+      }
+    }
+
+    // 2. Prime Web Speech API fallback for mobile Safari/Chrome
+    if ('speechSynthesis' in window && !isSpeaking) {
+      try {
+        const silentUtter = new SpeechSynthesisUtterance('');
+        silentUtter.volume = 0;
+        window.speechSynthesis.speak(silentUtter);
+      } catch {}
+    }
+
+    window.removeEventListener('touchstart', unlockHandler, true);
+    window.removeEventListener('pointerdown', unlockHandler, true);
+    window.removeEventListener('click', unlockHandler, true);
+  };
+
+  window.addEventListener('touchstart', unlockHandler, { capture: true, passive: true });
+  window.addEventListener('pointerdown', unlockHandler, { capture: true, passive: true });
+  window.addEventListener('click', unlockHandler, { capture: true, passive: true });
+}
+
+// Clean & normalize text for natural educational pronunciation
+// Uses "A-I" (hyphen, NO periods) so the sentence splitter and TTS never pause between A and I!
 function normalizeTextForSpeech(rawText) {
   return rawText
     .replace(/\([^)]*\)/g, '')           // Strip parenthetical side-notes
-    .replace(/\bAI's\b/g, "A. I.'s")     // Pronounce AI's as A. I.'s
-    .replace(/\bAI\b/g, 'A. I.')         // Pronounce AI as A. I. (never "ay")
+    .replace(/\bAI's\b/g, "A-I's")       // Smooth acronym possessive with zero pause
+    .replace(/\bAI\b/g, 'A-I')           // Smooth acronym with zero pause (never "A... I" or "ay")
     .replace(/#1\b/g, 'number one')
     .replace(/#2\b/g, 'number two')
     .replace(/#3\b/g, 'number three')
     .replace(/#[0-9]+/g, '')
-    .replace(/SmolLM2/gi, 'Small L. M. 2')
+    .replace(/SmolLM2/gi, 'Small L-M 2')
     .replace(/Logits/gi, 'low-jits')
     .replace(/[•·]/g, ' ')
     .replace(/—/g, ', ')
@@ -48,7 +100,7 @@ function normalizeTextForSpeech(rawText) {
     .trim();
 }
 
-// Split normalized text into short <175-char chunks for instant TTS streaming
+// Split normalized text into <175-char sentence chunks
 function splitIntoSpeechChunks(cleanText) {
   const rawSentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
   const chunks = [];
@@ -59,7 +111,6 @@ function splitIntoSpeechChunks(cleanText) {
     if (trimmed.length <= 175) {
       chunks.push(trimmed);
     } else {
-      // Split long sentences on commas or conjunctions
       const parts = trimmed.split(/,\s+|\s+and\s+/);
       let acc = '';
       for (const p of parts) {
@@ -80,7 +131,7 @@ function buildGoogleTtsUrl(chunkText) {
   return `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=en-US&q=${encodeURIComponent(chunkText)}`;
 }
 
-// Pre-create and buffer an Audio element in memory so .play() is 0ms instant
+// Pre-warm browser HTTP cache for a chunk
 function preloadChunkAudio(chunkText) {
   if (preloadedAudioMap.has(chunkText)) {
     return preloadedAudioMap.get(chunkText);
@@ -88,13 +139,15 @@ function preloadChunkAudio(chunkText) {
   ensureNoReferrerMeta();
   const audio = new Audio();
   audio.preload = 'auto';
+  audio.defaultPlaybackRate = SPEECH_SPEED_RATE;
+  audio.playbackRate = SPEECH_SPEED_RATE;
   audio.src = buildGoogleTtsUrl(chunkText);
   audio.load();
   preloadedAudioMap.set(chunkText, audio);
   return audio;
 }
 
-// Pre-warm all known course Learning Moment scripts in the background on page load!
+// Pre-warm all known course Learning Moment scripts in the background on page load
 const KNOWN_WALKTHROUGH_SCRIPTS = [
   "We just unlocked the Inside the AI's Head panel on the right. Unlike a human, this AI doesn't know what it's going to say at the end of a sentence. It holds an election across its dictionary to pick strictly one word piece at a time.",
   "The AI just read your question and scored every piece in its dictionary. Look at the Word Election Leaderboard on the right, and look at the Certainty Meter dial. Now it glues this piece onto your sentence and repeats the contest!",
@@ -149,21 +202,15 @@ function getInstructorSvgHtml() {
 
       <!-- Left Arm & Hand Resting Down at Her Side -->
       <g class="narrator-arm-left-down">
-        <!-- Left Hand at Side -->
         <rect x="69" y="224" width="12" height="17" rx="6" fill="#fbd3b7"/>
-        <!-- White Shirt Cuff -->
         <rect x="69" y="218" width="13" height="7" rx="2" fill="#ffffff"/>
-        <!-- Left Suit Sleeve Straight Down -->
         <path d="M 86 155 C 76 158, 71 170, 68 219 L 83 219 L 88 168 Z" fill="url(#suitGrad)"/>
       </g>
 
       <!-- Right Arm & Hand Resting Down at Her Side -->
       <g class="narrator-arm-right-down">
-        <!-- Right Hand at Side -->
         <rect x="159" y="224" width="12" height="17" rx="6" fill="#fbd3b7"/>
-        <!-- White Shirt Cuff -->
         <rect x="158" y="218" width="13" height="7" rx="2" fill="#ffffff"/>
-        <!-- Right Suit Sleeve Straight Down -->
         <path d="M 154 155 C 164 158, 169 170, 172 219 L 157 219 L 152 168 Z" fill="url(#suitGrad)"/>
       </g>
 
@@ -245,7 +292,8 @@ function injectNarratorStyles() {
   style.textContent = `
     .walkthrough-modal.with-narrator {
       max-width: 720px !important;
-      overflow: visible !important;
+      max-height: 92dvh !important;
+      overflow-y: auto !important;
     }
 
     .wt-narrator-layout {
@@ -255,7 +303,7 @@ function injectNarratorStyles() {
       align-items: center;
     }
 
-    /* Completely transparent background, no border, no floating animation */
+    /* Transparent background, no border, static character */
     .narrator-stage-col {
       display: flex;
       flex-direction: column;
@@ -324,10 +372,11 @@ function injectNarratorStyles() {
     @media (max-width: 680px) {
       .wt-narrator-layout, .briefing-with-narrator {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
       }
       .narrator-avatar-svg {
-        width: 130px;
-        height: 148px;
+        width: 112px;
+        height: 126px;
       }
     }
   `;
@@ -369,10 +418,11 @@ function startLipSyncAnimation(stageEl) {
   const states = ['open', 'mid', 'open', 'smile', 'mid', 'open'];
   let idx = 0;
   setMouthState(stageEl, 'open');
+  // Faster 105ms mouth cycle to match the 1.20x speaking cadence
   mouthFrameTimer = setInterval(() => {
     setMouthState(stageEl, states[idx % states.length]);
     idx++;
-  }, 125);
+  }, 105);
 }
 
 function stopLipSyncAnimation() {
@@ -387,10 +437,10 @@ function stopLipSyncAnimation() {
 
 export function stopNarration() {
   playbackAborted = true;
-  if (activeAudioEl) {
-    activeAudioEl.pause();
-    activeAudioEl.currentTime = 0;
-    activeAudioEl = null;
+  if (sharedAudioPlayer) {
+    try {
+      sharedAudioPlayer.pause();
+    } catch {}
   }
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -399,15 +449,18 @@ export function stopNarration() {
   stopLipSyncAnimation();
 }
 
-// Play a single pre-loaded Google Neural TTS chunk (resolves true if played, false if blocked/offline)
+// Play a single chunk through the mobile-unlocked sharedAudioPlayer at 1.20x speed
 function playPreloadedChunk(chunkText, stageEl, isFirstChunk) {
   return new Promise((resolve) => {
-    if (playbackAborted) return resolve(true);
+    if (playbackAborted || !sharedAudioPlayer) return resolve(true);
 
-    const audio = preloadChunkAudio(chunkText);
-    activeAudioEl = audio;
-    audio.currentTime = 0;
-    audio.playbackRate = 1.06; // Crisp, natural educational cadence
+    // Ensure chunk is in browser cache
+    preloadChunkAudio(chunkText);
+
+    const url = buildGoogleTtsUrl(chunkText);
+    sharedAudioPlayer.src = url;
+    sharedAudioPlayer.defaultPlaybackRate = SPEECH_SPEED_RATE;
+    sharedAudioPlayer.playbackRate = SPEECH_SPEED_RATE;
 
     let started = false;
     let settled = false;
@@ -415,41 +468,44 @@ function playPreloadedChunk(chunkText, stageEl, isFirstChunk) {
     const finish = (ok) => {
       if (settled) return;
       settled = true;
-      audio.onplaying = null;
-      audio.onended = null;
-      audio.onerror = null;
+      sharedAudioPlayer.onloadedmetadata = null;
+      sharedAudioPlayer.onplaying = null;
+      sharedAudioPlayer.onended = null;
+      sharedAudioPlayer.onerror = null;
       resolve(ok);
     };
 
-    // If first chunk doesn't start playing within 450ms (e.g., offline), fall back immediately
     const startTimeout = isFirstChunk
       ? setTimeout(() => {
           if (!started && !settled) {
-            try { audio.pause(); } catch {}
+            try { sharedAudioPlayer.pause(); } catch {}
             finish(false);
           }
-        }, 450)
+        }, 550)
       : null;
 
-    audio.onplaying = () => {
+    sharedAudioPlayer.onloadedmetadata = () => {
+      sharedAudioPlayer.playbackRate = SPEECH_SPEED_RATE;
+    };
+
+    sharedAudioPlayer.onplaying = () => {
       started = true;
+      sharedAudioPlayer.playbackRate = SPEECH_SPEED_RATE;
       if (startTimeout) clearTimeout(startTimeout);
       if (isFirstChunk) startLipSyncAnimation(stageEl);
     };
 
-    audio.onended = () => {
+    sharedAudioPlayer.onended = () => {
       if (startTimeout) clearTimeout(startTimeout);
-      activeAudioEl = null;
       finish(true);
     };
 
-    audio.onerror = () => {
+    sharedAudioPlayer.onerror = () => {
       if (startTimeout) clearTimeout(startTimeout);
-      activeAudioEl = null;
       finish(false);
     };
 
-    const playPromise = audio.play();
+    const playPromise = sharedAudioPlayer.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
         if (startTimeout) clearTimeout(startTimeout);
@@ -459,7 +515,7 @@ function playPreloadedChunk(chunkText, stageEl, isFirstChunk) {
   });
 }
 
-// Instant Web Speech fallback at natural 1.0 pitch (only used if offline / Google TTS blocked)
+// Instant Web Speech fallback at 1.18x speed (only used if offline / Google TTS blocked)
 function playInstantBrowserSpeechFallback(chunks, stageEl) {
   if (!('speechSynthesis' in window) || playbackAborted) {
     stopLipSyncAnimation();
@@ -474,9 +530,8 @@ function playInstantBrowserSpeechFallback(chunks, stageEl) {
     || voices.find(v => /^en/i.test(v.lang));
   if (preferred) utter.voice = preferred;
 
-  // Keep pitch strictly at 1.0 so the browser never applies robotic pitch-shifting distortion
   utter.pitch = 1.0;
-  utter.rate = 1.02;
+  utter.rate = 1.18;
 
   utter.onstart = () => {
     if (!playbackAborted) startLipSyncAnimation(stageEl);
@@ -511,7 +566,6 @@ export async function speakMainPoint(bodyEl, stageEl) {
     if (playbackAborted) break;
     const ok = await playPreloadedChunk(chunks[i], stageEl, i === 0);
     if (!ok) {
-      // Offline or blocked -> switch to instant 0ms fallback for remaining chunks
       playInstantBrowserSpeechFallback(chunks.slice(i), stageEl);
       return;
     }
@@ -631,7 +685,6 @@ function setupLab05BriefingNarrator() {
 
   const firstParagraphEl = textCol.querySelector('p');
   if (firstParagraphEl) {
-    // Preload Lab 05 briefing main point immediately
     extractMainPointChunks(firstParagraphEl).forEach(ch => preloadChunkAudio(ch));
   }
 
@@ -672,6 +725,7 @@ function setupLab05BriefingNarrator() {
 
 export function initNarrator() {
   if (typeof document === 'undefined') return;
+  setupMobileAudioUnlocker();
   prewarmKnownScripts();
   injectNarratorStyles();
   setupWalkthroughModalNarrator();

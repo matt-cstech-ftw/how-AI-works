@@ -218,6 +218,73 @@
     .diagnostic-bar.status-good { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.08); color: #e0f2fe; }
     .diagnostic-bar.status-error { border-color: rgba(239, 68, 68, 0.55); background: rgba(239, 68, 68, 0.1); color: #fecaca; }
     .diagnostic-bar.status-solved { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.1); color: #d1fae5; }
+
+    /* Mobile Touch Gamepad Bar (Automatically shown on touch/mobile devices) */
+    .mobile-touch-controls {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .touch-dpad, .touch-actions {
+      display: flex;
+      gap: 0.55rem;
+    }
+
+    .touch-btn {
+      min-width: 58px;
+      height: 48px;
+      padding: 0 0.9rem;
+      border-radius: 10px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-strong);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .touch-btn:active, .touch-btn.pressed {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      transform: scale(0.96);
+    }
+
+    .touch-btn-jump {
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #a7f3d0;
+    }
+
+    .touch-btn-laser {
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fde68a;
+    }
+
+    @media (pointer: coarse), (max-width: 820px) {
+      .mobile-touch-controls {
+        display: flex;
+      }
+      .arcade-viewport {
+        height: 360px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -290,6 +357,18 @@
             POWER-UP: NONE
           </span>
           <span class="arcade-hud-pill" id="hud-progress">PROGRESS: 0%</span>
+        </div>
+      </div>
+
+      <!-- Mobile Touch Controls (Auto-shown on phones & tablets) -->
+      <div class="mobile-touch-controls" id="mobile-touch-controls">
+        <div class="touch-dpad">
+          <button type="button" class="touch-btn" id="touch-left">◀ LEFT</button>
+          <button type="button" class="touch-btn" id="touch-right">RIGHT ▶</button>
+        </div>
+        <div class="touch-actions">
+          <button type="button" class="touch-btn touch-btn-laser" id="touch-laser">⚡ LASER</button>
+          <button type="button" class="touch-btn touch-btn-jump" id="touch-jump">▲ JUMP</button>
         </div>
       </div>
 

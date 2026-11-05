@@ -1088,3 +1088,35 @@ btnStartArcade.addEventListener('click', () => {
   updateHud();
   platformerLoop();
 });
+
+
+// Mobile Touch Controls Binding (Left, Right, Jump, Laser)
+const touchLeft = document.getElementById('touch-left');
+const touchRight = document.getElementById('touch-right');
+const touchJump = document.getElementById('touch-jump');
+const touchLaser = document.getElementById('touch-laser');
+
+function bindHoldButton(btn, onDown, onUp) {
+  if (!btn) return;
+  const start = (e) => { e.preventDefault(); btn.classList.add('pressed'); onDown(); };
+  const end = (e) => { e.preventDefault(); btn.classList.remove('pressed'); if (onUp) onUp(); };
+  btn.addEventListener('touchstart', start, { passive: false });
+  btn.addEventListener('touchend', end, { passive: false });
+  btn.addEventListener('touchcancel', end, { passive: false });
+  btn.addEventListener('mousedown', start);
+  btn.addEventListener('mouseup', end);
+  btn.addEventListener('mouseleave', end);
+}
+
+bindHoldButton(
+  touchLeft,
+  () => { keys.left = true; player.facing = -1; },
+  () => { keys.left = false; }
+);
+bindHoldButton(
+  touchRight,
+  () => { keys.right = true; player.facing = 1; },
+  () => { keys.right = false; }
+);
+bindHoldButton(touchJump, () => { if (isPlaying) triggerJump(); });
+bindHoldButton(touchLaser, () => { if (isPlaying) fireLaser(); });
